@@ -1,0 +1,45 @@
+# =============================================
+# NALI Dental Clinic - Git Ignore
+# =============================================
+
+# Logs
+*.log
+debug_*.log
+*_debug.log
+php_error.log
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backups
+*_backup.*
+*.bak
+*.old
+*.orig
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
+
+# Compressed files (optional)
+# *.zip
+# *.rar
+
+# Config với thông tin nhạy cảm (uncomment nếu cần)
+# config.php
+
+# Node modules (nếu có)
+node_modules/
+
+# Cache
+cache/
+*.cache
