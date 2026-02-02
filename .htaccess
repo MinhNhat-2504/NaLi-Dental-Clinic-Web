@@ -1,0 +1,99 @@
+# .htaccess - Bảo mật cho NALI Dental Clinic
+# Tăng cường bảo mật và ngăn chặn các tấn công phổ biến
+
+# 1. CHẶN TRUY CẬP TRỰC TIẾP VÀO CONFIG.PHP
+<Files "config.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# 2. BẢO VỆ CÁC FILE NHẠY CẢM
+<FilesMatch "\.(ini|log|sh|sql|md|yml|yaml)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# 3. NGĂN CHẶN DIRECTORY LISTING
+Options -Indexes
+
+# 4. BẢO VỆ CHỐNG SQL INJECTION VÀ XSS
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Chặn SQL Injection patterns
+    RewriteCond %{QUERY_STRING} (\<|%3C).*script.*(\>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} GLOBALS(=|\[|\%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} _REQUEST(=|\[|\%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} (\||%7C) [NC,OR]
+    RewriteCond %{QUERY_STRING} (javascript|vbscript|behaviour|script|eval|expression) [NC,OR]
+    RewriteCond %{QUERY_STRING} concat.*\( [NC,OR]
+    RewriteCond %{QUERY_STRING} union.*select [NC,OR]
+    RewriteCond %{QUERY_STRING} base64_encode [NC]
+    RewriteRule ^(.*)$ - [F,L]
+</IfModule>
+
+# 5. SECURITY HEADERS
+<IfModule mod_headers.c>
+    # Chống XSS
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Chống Clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # Chống MIME type sniffing
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Referrer Policy
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Content Security Policy (điều chỉnh theo nhu cầu)
+    Header set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https:; font-src 'self' data: https:;"
+    
+    # Permissions Policy
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# 6. CHẶN USER AGENTS ĐỘC HẠI
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP_USER_AGENT} ^$ [OR]
+    RewriteCond %{HTTP_USER_AGENT} ^(.*)(libwww|wget|python|nikto|curl|scan|java|winhttp|clshttp|loader) [NC]
+    RewriteRule ^(.*)$ - [F,L]
+</IfModule>
+
+# 7. GIỚI HẠN UPLOAD FILE SIZE (20MB)
+php_value upload_max_filesize 20M
+php_value post_max_size 20M
+
+# 8. TIMEOUT SETTINGS
+php_value max_execution_time 300
+php_value max_input_time 300
+
+# 9. CHẶN TRUY CẬP VÀO THƯ MỤC GIT (nếu có)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^\.git - [F,L]
+</IfModule>
+
+# 10. FORCE HTTPS (Bật khi production)
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     RewriteCond %{HTTPS} !=on
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+# </IfModule>
+
+# 11. CACHE CONTROL
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+# 12. GZIP COMPRESSION
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
+</IfModule>

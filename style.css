@@ -1,0 +1,220 @@
+/* ========== Giao diện đẹp cho menu dịch vụ động ========== */
+.menu-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 24px 10px 40px 10px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.menu-item {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 6px 24px rgba(77,166,255,0.10), 0 1.5px 6px rgba(77,166,255,0.08);
+  width: calc(25% - 24px);
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 12px 20px 12px;
+  box-sizing: border-box;
+  text-align: center;
+  transition: transform .18s, box-shadow .18s;
+  position: relative;
+  border: 1.5px solid #eaf4ff;
+}
+.menu-item:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 16px 40px rgba(77,166,255,0.18), 0 2px 8px rgba(77,166,255,0.10);
+  border-color: #4da6ff33;
+}
+.menu-item img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(77,166,255,0.07);
+}
+.menu-item h3 {
+  font-size: 1.08rem;
+  color: #1a3a5d;
+  margin: 8px 0 6px 0;
+  font-weight: 700;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.menu-item p {
+  font-size: 0.97rem;
+  color: #4d6a8a;
+  margin: 0 0 10px 0;
+  min-height: 48px;
+}
+.menu-item .price {
+  color: #4da6ff;
+  font-weight: 700;
+  font-size: 1.13rem;
+  margin-bottom: 10px;
+  display: block;
+}
+.menu-item .order-btn {
+  background: linear-gradient(135deg, #4da6ff 0%, #3d8fe8 100%);
+  color: #fff;
+  border: none;
+  padding: 13px 0;
+  width: 100%;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.18s;
+  margin-top: 8px;
+  box-shadow: 0 2px 8px rgba(77,166,255,0.10);
+}
+.menu-item .order-btn:hover {
+  background: linear-gradient(135deg, #5db0ff 0%, #4d9ff8 100%);
+  transform: translateY(-2px) scale(1.04);
+}
+
+/* Responsive: 3 cột */
+@media (max-width: 1100px) {
+  .menu-item { width: calc(33.333% - 24px); }
+}
+@media (max-width: 800px) {
+  .menu-item { width: calc(50% - 24px); }
+}
+@media (max-width: 500px) {
+  .menu-item { width: 100%; min-width: 0; }
+}
+/* Hiệu ứng nút menu active giống nút 'Về NALI' */
+.nav-btn {
+  background: #56afff;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 25px;
+  font-weight: bold;
+  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+}
+.nav-btn.active {
+  background: #fff;
+  color: #56afff;
+  border: 2px solid #56afff;
+}
+/* style.css - Tạo layout ảnh đẹp từ trái sang phải (responsive) */
+:root{
+  --gap:16px;
+  --card-bg:#ffffff;
+  --accent:#4da6ff;
+}
+
+body{font-family:Arial, Helvetica, sans-serif; background:#f7f9fb; margin:0; padding:0;}
+
+/* Header & Navigation styling - Fixed height across all pages */
+header{
+    background-color:#4da6ff !important; 
+    display:flex; 
+    flex-direction:column; 
+    align-items:center; 
+    justify-content:center; 
+    padding:20px 20px 25px 20px;
+    min-height: 100px;
+    position:relative;
+}
+header h1{margin:0 0 15px 0; color:#fff; font-size: 24px;}
+nav{display:flex; justify-content:center; gap:25px; flex-wrap:wrap; padding: 5px 0;}
+nav a{
+    color:#fff; 
+    text-decoration:none; 
+    font-weight:500; 
+    transition: all 0.3s ease;
+    padding: 5px 0;
+    position: relative;
+}
+nav a:hover{opacity:0.9;}
+nav a.active{
+    font-weight: 700; 
+    background: #fff;
+    color: #4da6ff !important;
+    padding: 8px 15px;
+    border-radius: 20px;
+}
+.cart{background-color:#fff; color:#4da6ff; padding:8px 15px; border-radius:20px; font-weight:bold; cursor:pointer; position:absolute; bottom:10px; right:20px;}
+.cart:hover{opacity:0.9;}
+
+
+.menu-container{
+  display:flex;
+  flex-wrap:wrap;
+  gap:var(--gap);
+  justify-content:flex-start; /* căn từ trái sang phải */
+  align-items:stretch;
+  padding:20px;
+  box-sizing:border-box;
+  max-width:1200px;
+  margin:0 auto;
+}
+
+.product-card{
+  background:var(--card-bg);
+  border-radius:10px;
+  box-shadow:0 6px 18px rgba(25,40,60,0.08);
+  width:calc(25% - (var(--gap)));
+  min-width:220px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:12px;
+  box-sizing:border-box;
+  text-align:center;
+  transition:transform .16s ease, box-shadow .16s ease;
+}
+.product-card:hover{transform:translateY(-6px); box-shadow:0 12px 28px rgba(25,40,60,0.12);}
+
+.product-card img{width:100%; height:180px; object-fit:cover; border-radius:8px; display:block;}
+.product-card h3{font-size:1rem; margin:10px 0 6px; color:#222;}
+.product-card .price{color:var(--accent); font-weight:700; margin-bottom:8px;}
+.product-card .btn-add{background:var(--accent); color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;}
+.product-card .btn-add:hover{opacity:0.95}
+
+/* Responsive: 3 columns on medium screens */
+@media (max-width:1000px){
+  .product-card{width:calc(33.333% - var(--gap));}
+}
+
+/* Responsive: 2 columns on small screens */
+@media (max-width:700px){
+  .product-card{width:calc(50% - var(--gap));}
+}
+
+/* Single column on very small screens */
+@media (max-width:420px){
+  .product-card{width:100%;}
+}
+
+/* Popup image styling (sizePopup removed) */
+
+/* Modal / Overlay styles for appointments */
+.overlay{position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:10000;}
+.modal{background:#fff; padding:18px; border-radius:10px; width:90%; max-width:720px; box-shadow:0 14px 40px rgba(10,20,30,0.12);}
+.appointments-modal{padding:12px 16px}
+.appointments-modal h3{margin:6px 0 12px; color:var(--accent)}
+.close-btn{position:absolute; background:transparent; border:0; font-size:26px; font-weight:700; cursor:pointer; color:#666}
+.modal .close-btn{position:relative; float:right; margin-left:8px}
+.appointment-item{padding:8px 0}
+
+/* Footer styling - consistent across all pages */
+footer{background:#ffffff; color:#333; text-align:center; padding:40px 20px; margin-top:50px; border-top: 1px solid #e0e0e0;}
+footer h2{margin:0 0 10px 0; font-size:24px; font-weight:700; color:#333;}
+footer p{margin:0 0 15px 0; font-size:16px; color:#666;}
+footer hr{width:80px; margin:15px auto; border:none; border-top:2px solid #e0e0e0;}
+footer .footer-info{display:flex; justify-content:center; gap:20px; flex-wrap:wrap; font-size:14px; margin-top:15px;}
+footer .footer-info span{display:flex; align-items:center; gap:6px;}
+
