@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Quản trị — Phản hồi{% endblock %}
+{% block content %}
+{% include 'partials/admin_nav.html' %}
+<div class="admin-wrap">
+  <div class="admin-card">
+    <h2><i class="fas fa-comment-dots"></i> Phản hồi khách hàng</h2>
+    <table class="admin-table">
+      <thead><tr><th>ID</th><th>Khách</th><th>Đánh giá</th><th>Loại</th><th>Nội dung</th><th>Ngày</th></tr></thead>
+      <tbody>
+        {% for f in items %}
+        <tr><td>#{{ f.id }}</td><td><b>{{ f.name }}</b><br><small style="color:#94a3b8;">{{ f.email or f.phone }}</small></td>
+          <td style="color:#f59e0b;">{{ '★' * (f.rating or 0) }}</td>
+          <td>{{ {'khen':'Khen ngợi','gop-y':'Góp ý','phan-anh':'Phản ánh'}.get(f.type, f.type) }}</td>
+          <td style="max-width:340px;">{{ f.message }}</td>
+          <td>{{ f.created_at.strftime('%d/%m/%Y') if f.created_at else '—' }}</td></tr>
+        {% else %}<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px;">Chưa có phản hồi.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    {% if pagination.pages > 1 %}
+    <div style="text-align:center;margin-top:18px;">
+      {% for n in pagination.iter_pages() %}
+        {% if n %}<a class="btn-sm {{ 'btn-blue' if n==pagination.page else 'btn-gray' }}" href="{{ url_for('admin.feedback', page=n) }}">{{ n }}</a>{% else %}…{% endif %}
+      {% endfor %}
+    </div>{% endif %}
+  </div>
+</div>
+{% endblock %}

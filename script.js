@@ -137,7 +137,7 @@ async function renderProducts() {
     container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin fa-2x"></i> Đang tải...</div>';
 
     try {
-        const res = await fetch('products.php');
+        const res = await fetch('api/products.php');
         const data = await res.json();
         if (data.success && data.products.length > 0) {
             products = data.products;
@@ -251,11 +251,11 @@ function proceedToPayment() {
                 timer: 1800,
                 showConfirmButton: false
             }).then(() => {
-                window.location.href = 'login.html';
+                window.location.href = 'auth.php';
             });
         } else {
             alert('⚠️ Vui lòng đăng nhập để đặt lịch hẹn!');
-            window.location.href = 'login.html';
+            window.location.href = 'auth.php';
         }
         return;
     }
@@ -375,7 +375,7 @@ async function renderProducts() {
 
     // Fetch products and split into groups
     try {
-        const res = await fetch('products.php');
+        const res = await fetch('api/products.php');
         const data = await res.json();
         if (data.success && data.products.length > 0) {
             products = data.products;

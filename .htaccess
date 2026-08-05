@@ -47,7 +47,7 @@ Options -Indexes
     Header set Referrer-Policy "strict-origin-when-cross-origin"
     
     # Content Security Policy (điều chỉnh theo nhu cầu)
-    Header set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https:; font-src 'self' data: https:;"
+    Header set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 https:; img-src 'self' data: https:; font-src 'self' data: https:;"
     
     # Permissions Policy
     Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"

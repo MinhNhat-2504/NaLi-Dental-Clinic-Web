@@ -1,0 +1,6 @@
+# Không commit thông tin bí mật và file rác
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/

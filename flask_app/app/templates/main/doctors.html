@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Đội ngũ bác sĩ — NALI Dental{% endblock %}
+{% block content %}
+<div class="team-header"><div><h1>Chuyên Gia Của Chúng Tôi</h1><p>Đội ngũ bác sĩ đầu ngành - Tận tâm - Y đức</p></div></div>
+<section class="section">
+  <div class="services-grid">
+    {% for d in doctors %}
+    <div class="doctor-card" style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 6px 22px rgba(45,100,180,.08);border:1px solid #eef3fa;text-align:center;">
+      <div style="height:220px;background:linear-gradient(135deg,#4da6ff,#2c7ad1);display:flex;align-items:center;justify-content:center;color:#fff;font-size:4rem;">
+        <i class="fas fa-user-md"></i>
+      </div>
+      <div style="padding:22px;">
+        <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:6px;">{{ d.full_name }}</h3>
+        <p style="color:var(--nali);font-weight:600;margin-bottom:10px;">{{ d.specialty or 'Bác sĩ Nha khoa' }}</p>
+        <p style="color:#64748b;font-size:.92rem;"><i class="fas fa-phone"></i> {{ d.phone or '0945 457 512' }}</p>
+        <a href="{{ url_for('booking.book') }}" class="order-btn" style="margin-top:14px;display:inline-flex;"><i class="fas fa-calendar-check"></i> Đặt lịch với bác sĩ</a>
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-message"><i class="fas fa-user-md"></i><p>Chưa có thông tin bác sĩ.</p></div>
+    {% endfor %}
+  </div>
+</section>
+<div style="height:50px"></div>
+{% endblock %}

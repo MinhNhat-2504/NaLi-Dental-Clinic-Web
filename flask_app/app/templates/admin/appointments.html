@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Quản trị — Lịch hẹn{% endblock %}
+{% block content %}
+{% include 'partials/admin_nav.html' %}
+<div class="admin-wrap">
+  <div class="admin-card">
+    <h2><i class="fas fa-calendar-check"></i> Quản lý lịch hẹn</h2>
+    <form method="get" class="admin-search">
+      <input type="text" name="q" value="{{ q }}" placeholder="🔍 Tìm theo tên / SĐT khách...">
+      <input type="hidden" name="status" value="{{ status }}">
+      <button type="submit"><i class="fas fa-search"></i></button>
+    </form>
+    <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;">
+      {% for k,label in [('','Tất cả'),('pending','Chờ xác nhận'),('confirmed','Đã xác nhận'),('completed','Hoàn thành'),('cancelled','Đã huỷ')] %}
+        <a class="btn-sm {{ 'btn-blue' if status==k else 'btn-gray' }}" href="{{ url_for('admin.appointments', status=k, q=q) }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+    <table class="admin-table">
+      <thead><tr><th>Mã</th><th>Khách hàng</th><th>Điện thoại</th><th>Ngày giờ</th><th>Trạng thái</th><th>Đổi nhanh</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        {% for a in items %}
+        <tr>
+          <td>#{{ a.id }}</td><td><b>{{ a.customer_name }}</b></td><td>{{ a.customer_phone }}</td>
+          <td>{{ a.appointment_date.strftime('%d/%m/%Y') if a.appointment_date }} {{ a.appointment_time.strftime('%H:%M') if a.appointment_time }}</td>
+          <td>{{ {'pending':'Chờ','confirmed':'Đã xác nhận','completed':'Hoàn thành','cancelled':'Đã huỷ'}[a.status] }}</td>
+          <td>
+            <form method="post" action="{{ url_for('admin.appointment_status', aid=a.id) }}" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <select name="status" onchange="this.form.submit()" class="fc" style="padding:6px 10px;width:auto;">
+                {% for s,l in [('pending','Chờ'),('confirmed','Xác nhận'),('completed','Hoàn thành'),('cancelled','Huỷ')] %}
+                  <option value="{{ s }}" {{ 'selected' if a.status==s }}>{{ l }}</option>
+                {% endfor %}
+              </select>
+            </form>
+          </td>
+          <td>
+            <a href="{{ url_for('admin.appointment_edit', aid=a.id) }}" class="btn-sm btn-gray"><i class="fas fa-pen"></i></a>
+            <form method="post" action="{{ url_for('admin.appointment_delete', aid=a.id) }}" style="display:inline;" onsubmit="return confirm('Xóa lịch hẹn #{{ a.id }}?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn-sm btn-red"><i class="fas fa-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px;">Không có lịch hẹn.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    {% if pagination.pages > 1 %}
+    <div style="text-align:center;margin-top:18px;">
+      {% for n in pagination.iter_pages() %}
+        {% if n %}<a class="btn-sm {{ 'btn-blue' if n==pagination.page else 'btn-gray' }}" href="{{ url_for('admin.appointments', status=status, q=q, page=n) }}">{{ n }}</a>{% else %}…{% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% include 'partials/auth_style.html' %}
+{% endblock %}

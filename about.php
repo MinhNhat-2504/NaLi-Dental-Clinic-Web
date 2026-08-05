@@ -7,7 +7,11 @@ require_once 'includes/components.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Về Chúng Tôi - NALI Dental Clinic</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="favicon.png">
     <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
@@ -16,7 +20,7 @@ require_once 'includes/components.php';
         /* Hero Section */
         .about-hero {
             background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
-                        url('images/1.png') center/cover no-repeat;
+                        url('images/hero-tech.jpg') center/cover no-repeat;
             min-height: 400px;
             display: flex;
             align-items: center;

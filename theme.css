@@ -1,0 +1,99 @@
+/* =====================================================================
+   theme.css — Lớp giao diện ĐỒNG BỘ cho toàn site NALI.
+   Nạp SAU common.css ở các trang about/team/news/contact để thống nhất
+   phong cách với trang chủ (services.php): font Be Vietnam Pro, hero gradient
+   hiện đại, nút lọc & tiêu đề đồng bộ. Dùng override có chủ đích (!important)
+   để chỉnh giao diện mà không phải viết lại từng trang.
+   ===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+
+:root { --nali: #4da6ff; --nali-dark: #2c7ad1; --ink: #1a2b47; }
+
+/* ===== Font đồng bộ toàn site ===== */
+body { font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif !important; color: var(--ink); }
+
+/* ===== HERO đồng bộ (banner đầu mỗi trang) ===== */
+.about-hero, .team-header, .news-header, .contact-header {
+    position: relative !important;
+    color: #fff !important;
+    padding: 66px 20px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    text-align: center !important;
+    overflow: hidden !important;
+    display: block !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+.about-hero > div, .team-header > div, .news-header > div, .contact-header > div {
+    position: relative; z-index: 2; max-width: 820px; margin: 0 auto;
+}
+.about-hero h1, .team-header h1, .news-header h1, .contact-header h1 {
+    font-size: 2.6rem !important; font-weight: 800 !important; line-height: 1.15 !important;
+    margin: 0 0 12px !important; letter-spacing: -.5px !important;
+    text-shadow: 0 2px 14px rgba(0,0,0,.2) !important; color: #fff !important;
+}
+.about-hero p, .team-header p, .news-header p, .contact-header p {
+    font-size: 1.12rem !important; opacity: .95 !important; margin: 0 auto !important;
+    max-width: 640px !important; color: #fff !important; line-height: 1.6 !important;
+}
+/* Hình tròn trang trí mờ (glassmorphism nhẹ) */
+.about-hero::before, .team-header::before, .news-header::before, .contact-header::before {
+    content: ''; position: absolute; width: 340px; height: 340px; border-radius: 50%;
+    background: #fff; opacity: .12; top: -130px; left: -80px; filter: blur(2px);
+}
+.about-hero::after, .team-header::after, .news-header::after, .contact-header::after {
+    content: ''; position: absolute; width: 210px; height: 210px; border-radius: 50%;
+    background: #fff; opacity: .10; bottom: -90px; right: 6%;
+}
+
+/* Ảnh nền hero RIÊNG cho từng trang con (đa dạng ảnh + tông màu) */
+.about-hero {
+    background:
+        radial-gradient(900px 380px at 85% -20%, rgba(255,255,255,.15), transparent 60%),
+        linear-gradient(135deg, rgba(61,143,232,.92), rgba(37,103,201,.95)),
+        url('images/tay-trang.jpg') center/cover no-repeat !important;   /* nụ cười thật */
+}
+.team-header {
+    background:
+        radial-gradient(900px 380px at 85% -20%, rgba(255,255,255,.14), transparent 60%),
+        linear-gradient(135deg, rgba(26,180,150,.90), rgba(15,120,110,.95)),
+        url('images/hero-tech.jpg') right center/cover no-repeat !important;     /* teal-xanh lá */
+}
+.news-header {
+    background:
+        radial-gradient(900px 380px at 85% -20%, rgba(255,255,255,.13), transparent 60%),
+        linear-gradient(135deg, rgba(110,100,230,.90), rgba(70,55,175,.95)),
+        url('images/hero-tech.jpg') right center/cover no-repeat !important;     /* tím-indigo */
+}
+.contact-header {
+    background:
+        radial-gradient(900px 380px at 85% -20%, rgba(255,255,255,.15), transparent 60%),
+        linear-gradient(135deg, rgba(56,150,200,.90), rgba(30,100,170,.95)),
+        url('images/hero-tech.jpg') right center/cover no-repeat !important;     /* cyan-sky */
+}
+
+/* ===== Nút lọc đồng bộ (team.php, news.php) ===== */
+.filter-btn { font-family: inherit; border-radius: 30px !important; }
+.filter-btn.active {
+    background: linear-gradient(135deg, var(--nali), var(--nali-dark)) !important;
+    color: #fff !important; border-color: transparent !important;
+    box-shadow: 0 8px 20px rgba(77,166,255,.35) !important;
+}
+
+/* ===== Nút chính bo tròn hiện đại ===== */
+.btn-primary, .btn-book, button.submit-btn {
+    border-radius: 12px !important;
+}
+
+/* ===== Thẻ có hiệu ứng nâng nhẹ khi hover (đồng bộ cảm giác) ===== */
+.card, .news-card, .doctor-card, .about-section {
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+
+/* Responsive: hero nhỏ lại trên mobile */
+@media (max-width: 768px) {
+    .about-hero, .team-header, .news-header, .contact-header { padding: 46px 18px !important; }
+    .about-hero h1, .team-header h1, .news-header h1, .contact-header h1 { font-size: 1.9rem !important; }
+    .about-hero p, .team-header p, .news-header p, .contact-header p { font-size: 1rem !important; }
+}

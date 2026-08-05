@@ -1,0 +1,14 @@
+.git/
+.gitignore
+ai_service/.venv/
+ai_service/venv/
+ai_service/__pycache__/
+ai_service/**/__pycache__/
+ai_service/.env
+ai_service/finetune/out/
+ai_service/finetune/data/
+*.gguf
+*.sql
+!nali_dental_schema_REAL.sql
+node_modules/
+*.md

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt lịch thành công — NALI Dental</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <style>
+        :root { --primary: #4da6ff; --primary-dark: #3d8fe8; --secondary: #28a745; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+               background: linear-gradient(135deg, #e8f4ff, #f5f9ff); padding: 20px; }
+        .card { background: #fff; border-radius: 22px; box-shadow: 0 20px 60px rgba(77,166,255,.25);
+                max-width: 480px; width: 100%; padding: 40px 32px; text-align: center; }
+        .check { width: 88px; height: 88px; margin: 0 auto 20px; border-radius: 50%;
+                 background: var(--secondary); display: flex; align-items: center; justify-content: center;
+                 color: #fff; font-size: 46px; animation: pop .4s ease-out; }
+        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+        h1 { color: #333; font-size: 1.6rem; margin-bottom: 8px; }
+        .sub { color: #666; margin-bottom: 24px; }
+        .code { background: #e8f4ff; color: var(--primary-dark); font-weight: 700; font-size: 1.3rem;
+                letter-spacing: 1px; padding: 12px; border-radius: 12px; margin-bottom: 24px; }
+        .info { text-align: left; background: #f8fbff; border: 1px solid #e3eefc; border-radius: 14px;
+                padding: 18px; margin-bottom: 24px; }
+        .info .row { display: flex; justify-content: space-between; padding: 7px 0; font-size: .95rem;
+                     border-bottom: 1px dashed #e3eefc; }
+        .info .row:last-child { border-bottom: none; }
+        .info .row span:first-child { color: #888; }
+        .info .row span:last-child { color: #333; font-weight: 600; text-align: right; }
+        .btn { display: inline-block; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+               color: #fff; text-decoration: none; padding: 13px 30px; border-radius: 30px; font-weight: 600;
+               box-shadow: 0 8px 20px rgba(77,166,255,.35); }
+        .note { color: #999; font-size: .82rem; margin-top: 18px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="check">✓</div>
+        <h1>Đặt lịch thành công!</h1>
+        <p class="sub">Cảm ơn bạn đã tin tưởng NALI Dental 💙</p>
+        <div class="code" id="bookingCode">NALI000000</div>
+        <div class="info" id="bookingInfo"></div>
+        <a href="services.php" class="btn">← Về trang chủ</a>
+        <p class="note">Lễ tân sẽ gọi điện xác nhận trước buổi hẹn của bạn.</p>
+    </div>
+
+    <script>
+        // Đọc thông tin đặt lịch vừa lưu ở contact.php
+        const b = JSON.parse(localStorage.getItem('lastBooking') || '{}');
+        if (b.bookingCode) document.getElementById('bookingCode').textContent = b.bookingCode;
+
+        const rows = [
+            ['Khách hàng', b.customerName],
+            ['Điện thoại', b.customerPhone],
+            ['Ngày hẹn', b.appointmentDate],
+            ['Giờ hẹn', b.appointmentTime],
+            ['Dịch vụ', b.service],
+            ['Bác sĩ', b.doctor],
+        ].filter(r => r[1]);
+
+        document.getElementById('bookingInfo').innerHTML = rows.map(r =>
+            `<div class="row"><span>${r[0]}</span><span>${r[1]}</span></div>`
+        ).join('') || '<div class="row"><span>Thông tin</span><span>Đã ghi nhận</span></div>';
+    </script>
+</body>
+</html>

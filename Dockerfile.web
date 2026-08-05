@@ -1,0 +1,18 @@
+# ===== Web PHP (Apache) — NALI Dental =====
+FROM php:8.2-apache
+
+# mysqli cho PHP + bật mod_rewrite/headers cho .htaccess
+RUN docker-php-ext-install mysqli \
+    && a2enmod rewrite headers \
+    && sed -ri 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
+
+# Mã nguồn web
+COPY . /var/www/html/
+RUN chown -R www-data:www-data /var/www/html
+
+# Entrypoint: chờ DB -> seed -> chạy Apache
+COPY docker/entrypoint-web.sh /usr/local/bin/entrypoint-web.sh
+RUN chmod +x /usr/local/bin/entrypoint-web.sh
+
+EXPOSE 80
+ENTRYPOINT ["/usr/local/bin/entrypoint-web.sh"]

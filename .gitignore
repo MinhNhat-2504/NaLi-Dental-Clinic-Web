@@ -43,3 +43,28 @@ node_modules/
 # Cache
 cache/
 *.cache
+
+# Bảo mật: không commit thông tin nhạy cảm
+.env
+**/.env
+
+# ===== Python =====
+__pycache__/
+**/__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# ===== Model finetune (nặng, tự train lại được) =====
+ai_service/finetune/out/
+*.gguf
+*.safetensors
+*.pt
+*.bin
+
+# ===== File nén nộp bài / build =====
+*.zip
+
+# ===== Docker volume =====
+db_data/

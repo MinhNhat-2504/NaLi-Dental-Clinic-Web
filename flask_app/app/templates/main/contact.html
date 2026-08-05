@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Liên hệ — NALI Dental{% endblock %}
+{% block content %}
+<div class="contact-header"><div><h1><i class="fas fa-map-marker-alt"></i> Liên Hệ NALI</h1><p>Hệ thống chi nhánh &amp; thông tin liên hệ</p></div></div>
+<section class="section">
+  <div class="branch-grid">
+    <div>
+      {% set branches = [
+        ('Chi nhánh Bình Thạnh','69/68 Đặng Thùy Trâm, Q. Bình Thạnh, TP.HCM'),
+        ('Chi nhánh Quận 1','123 Nguyễn Huệ, Quận 1, TP.HCM'),
+        ('Chi nhánh Gò Vấp','456 Quang Trung, Q. Gò Vấp, TP.HCM')] %}
+      {% for b in branches %}
+      <button type="button" class="branch-item {{ 'active' if loop.first }}" data-q="{{ b[1] }}">
+        <span class="branch-ico"><i class="fas fa-hospital"></i></span>
+        <span><b>{{ b[0] }}</b><span class="addr">{{ b[1] }}</span></span>
+      </button>
+      {% endfor %}
+      <div class="branch-info">
+        <p><i class="fas fa-phone"></i> Hotline: <strong>0945 457 512</strong></p>
+        <p><i class="fas fa-envelope"></i> nalidental@gmail.com</p>
+        <p><i class="fas fa-clock"></i> T2 – CN: 08:00 – 20:00</p>
+        <p id="weatherBox"><i class="fas fa-cloud-sun"></i> <span>Đang tải thời tiết…</span></p>
+      </div>
+    </div>
+    <div class="branch-map">
+      <iframe id="branchMap" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps?q={{ branches[0][1]|urlencode }}&output=embed" title="Bản đồ NALI"></iframe>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="max-width:700px;">
+  <div class="section-head"><span class="eyebrow">Ý kiến của bạn</span><h2>Góp Ý &amp; Phản Hồi</h2>
+    <p>NALI luôn lắng nghe để phục vụ bạn tốt hơn.</p></div>
+  <div class="fb-card">
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="fb-grid">
+        <div class="fg">{{ form.name.label }} {{ form.name(class="fc") }}
+          {% for e in form.name.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+        <div class="fg">{{ form.phone.label }} {{ form.phone(class="fc") }}</div>
+      </div>
+      <div class="fb-grid">
+        <div class="fg">{{ form.email.label }} {{ form.email(class="fc") }}</div>
+        <div class="fg">{{ form.rating.label }} {{ form.rating(class="fc") }}</div>
+      </div>
+      <div class="fg">{{ form.type.label }} {{ form.type(class="fc") }}</div>
+      <div class="fg">{{ form.message.label }} {{ form.message(class="fc", rows=4) }}
+        {% for e in form.message.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+      {{ form.submit(class="auth-btn") }}
+    </form>
+  </div>
+</section>
+<div style="height:50px"></div>
+{% include 'partials/auth_style.html' %}
+<style>
+.fb-card { background:#fff; border:1px solid #eef3fa; border-radius:18px; padding:30px; box-shadow:0 6px 22px rgba(45,100,180,.08); }
+.fb-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.fb-card .fg { text-align:left; margin-bottom:14px; }
+[data-theme="dark"] .fb-card { background:#1e293b; border-color:#334155; }
+@media(max-width:560px){ .fb-grid{ grid-template-columns:1fr; } }
+.branch-grid { display:grid; grid-template-columns:1fr 1.35fr; gap:26px; align-items:start; max-width:1100px; margin:0 auto; }
+.branch-item { width:100%; text-align:left; display:flex; gap:14px; align-items:flex-start; background:#fff; border:2px solid #eef3fa; border-radius:16px; padding:18px; margin-bottom:14px; cursor:pointer; transition:.25s; font-family:inherit; }
+.branch-item:hover { border-color:#4da6ff; transform:translateY(-2px); } .branch-item.active { border-color:#4da6ff; background:#f2f8ff; }
+.branch-ico { width:44px; height:44px; border-radius:12px; flex-shrink:0; color:#fff; background:linear-gradient(135deg,#4da6ff,#2c7ad1); display:flex; align-items:center; justify-content:center; }
+.branch-item b { display:block; color:#1a2b47; margin-bottom:4px; } .branch-item .addr { color:#64748b; font-size:.92rem; }
+.branch-info { background:#fff; border:1px solid #eef3fa; border-radius:16px; padding:18px; }
+.branch-info p { display:flex; align-items:center; gap:10px; color:#475569; margin:8px 0; } .branch-info i { color:#4da6ff; width:18px; }
+.branch-map { border-radius:18px; overflow:hidden; box-shadow:0 14px 40px rgba(45,100,180,.18); } .branch-map iframe { width:100%; height:520px; border:0; display:block; }
+[data-theme="dark"] .branch-item, [data-theme="dark"] .branch-info { background:#1e293b; border-color:#334155; } [data-theme="dark"] .branch-item b { color:#f1f5f9; }
+@media (max-width:900px){ .branch-grid{ grid-template-columns:1fr; } .branch-map iframe{ height:360px; } }
+</style>
+<script>
+(function(){var m=document.getElementById('branchMap');document.querySelectorAll('.branch-item').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.branch-item').forEach(function(x){x.classList.remove('active');});b.classList.add('active');m.src='https://www.google.com/maps?q='+encodeURIComponent(b.dataset.q)+'&output=embed';});});})();
+/* Widget thời tiết TP.HCM (dữ liệu từ API ngoài qua backend Flask) */
+(function(){var el=document.querySelector('#weatherBox span');if(!el)return;
+fetch('{{ url_for("api.weather") }}').then(function(r){return r.json();}).then(function(d){
+  el.textContent = d.success ? ('TP.HCM · '+Math.round(d.temp)+'°C · '+d.desc) : 'Thời tiết: đang cập nhật';
+}).catch(function(){el.textContent='Thời tiết: đang cập nhật';});})();
+</script>
+{% endblock %}

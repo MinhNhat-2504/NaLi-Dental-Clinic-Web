@@ -1,0 +1,11 @@
+# ===== NALI AI Assistant - Python dependencies =====
+# Install:  pip install -r requirements.txt
+
+fastapi==0.115.0               # async web framework for the AI service
+uvicorn[standard]==0.30.6      # ASGI server that runs FastAPI
+pydantic==2.9.2                # data validation (type-safe I/O)
+python-dotenv==1.0.1           # read config from .env
+mysql-connector-python==9.0.0  # MySQL driver (pure Python)
+google-generativeai==0.8.3     # Gemini API (fallback LLM brain)
+scikit-learn==1.5.2            # TF-IDF for offline RAG fallback
+numpy==2.1.1                   # vector math (cosine similarity)

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Đăng nhập — NALI Dental{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">🦷</div>
+    <h1>Chào Mừng Đến NALI</h1>
+    <p class="auth-sub">Đăng nhập để đặt lịch và quản lý lịch hẹn</p>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="fg">
+        {{ form.email.label }}
+        {{ form.email(class="fc", placeholder="email@example.com hoặc tên đăng nhập") }}
+        {% for e in form.email.errors %}<small class="err">{{ e }}</small>{% endfor %}
+      </div>
+      <div class="fg">
+        {{ form.password.label }}
+        {{ form.password(class="fc", placeholder="Nhập mật khẩu") }}
+        {% for e in form.password.errors %}<small class="err">{{ e }}</small>{% endfor %}
+      </div>
+      <label class="fg-check">{{ form.remember() }} Ghi nhớ đăng nhập</label>
+      {{ form.submit(class="auth-btn") }}
+    </form>
+    <p class="auth-alt">Chưa có tài khoản? <a href="{{ url_for('auth.register') }}">Đăng ký ngay</a></p>
+  </div>
+</div>
+{% include 'partials/auth_style.html' %}
+{% endblock %}

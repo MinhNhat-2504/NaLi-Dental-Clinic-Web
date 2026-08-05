@@ -29,6 +29,7 @@ function renderHeader($currentPage = '') {
         ['href' => 'team.php', 'label' => 'Bác sĩ', 'icon' => 'fa-user-md', 'key' => 'team'],
     ];
     ?>
+    <script>/* Áp dark mode sớm (chống nháy sáng) */(function(){try{var t=localStorage.getItem('nali-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
     <header class="site-header">
         <div class="header-container">
             <a href="services.php" class="site-logo">
@@ -161,6 +162,29 @@ function renderHeader($currentPage = '') {
     // Đóng menu khi nhấn nút Back
     window.addEventListener('popstate', closeMobileMenu);
     </script>
+
+    <!-- Nút chuyển Dark Mode / Light Mode -->
+    <button id="naliThemeToggle" aria-label="Chuyển chế độ tối/sáng" title="Chế độ tối / sáng">
+        <i class="fas fa-moon"></i>
+    </button>
+    <script>
+    (function () {
+        var btn = document.getElementById('naliThemeToggle');
+        if (!btn) return;
+        var icon = btn.querySelector('i');
+        function sync() {
+            var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+            icon.className = dark ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        sync();
+        btn.addEventListener('click', function () {
+            var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (dark) { document.documentElement.removeAttribute('data-theme'); try { localStorage.setItem('nali-theme', ''); } catch (e) {} }
+            else { document.documentElement.setAttribute('data-theme', 'dark'); try { localStorage.setItem('nali-theme', 'dark'); } catch (e) {} }
+            sync();
+        });
+    })();
+    </script>
     <?php
 }
 
@@ -218,6 +242,84 @@ function renderFooter() {
             <p>&copy; <?php echo date('Y'); ?> NALI Dental Clinic. All rights reserved.</p>
         </div>
     </footer>
+    <?php
+    // Nhúng widget Trợ lý AI (chatbot RAG + đặt lịch) trên mọi trang
+    $__aiWidget = __DIR__ . '/../ai_chat_widget.php';
+    if (is_file($__aiWidget)) {
+        include $__aiWidget;
+    }
+    ?>
+    <!-- Thanh tiến trình cuộn + nút về đầu trang -->
+    <div id="naliProgress"></div>
+    <button id="naliTop" aria-label="Về đầu trang" title="Về đầu trang"><i class="fas fa-arrow-up"></i></button>
+    <script>
+    (function () {
+        var prog = document.getElementById('naliProgress');
+        var topBtn = document.getElementById('naliTop');
+        var header = document.querySelector('.site-header');
+        function onScroll() {
+            var st = window.pageYOffset || document.documentElement.scrollTop;
+            var h = document.documentElement.scrollHeight - window.innerHeight;
+            if (prog) prog.style.width = (h > 0 ? (st / h) * 100 : 0) + '%';
+            if (header) header.classList.toggle('scrolled', st > 40);
+            if (topBtn) topBtn.classList.toggle('show', st > 400);
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll);
+        onScroll();
+        if (topBtn) topBtn.addEventListener('click', function () {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    })();
+    </script>
+    <script>
+    /* Hiệu ứng cuộn hiện dần + đếm số. Progressive enhancement:
+       JS gắn .reveal để ẩn rồi hiện; nếu JS/IO lỗi, nội dung vẫn hiển thị. */
+    (function () {
+        // CHỈ reveal các thẻ nội dung nằm DƯỚI màn hình đầu (không đụng hero/stats
+        // để không bao giờ ẩn nội dung trên cùng).
+        var SEL = '.service-card,.why-card,.review-card,.doctor-card,.news-card,' +
+                  '.article-card,.about-section,.cta-band,.knowledge-card,.info-card';
+        // Chỉ ẩn-để-reveal các phần tử ĐANG Ở DƯỚI viewport -> tránh nháy phần trên.
+        var vh = window.innerHeight || 800;
+        var els = [].slice.call(document.querySelectorAll(SEL)).filter(function (el) {
+            if (el.getBoundingClientRect().top < vh * 0.9) return false; // đang hiện -> giữ nguyên
+            el.classList.add('reveal');
+            return true;
+        });
+
+        function reveal(el) { el.classList.add('in'); }
+
+        if (els.length && 'IntersectionObserver' in window) {
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (e.isIntersecting) { reveal(e.target); io.unobserve(e.target); }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -5% 0px' });
+            els.forEach(function (el) { io.observe(el); });
+            // Bảo hiểm: nếu IO không kích hoạt, ép hiện (không bao giờ để ẩn nội dung)
+            setTimeout(function () { els.forEach(reveal); }, 6000);
+        } else {
+            els.forEach(reveal);
+        }
+
+        // Đếm số cho thanh thống kê (LUÔN hiển thị, chỉ chạy hiệu ứng đếm lên)
+        [].slice.call(document.querySelectorAll('.stat .num')).forEach(function (node) {
+            var m = node.textContent.trim().match(/^(\d[\d.,]*)(.*)$/);
+            if (!m) return;
+            var target = parseFloat(m[1].replace(/[.,]/g, '')), suffix = m[2] || '';
+            if (!target || target > 1000000) return;
+            var dur = 1200, start = null, finalText = m[1] + suffix;
+            function step(ts) {
+                if (!start) start = ts;
+                var p = Math.min((ts - start) / dur, 1);
+                node.textContent = Math.floor((0.5 - Math.cos(p * Math.PI) / 2) * target) + suffix;
+                if (p < 1) requestAnimationFrame(step); else node.textContent = finalText;
+            }
+            requestAnimationFrame(step);
+        });
+    })();
+    </script>
     <?php
 }
 ?>

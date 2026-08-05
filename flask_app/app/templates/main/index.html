@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% from 'partials/service_card.html' import service_card with context %}
+{% block title %}NALI Dental Clinic — Nha khoa công nghệ cao{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-inner">
+        <div>
+            <span class="hero-badge"><i class="fas fa-award"></i> Phòng khám nha khoa được tin tưởng #1</span>
+            <h1>Nụ cười khỏe đẹp bắt đầu từ <span>NALI Dental</span></h1>
+            <p class="lead">Hệ thống nha khoa công nghệ cao với đội ngũ bác sĩ chuyên sâu, trang thiết bị hiện đại và quy trình vô trùng chuẩn Bộ Y tế. Chăm sóc tận tâm cho mọi lứa tuổi.</p>
+            <div class="hero-cta">
+                <a href="{{ url_for('booking.book') }}" class="btn-hero primary"><i class="fas fa-calendar-check"></i> Đặt lịch hẹn ngay</a>
+                <a href="{{ url_for('main.services') }}" class="btn-hero ghost"><i class="fas fa-tooth"></i> Khám phá dịch vụ</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-card">
+                <div class="doc"><div class="doc-ava">🦷</div><div><b>NALI Dental Clinic</b><small>Đánh giá 4.9/5 · hơn 12.000 khách</small></div></div>
+                <div class="row"><i class="fas fa-user-md"></i> 20+ bác sĩ chuyên khoa giàu kinh nghiệm</div>
+                <div class="row"><i class="fas fa-shield-heart"></i> Vô trùng khép kín, an toàn tuyệt đối</div>
+                <div class="row"><i class="fas fa-clock"></i> Mở cửa cả tuần · 08:00 – 20:00</div>
+                <div class="row"><i class="fas fa-hand-holding-dollar"></i> Hỗ trợ trả góp 0% cho dịch vụ lớn</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="stats-bar">
+    <div class="stat"><div class="num">15+</div><div class="lbl">Năm kinh nghiệm</div></div>
+    <div class="stat"><div class="num">12K+</div><div class="lbl">Khách hàng tin tưởng</div></div>
+    <div class="stat"><div class="num">20+</div><div class="lbl">Bác sĩ chuyên khoa</div></div>
+    <div class="stat"><div class="num">98%</div><div class="lbl">Khách hàng hài lòng</div></div>
+</div>
+
+<section class="section" id="dichvu">
+    <div class="section-head">
+        <span class="eyebrow">Bảng giá dịch vụ</span>
+        <h2>Dịch vụ nha khoa toàn diện</h2>
+        <p>Từ chăm sóc răng miệng cơ bản đến thẩm mỹ và phục hình chuyên sâu — mọi dịch vụ đều minh bạch giá và bảo hành rõ ràng.</p>
+    </div>
+    <div class="services-grid">
+        {% for p in services %}{{ service_card(p) }}{% endfor %}
+    </div>
+    <div style="text-align:center;margin-top:34px;">
+        <a href="{{ url_for('main.services') }}" class="btn-hero primary" style="color:#fff;background:linear-gradient(135deg,#4da6ff,#2c7ad1);"><i class="fas fa-list"></i> Xem tất cả dịch vụ</a>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-head">
+        <span class="eyebrow">Kết quả thực tế</span>
+        <h2>Trước &amp; Sau khi điều trị</h2>
+        <p>Kéo thanh trượt để thấy sự khác biệt sau một liệu trình Tẩy trắng răng Laser tại NALI.</p>
+    </div>
+    <div class="ba-wrap" id="baWrap">
+        <img src="{{ url_for('static', filename='images/after.jpg') }}" alt="Sau" loading="lazy">
+        <div class="ba-before" id="baBefore"><img src="{{ url_for('static', filename='images/before.jpg') }}" alt="Trước" loading="lazy"></div>
+        <div class="ba-handle" id="baHandle"><span class="ba-grab"><i class="fas fa-arrows-left-right"></i></span></div>
+        <span class="ba-label l">TRƯỚC</span><span class="ba-label r">SAU</span>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-head"><span class="eyebrow">Cam kết của chúng tôi</span><h2>Vì sao khách hàng chọn NALI?</h2></div>
+    <div class="why-grid">
+        <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#4da6ff,#2c7ad1)"><i class="fas fa-user-md"></i></div><h4>Bác sĩ chuyên sâu</h4><p>Đội ngũ hơn 20 bác sĩ tốt nghiệp chính quy, nhiều năm kinh nghiệm và tu nghiệp quốc tế.</p></div>
+        <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#26de81,#20bf6b)"><i class="fas fa-microscope"></i></div><h4>Công nghệ hiện đại</h4><p>Máy scan 3D, chụp X-quang kỹ thuật số, laser và vật liệu nhập khẩu chính hãng.</p></div>
+        <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#ff9f43,#f39c12)"><i class="fas fa-shield-heart"></i></div><h4>Vô trùng tuyệt đối</h4><p>Quy trình tiệt trùng khép kín đạt chuẩn Bộ Y tế, dụng cụ dùng riêng cho từng khách.</p></div>
+        <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#a55eea,#8854d0)"><i class="fas fa-hand-holding-heart"></i></div><h4>Bảo hành &amp; trả góp</h4><p>Chính sách bảo hành minh bạch, hỗ trợ trả góp 0% giúp bạn an tâm điều trị.</p></div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-head"><span class="eyebrow">Khách hàng nói gì</span><h2>Hàng nghìn nụ cười hài lòng</h2></div>
+    <div class="rv-viewport" id="rvViewport">
+        <div class="rv-track">
+            <div class="review-card"><div class="stars">★★★★★</div><p class="quote">"Mình niềng răng Invisalign ở NALI, bác sĩ tư vấn rất kỹ và theo sát tiến trình. Sau 1 năm răng đều đẹp hẳn!"</p><div class="reviewer"><div class="ava">T</div><div><b>Thu Trang</b><small>Niềng răng Invisalign</small></div></div></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p class="quote">"Trồng Implant tưởng đau lắm mà nhẹ nhàng ngoài mong đợi. Phòng khám sạch sẽ, giá lại có trả góp."</p><div class="reviewer"><div class="ava">H</div><div><b>Hoàng Nam</b><small>Cấy ghép Implant</small></div></div></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p class="quote">"Đưa bé đi khám răng mà bé không sợ chút nào vì bác sĩ rất khéo dỗ. Không gian dễ thương!"</p><div class="reviewer"><div class="ava">M</div><div><b>Minh Anh</b><small>Nha khoa trẻ em</small></div></div></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p class="quote">"Tẩy trắng Laser chỉ 45 phút mà răng sáng lên thấy rõ, lại không hề ê buốt. Rất đáng tiền!"</p><div class="reviewer"><div class="ava">L</div><div><b>Lan Phương</b><small>Tẩy trắng răng Laser</small></div></div></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p class="quote">"Nhổ răng khôn mọc lệch mà chỉ hơi tê nhẹ, hôm sau đã ăn uống bình thường. Bác sĩ tay nghề cao."</p><div class="reviewer"><div class="ava">Đ</div><div><b>Đức Huy</b><small>Nhổ răng khôn</small></div></div></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p class="quote">"Mẹ mình làm hàm giả tháo lắp ở đây, ăn nhai thoải mái hẳn. Nhân viên hỗ trợ người lớn tuổi rất chu đáo."</p><div class="reviewer"><div class="ava">N</div><div><b>Ngọc Diệp</b><small>Hàm giả tháo lắp</small></div></div></div>
+        </div>
+    </div>
+    <div class="rv-nav">
+        <button class="rv-btn" id="rvPrev" aria-label="Trước"><i class="fas fa-chevron-left"></i></button>
+        <button class="rv-btn" id="rvNext" aria-label="Sau"><i class="fas fa-chevron-right"></i></button>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-head"><span class="eyebrow">Giải đáp thắc mắc</span><h2>Câu hỏi thường gặp</h2>
+        <p>Chưa thấy câu trả lời? Chat với Trợ lý AI góc phải màn hình nhé!</p></div>
+    <div class="faq-list">
+        {% set faqs = [
+            ('Đặt lịch tại NALI có mất phí không?','Hoàn toàn miễn phí. Bạn có thể đặt lịch trực tuyến, gọi hotline 0945 457 512, hoặc chat với Trợ lý AI.'),
+            ('Tôi có được tư vấn miễn phí trước khi điều trị không?','Có. Buổi khám và tư vấn đầu tiên tại NALI là miễn phí, bác sĩ sẽ đề xuất phương án phù hợp ngân sách.'),
+            ('NALI có hỗ trợ trả góp không?','Có. Implant, niềng răng Invisalign được hỗ trợ trả góp 0% lãi suất.'),
+            ('Điều trị tại NALI có đau không?','NALI dùng gây tê hiện đại và thiết bị ít xâm lấn (siêu âm Piezotome, laser), đa số khách chỉ cảm thấy tê nhẹ.'),
+            ('Các dịch vụ có được bảo hành không?','Có. Bọc răng sứ bảo hành 5–7 năm, trụ Implant bảo hành trọn đời theo chính sách hãng.'),
+            ('Trẻ em mấy tuổi nên đi khám răng?','Nên cho bé khám lần đầu khi mọc răng sữa đầu tiên (6–12 tháng), sau đó định kỳ 6 tháng/lần.')] %}
+        {% for f in faqs %}
+        <div class="faq-item">
+            <button class="faq-q" type="button"><span>{{ f[0] }}</span><i class="fas fa-chevron-down"></i></button>
+            <div class="faq-a"><p>{{ f[1] }}</p></div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<div class="cta-band">
+    <h2>Sẵn sàng cho nụ cười mới?</h2>
+    <p>Đặt lịch hẹn chỉ trong 30 giây — hoặc chat ngay với Trợ lý AI của NALI để được tư vấn miễn phí.</p>
+    <a href="{{ url_for('booking.book') }}" class="btn-hero primary"><i class="fas fa-calendar-check"></i> Đặt lịch hẹn ngay</a>
+</div>
+<div style="height:60px"></div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){var w=document.getElementById('baWrap');if(!w)return;var b=document.getElementById('baBefore'),h=document.getElementById('baHandle'),d=false;
+function set(x){var r=w.getBoundingClientRect();var p=Math.min(Math.max((x-r.left)/r.width,0),1)*100;b.style.clipPath='inset(0 '+(100-p)+'% 0 0)';h.style.left=p+'%';}
+w.addEventListener('pointerdown',function(e){d=true;w.setPointerCapture(e.pointerId);set(e.clientX);});
+w.addEventListener('pointermove',function(e){if(d)set(e.clientX);});
+w.addEventListener('pointerup',function(){d=false;});})();
+/* Carousel cảm nhận */
+(function(){var vp=document.getElementById('rvViewport');if(!vp)return;var t;
+function step(){var c=vp.querySelector('.review-card');return c?c.offsetWidth+24:vp.clientWidth;}
+function go(dir){var max=vp.scrollWidth-vp.clientWidth-2;
+  if(dir>0&&vp.scrollLeft>=max)vp.scrollTo({left:0,behavior:'smooth'});
+  else if(dir<0&&vp.scrollLeft<=2)vp.scrollTo({left:max,behavior:'smooth'});
+  else vp.scrollBy({left:dir*step(),behavior:'smooth'});}
+var n=document.getElementById('rvNext'),p=document.getElementById('rvPrev');
+if(n)n.addEventListener('click',function(){go(1);});if(p)p.addEventListener('click',function(){go(-1);});
+function play(){t=setInterval(function(){go(1);},4500);}play();
+vp.addEventListener('mouseenter',function(){clearInterval(t);});vp.addEventListener('mouseleave',play);})();
+/* FAQ accordion */
+(function(){document.querySelectorAll('.faq-item').forEach(function(it){var b=it.querySelector('.faq-q'),a=it.querySelector('.faq-a');if(!b||!a)return;
+b.addEventListener('click',function(){var open=it.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(function(o){o.classList.remove('open');o.querySelector('.faq-a').style.maxHeight=null;});
+  if(!open){it.classList.add('open');a.style.maxHeight=a.scrollHeight+'px';}});});})();
+</script>
+{% endblock %}

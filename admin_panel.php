@@ -16,7 +16,11 @@ $admin_username = $_SESSION['auth_user']['username'] ?? '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - NALI Dental</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; }
@@ -56,7 +60,9 @@ $admin_username = $_SESSION['auth_user']['username'] ?? '';
         .content { padding: 30px; }
         
         /* Stats Grid */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .charts-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; margin-bottom: 30px; }
+        @media (max-width: 1000px) { .charts-grid { grid-template-columns: 1fr; } }
         .stat-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 20px; transition: transform 0.3s; }
         .stat-card:hover { transform: translateY(-5px); }
         .stat-icon { width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white; }
@@ -235,7 +241,23 @@ $admin_username = $_SESSION['auth_user']['username'] ?? '';
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- ===== BIỂU ĐỒ THỐNG KÊ ===== -->
+                <div class="charts-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-chart-column"></i> Lịch hẹn 7 ngày tới</h2>
+                        </div>
+                        <div class="card-body"><canvas id="chartWeek" height="120"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-chart-pie"></i> Trạng thái lịch hẹn</h2>
+                        </div>
+                        <div class="card-body"><canvas id="chartStatus" height="120"></canvas></div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header">
                         <h2><i class="fas fa-clock"></i> Lịch hẹn chờ xác nhận</h2>
@@ -587,6 +609,55 @@ document.querySelectorAll('.menu-item').forEach(item => {
     });
 });
 
+// ========== Biểu đồ thống kê (Chart.js) ==========
+let _chartWeek = null, _chartStatus = null;
+
+async function renderCharts() {
+    if (typeof Chart === 'undefined') return;   // CDN chưa tải -> bỏ qua, không vỡ trang
+    let appts = [];
+    try {
+        const res = await fetch('api/appointments.php');
+        const data = await res.json();
+        appts = data.success ? (data.appointments || []) : [];
+    } catch (e) { console.error('Chart data error:', e); return; }
+
+    // --- Biểu đồ cột: lịch hẹn 7 ngày tới (hôm nay -> +6) ---
+    const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const labels = [], counts = [];
+    for (let i = 0; i <= 6; i++) {
+        const d = new Date(); d.setDate(d.getDate() + i);
+        const key = ymd(d);
+        labels.push(d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }));
+        counts.push(appts.filter(a => String(a.appointment_date || '').slice(0, 10) === key).length);
+    }
+    const ctxW = document.getElementById('chartWeek');
+    if (ctxW) {
+        if (_chartWeek) _chartWeek.destroy();
+        _chartWeek = new Chart(ctxW, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Lịch hẹn', data: counts,
+                    backgroundColor: 'rgba(77,166,255,.75)', borderRadius: 8, maxBarThickness: 44 }] },
+            options: { responsive: true, plugins: { legend: { display: false } },
+                       scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+        });
+    }
+
+    // --- Biểu đồ tròn: trạng thái lịch hẹn ---
+    const map = { pending: 'Chờ xác nhận', confirmed: 'Đã xác nhận', completed: 'Hoàn thành', cancelled: 'Đã huỷ' };
+    const keys = Object.keys(map);
+    const vals = keys.map(k => appts.filter(a => (a.status || 'pending') === k).length);
+    const ctxS = document.getElementById('chartStatus');
+    if (ctxS) {
+        if (_chartStatus) _chartStatus.destroy();
+        _chartStatus = new Chart(ctxS, {
+            type: 'doughnut',
+            data: { labels: keys.map(k => map[k]),
+                    datasets: [{ data: vals, backgroundColor: ['#ffa726', '#4da6ff', '#26de81', '#ef5350'], borderWidth: 0 }] },
+            options: { responsive: true, cutout: '62%', plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+}
+
 // ========== Load Dashboard Stats ==========
 async function loadDashboard() {
     try {
@@ -600,7 +671,10 @@ async function loadDashboard() {
             document.getElementById('statDoctors').textContent = data.stats.total_doctors || 0;
         }
     } catch (e) { console.error('Dashboard error:', e); }
-    
+
+    // Vẽ biểu đồ thống kê
+    renderCharts();
+
     // Load pending appointments
     loadPendingAppointments();
 }

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Quản trị — Dịch vụ{% endblock %}
+{% block content %}
+{% include 'partials/admin_nav.html' %}
+<div class="admin-wrap">
+  <div class="admin-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h2 style="margin:0;"><i class="fas fa-tooth"></i> Danh sách dịch vụ</h2>
+      <a href="{{ url_for('admin.product_add') }}" class="btn-sm btn-blue"><i class="fas fa-plus"></i> Thêm dịch vụ</a>
+    </div>
+    <form method="get" class="admin-search">
+      <input type="text" name="q" value="{{ q }}" placeholder="🔍 Tìm dịch vụ theo tên...">
+      <button type="submit"><i class="fas fa-search"></i></button>
+    </form>
+    <table class="admin-table">
+      <thead><tr><th>ID</th><th>Tên dịch vụ</th><th>Giá</th><th>Thời gian</th><th>Nhóm</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        {% for p in items %}
+        <tr>
+          <td>#{{ p.id }}</td><td><b>{{ p.name }}</b></td><td>{{ p.price_text }}</td><td>{{ p.duration }}′</td>
+          <td>{{ p.target_group }}</td>
+          <td>{% if p.is_active %}<span style="color:#1e7a44;">● Hoạt động</span>{% else %}<span style="color:#94a3b8;">○ Ẩn</span>{% endif %}</td>
+          <td>
+            <a href="{{ url_for('admin.product_edit', pid=p.id) }}" class="btn-sm btn-gray"><i class="fas fa-pen"></i></a>
+            <form method="post" action="{{ url_for('admin.product_delete', pid=p.id) }}" style="display:inline;" onsubmit="return confirm('Xóa dịch vụ này?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn-sm btn-red"><i class="fas fa-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if pagination.pages > 1 %}
+    <div style="text-align:center;margin-top:18px;">
+      {% for n in pagination.iter_pages() %}
+        {% if n %}<a class="btn-sm {{ 'btn-blue' if n==pagination.page else 'btn-gray' }}" href="{{ url_for('admin.products', q=q, page=n) }}">{{ n }}</a>{% else %}…{% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

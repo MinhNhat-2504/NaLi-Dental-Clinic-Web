@@ -42,7 +42,11 @@ require_once 'includes/components.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đặt Lịch Hẹn - NALI Dental Clinic</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="favicon.png">
     <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
@@ -867,10 +871,10 @@ require_once 'includes/components.php';
                 <h3 style="color: #856404; margin: 0 0 10px 0;">Vui lòng đăng nhập để đặt lịch</h3>
                 <p style="color: #856404; margin: 0 0 20px 0;">Bạn cần có tài khoản để đặt lịch hẹn và theo dõi lịch sử khám.</p>
                 <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                    <a href="login.html" style="padding: 12px 30px; background: #4da6ff; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                    <a href="auth.php" style="padding: 12px 30px; background: #4da6ff; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
                         <i class="fas fa-sign-in-alt"></i> Đăng Nhập
                     </a>
-                    <a href="login.html" onclick="localStorage.setItem('showSignup', 'true')" style="padding: 12px 30px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                    <a href="auth.php" onclick="localStorage.setItem('showSignup', 'true')" style="padding: 12px 30px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
                         <i class="fas fa-user-plus"></i> Đăng Ký Tài Khoản
                     </a>
                 </div>
@@ -1005,41 +1009,6 @@ require_once 'includes/components.php';
         </div>
     </div>
 
-    <!-- Google Maps Section (Bottom) - 3 Branches -->
-    <div class="map-section">
-        <h3><i class="fas fa-map-marked-alt"></i> Bản Đồ Các Cơ Sở</h3>
-        <div class="maps-grid">
-            <!-- Cơ Sở 1 - Bình Thạnh -->
-            <div class="map-item">
-                <h4><i class="fas fa-hospital"></i> Cơ Sở 1 - Bình Thạnh</h4>
-                <p><i class="fas fa-map-marker-alt"></i> 69/68 Đặng Thùy Trâm, P. Bình Lợi Trung</p>
-                <div class="map-box">
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.8579647391974!2d106.71847087584655!3d10.822898889329258!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3175283ad5764a81%3A0xa5a8f7b8b7e5f2b2!2zNjkvNjggxJDhuqFuZyBUaOG7p3kgVHLDom0sIELDrG5oIEzhu6NpLCBCw6xuaCBUaOG6oW5oLCBUaMOgbmggcGjhu5EgSOG7kyBDaMOtIE1pbmg!5e0!3m2!1svi!2s!4v1703427890123!5m2!1svi!2s" 
-                    allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                </div>
-            </div>
-            
-            <!-- Cơ Sở 2 - Quận 1 -->
-            <div class="map-item">
-                <h4><i class="fas fa-hospital"></i> Cơ Sở 2 - Quận 1</h4>
-                <p><i class="fas fa-map-marker-alt"></i> 123 Nguyễn Huệ, P. Bến Nghé, Quận 1</p>
-                <div class="map-box">
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.5198459387574!2d106.70077847584613!3d10.772544089387608!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f4670702e31%3A0xa5777fb3a5bb9972!2zMTIzIE5ndXnhu4VuIEh14buHLCBC4bq_biBOZ2jDqSwgUXXhuq1uIDEsIFRow6BuaCBwaOG7kSBI4buTIENow60gTWluaCwgVmnhu4d0IE5hbQ!5e0!3m2!1svi!2s!4v1703427890124!5m2!1svi!2s" 
-                    allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                </div>
-            </div>
-            
-            <!-- Cơ Sở 3 - Gò Vấp -->
-            <div class="map-item">
-                <h4><i class="fas fa-hospital"></i> Cơ Sở 3 - Gò Vấp</h4>
-                <p><i class="fas fa-map-marker-alt"></i> 456 Quang Trung, P.10, Quận Gò Vấp</p>
-                <div class="map-box">
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.4889877595775!2d106.66407087584684!3d10.850775689276748!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752890d4ab7e97%3A0x60a9a747d06ae8d9!2zNDU2IFF1YW5nIFRydW5nLCBQaMaw4budbmcgMTAsIEfDsiBW4bqlcCwgVGjDoG5oIHBo4buRIEjhu5MgQ2jDrSBNaW5oLCBWaeG7h3QgTmFt!5e0!3m2!1svi!2s!4v1703427890125!5m2!1svi!2s" 
-                    allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- FEEDBACK SECTION -->
     <div style="max-width: 800px; margin: 60px auto; padding: 0 20px;">
@@ -1135,6 +1104,86 @@ require_once 'includes/components.php';
             </form>
         </div>
     </div>
+
+    <!-- ===== CHI NHÁNH + BẢN ĐỒ ===== -->
+    <style>
+        .branch-section { max-width: 1200px; margin: 60px auto 0; padding: 0 20px; }
+        .branch-head { text-align: center; max-width: 620px; margin: 0 auto 40px; }
+        .branch-head .eyebrow { color: #4da6ff; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; font-size: .8rem; }
+        .branch-head h2 { font-size: 2rem; font-weight: 800; margin: 10px 0; color: #1a2b47; }
+        .branch-head p { color: #64748b; }
+        .branch-grid { display: grid; grid-template-columns: 1fr 1.35fr; gap: 26px; align-items: start; }
+        .branch-item { width: 100%; text-align: left; display: flex; gap: 14px; align-items: flex-start;
+            background: #fff; border: 2px solid #eef3fa; border-radius: 16px; padding: 18px; margin-bottom: 14px;
+            cursor: pointer; transition: .25s; font-family: inherit; }
+        .branch-item:hover { border-color: #4da6ff; transform: translateY(-2px); }
+        .branch-item.active { border-color: #4da6ff; background: #f2f8ff; box-shadow: 0 10px 26px rgba(77,166,255,.18); }
+        .branch-ico { width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; color: #fff;
+            background: linear-gradient(135deg,#4da6ff,#2c7ad1); display: flex; align-items: center; justify-content: center; }
+        .branch-item b { display: block; color: #1a2b47; margin-bottom: 4px; }
+        .branch-item .addr { color: #64748b; font-size: .92rem; }
+        .branch-info { background: #fff; border: 1px solid #eef3fa; border-radius: 16px; padding: 18px; margin-top: 6px; }
+        .branch-info p { display: flex; align-items: center; gap: 10px; color: #475569; margin: 8px 0; font-size: .95rem; }
+        .branch-info i { color: #4da6ff; width: 18px; }
+        .branch-map { border-radius: 18px; overflow: hidden; box-shadow: 0 14px 40px rgba(45,100,180,.18); }
+        .branch-map iframe { width: 100%; height: 520px; border: 0; display: block; }
+        [data-theme="dark"] .branch-item, [data-theme="dark"] .branch-info { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .branch-item.active { background: #14304d; }
+        [data-theme="dark"] .branch-head h2, [data-theme="dark"] .branch-item b { color: #f1f5f9; }
+        @media (max-width: 900px) {
+            .branch-grid { grid-template-columns: 1fr; }
+            .branch-map iframe { height: 360px; }
+        }
+    </style>
+    <section class="branch-section">
+        <div class="branch-head">
+            <span class="eyebrow">Ghé thăm NALI</span>
+            <h2>Hệ thống chi nhánh</h2>
+            <p>Chọn một chi nhánh để xem vị trí trên bản đồ.</p>
+        </div>
+        <div class="branch-grid">
+            <div>
+                <?php
+                $branches = [
+                    ['Chi nhánh Bình Thạnh', '69/68 Đặng Thùy Trâm, Q. Bình Thạnh, TP.HCM'],
+                    ['Chi nhánh Quận 1', '123 Nguyễn Huệ, Quận 1, TP.HCM'],
+                    ['Chi nhánh Gò Vấp', '456 Quang Trung, Q. Gò Vấp, TP.HCM'],
+                ];
+                foreach ($branches as $i => $b): ?>
+                <button type="button" class="branch-item <?php echo $i === 0 ? 'active' : ''; ?>"
+                        data-q="<?php echo htmlspecialchars($b[1]); ?>">
+                    <span class="branch-ico"><i class="fas fa-hospital"></i></span>
+                    <span>
+                        <b><?php echo htmlspecialchars($b[0]); ?></b>
+                        <span class="addr"><?php echo htmlspecialchars($b[1]); ?></span>
+                    </span>
+                </button>
+                <?php endforeach; ?>
+                <div class="branch-info">
+                    <p><i class="fas fa-phone"></i> Hotline: <strong>0945 457 512</strong></p>
+                    <p><i class="fas fa-envelope"></i> nalidental@gmail.com</p>
+                    <p><i class="fas fa-clock"></i> T2 – CN: 08:00 – 20:00</p>
+                </div>
+            </div>
+            <div class="branch-map">
+                <iframe id="branchMap" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"
+                        src="https://www.google.com/maps?q=<?php echo rawurlencode($branches[0][1]); ?>&amp;output=embed"
+                        title="Bản đồ chi nhánh NALI"></iframe>
+            </div>
+        </div>
+    </section>
+    <script>
+    (function () {
+        var map = document.getElementById('branchMap');
+        document.querySelectorAll('.branch-item').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.branch-item').forEach(function (b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                map.src = 'https://www.google.com/maps?q=' + encodeURIComponent(btn.dataset.q) + '&output=embed';
+            });
+        });
+    })();
+    </script>
 
     <?php renderFooter(); ?>
 
@@ -1536,7 +1585,7 @@ require_once 'includes/components.php';
                     // Kiểm tra nếu yêu cầu đăng nhập
                     if (result.require_login) {
                         alert('⚠️ Vui lòng đăng nhập để đặt lịch hẹn!');
-                        window.location.href = 'login.html';
+                        window.location.href = 'auth.php';
                     } else {
                         alert('❌ ' + (result.message || 'Đặt lịch thất bại. Vui lòng thử lại.'));
                         submitBtn.disabled = false;

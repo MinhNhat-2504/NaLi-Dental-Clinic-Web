@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Quản trị — Bệnh nhân{% endblock %}
+{% block content %}
+{% include 'partials/admin_nav.html' %}
+<div class="admin-wrap">
+  <div class="admin-card">
+    <h2><i class="fas fa-users"></i> Danh sách bệnh nhân</h2>
+    <form method="get" class="admin-search">
+      <input type="text" name="q" value="{{ q }}" placeholder="🔍 Tìm theo tên / email / SĐT...">
+      <button type="submit"><i class="fas fa-search"></i></button>
+    </form>
+    <table class="admin-table">
+      <thead><tr><th>ID</th><th>Họ tên</th><th>Email</th><th>Điện thoại</th><th>Giới tính</th><th>Ngày tạo</th></tr></thead>
+      <tbody>
+        {% for p in items %}
+        <tr><td>#{{ p.id }}</td><td><b>{{ p.full_name }}</b></td><td>{{ p.email }}</td>
+          <td>{{ p.phone }}</td><td>{{ p.gender }}</td>
+          <td>{{ p.created_at.strftime('%d/%m/%Y') if p.created_at else '—' }}</td></tr>
+        {% else %}<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px;">Không có bệnh nhân.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    {% if pagination.pages > 1 %}
+    <div style="text-align:center;margin-top:18px;">
+      {% for n in pagination.iter_pages() %}
+        {% if n %}<a class="btn-sm {{ 'btn-blue' if n==pagination.page else 'btn-gray' }}" href="{{ url_for('admin.patients', q=q, page=n) }}">{{ n }}</a>{% else %}…{% endif %}
+      {% endfor %}
+    </div>{% endif %}
+  </div>
+</div>
+{% endblock %}
