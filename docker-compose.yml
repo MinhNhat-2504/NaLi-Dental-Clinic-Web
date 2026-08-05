@@ -1,0 +1,75 @@
+# ============================================================
+#  NALI Dental — Toàn bộ hệ thống đóng gói Docker
+#  Chạy 1 lệnh:  docker compose up -d --build
+#  Web:  http://localhost:8080     AI:  http://localhost:8000/docs
+# ============================================================
+services:
+
+  # --- Cơ sở dữ liệu MySQL ---
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: nali_dental
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"        # tránh đụng MySQL sẵn có ở host (3306)
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
+      interval: 8s
+      timeout: 5s
+      retries: 12
+
+  # --- Web PHP + Apache ---
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    environment:
+      # Widget chạy trong trình duyệt nên cần gọi cổng AI đã publish ra máy host
+      AI_SERVICE_URL: http://localhost:8000
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASS: "123456"
+      DB_NAME: nali_dental
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # --- AI Service (FastAPI + RAG + tool-calling) ---
+  ai_service:
+    build: ./ai_service
+    environment:
+      LLM_BACKEND: auto           # auto -> local (Ollama) -> gemini -> offline
+      LOCAL_LLM_URL: http://ollama:11434/v1
+      LOCAL_LLM_MODEL: nali-dental
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASSWORD: "123456"
+      DB_NAME: nali_dental
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+
+  # --- Ollama: máy chủ chạy LLM mở (Qwen2.5 finetune) ---
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./ai_service/finetune:/models:ro   # chứa Modelfile + GGUF đã train
+    ports:
+      - "11434:11434"
+
+volumes:
+  db_data:
+  ollama_data:

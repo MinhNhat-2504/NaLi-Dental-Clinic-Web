@@ -4,12 +4,17 @@
  * NALI Dental Clinic
  */
 
-// Cấu hình kết nối Database
-define('DB_HOST', 'localhost');
-define('DB_PORT', '3306'); // Cổng MySQL - thay đổi nếu cần (3306 hoặc 3307)
-define('DB_USER', 'root');
-define('DB_PASS', ''); // Mật khẩu MySQL (thường để trống với XAMPP)
-define('DB_NAME', 'nali_dental');
+// Cấu hình kết nối Database — ưu tiên biến môi trường (để chạy Docker),
+// nếu không có thì dùng giá trị mặc định cho XAMPP/MySQL local.
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_PORT', getenv('DB_PORT') ?: '3306'); // Cổng MySQL (3306/3307)
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : '123456'); // Mật khẩu MySQL 8
+define('DB_NAME', getenv('DB_NAME') ?: 'nali_dental');
+
+// PHP 8.2: tắt chế độ ném exception của mysqli để đoạn kiểm tra connect_error
+// bên dưới hoạt động đúng (nếu không sẽ ném Fatal error trước khi kịp xử lý).
+mysqli_report(MYSQLI_REPORT_OFF);
 
 // Kết nối Database với port
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
@@ -35,7 +40,7 @@ $conn->set_charset("utf8mb4");
 // Helper functions
 function requireLogin() {
     if (!isset($_SESSION['user_id'])) {
-        header('Location: login.html');
+        header('Location: auth.php');
         exit;
     }
 }
@@ -61,7 +66,7 @@ function requireAdmin() {
             ]);
             exit;
         } else {
-            header('Location: login.html');
+            header('Location: auth.php');
             exit;
         }
     }

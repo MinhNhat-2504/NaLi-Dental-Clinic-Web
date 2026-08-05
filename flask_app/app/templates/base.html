@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NALI Dental Clinic{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>/* Áp dark mode sớm */(function(){try{var t=localStorage.getItem('nali-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div id="naliProgress"></div>
+
+    <!-- ===== HEADER ===== -->
+    <header class="site-header">
+        <div class="header-container">
+            <a href="{{ url_for('main.index') }}" class="site-logo">
+                <span class="logo-icon">🦷</span><span>NALI Dental</span>
+            </a>
+            <button class="menu-toggle" id="menuToggle" onclick="document.getElementById('mainNav').classList.toggle('show')" aria-label="Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav class="main-nav" id="mainNav">
+                {% set ep = request.endpoint or '' %}
+                <a href="{{ url_for('main.about') }}" class="nav-link {{ 'active' if ep=='main.about' }}"><i class="fas fa-info-circle"></i> Về NALI</a>
+                <a href="{{ url_for('main.services') }}" class="nav-link {{ 'active' if ep in ['main.services','main.service_detail'] }}"><i class="fas fa-tooth"></i> Dịch vụ</a>
+                <a href="{{ url_for('booking.book') }}" class="nav-link {{ 'active' if ep=='booking.book' }}"><i class="fas fa-calendar-check"></i> Đặt lịch</a>
+                <a href="{{ url_for('main.doctors') }}" class="nav-link {{ 'active' if ep=='main.doctors' }}"><i class="fas fa-user-md"></i> Bác sĩ</a>
+                <a href="{{ url_for('main.contact') }}" class="nav-link {{ 'active' if ep=='main.contact' }}"><i class="fas fa-map-marker-alt"></i> Liên hệ</a>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.role == 'admin' %}
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link" style="background:#28a745;color:#fff;"><i class="fas fa-cog"></i> Admin</a>
+                    {% endif %}
+                    <span class="user-menu"><span class="user-name"><i class="fas fa-user-circle"></i> {{ current_user.full_name }}</span></span>
+                    <a href="{{ url_for('auth.logout') }}" class="nav-link"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="nav-link btn-login"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- ===== FLASH MESSAGES ===== -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-wrap">
+        {% for cat, msg in messages %}
+          <div class="flash flash-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer">
+        <div class="footer-main">
+            <div class="footer-brand">
+                <div class="logo"><span>🦷</span> <span>NALI Dental Clinic</span></div>
+                <p>Hệ thống Nha khoa Công nghệ cao tích hợp AI — Mang đến nụ cười hoàn hảo cho bạn.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-section footer-contact">
+                <h4>Liên hệ</h4>
+                <p><i class="fas fa-phone"></i> <span style="color:#ff6b6b;font-weight:bold;">0945 457 512</span></p>
+                <p><i class="fas fa-envelope"></i> nalidental@gmail.com</p>
+                <p><i class="fas fa-clock"></i> T2 - CN: 08:00 - 20:00</p>
+            </div>
+            <div class="footer-section">
+                <h4>Chi nhánh</h4>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fas fa-hospital"></i> Bình Thạnh: 69/68 Đặng Thùy Trâm</a></li>
+                    <li><a href="#"><i class="fas fa-hospital"></i> Quận 1: 123 Nguyễn Huệ</a></li>
+                    <li><a href="#"><i class="fas fa-hospital"></i> Gò Vấp: 456 Quang Trung</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>&copy; {{ current_year }} NALI Dental Clinic. All rights reserved.</p></div>
+    </footer>
+
+    <!-- ===== NÚT NỔI: về đầu trang + dark mode ===== -->
+    <button id="naliTop" aria-label="Về đầu trang"><i class="fas fa-arrow-up"></i></button>
+    <button id="naliThemeToggle" aria-label="Chế độ tối/sáng"><i class="fas fa-moon"></i></button>
+
+    {% include 'partials/chat_widget.html' %}
+
+    <style>
+    .flash-wrap { max-width: 900px; margin: 16px auto 0; padding: 0 20px; }
+    .flash { padding: 12px 18px; border-radius: 10px; margin-bottom: 10px; font-weight: 500; }
+    .flash-success { background: #e6f7ed; color: #1e7a44; border: 1px solid #b6e6c9; }
+    .flash-danger  { background: #fdecec; color: #c0392b; border: 1px solid #f5c6cb; }
+    .flash-warning { background: #fff6e0; color: #a06a00; border: 1px solid #ffe0a3; }
+    [data-theme="dark"] .flash-success { background:#12341f; color:#7fe0a5; }
+    [data-theme="dark"] .flash-danger  { background:#3a1516; color:#f19a9a; }
+    [data-theme="dark"] .flash-warning { background:#3a2e10; color:#ffd67a; }
+    </style>
+
+    <script>
+    /* Progress + back-to-top + header scrolled */
+    (function () {
+        var prog=document.getElementById('naliProgress'), top=document.getElementById('naliTop'), hdr=document.querySelector('.site-header');
+        function s(){var st=window.pageYOffset,h=document.documentElement.scrollHeight-window.innerHeight;
+            if(prog)prog.style.width=(h>0?st/h*100:0)+'%'; if(hdr)hdr.classList.toggle('scrolled',st>40); if(top)top.classList.toggle('show',st>400);}
+        window.addEventListener('scroll',s,{passive:true}); window.addEventListener('resize',s); s();
+        if(top)top.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+    })();
+    /* Dark mode toggle */
+    (function () {
+        var b=document.getElementById('naliThemeToggle'); if(!b)return; var i=b.querySelector('i');
+        function sync(){i.className=document.documentElement.getAttribute('data-theme')==='dark'?'fas fa-sun':'fas fa-moon';}
+        sync();
+        b.addEventListener('click',function(){var d=document.documentElement.getAttribute('data-theme')==='dark';
+            if(d){document.documentElement.removeAttribute('data-theme');localStorage.setItem('nali-theme','');}
+            else{document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('nali-theme','dark');}sync();});
+    })();
+    /* Scroll reveal (dưới viewport) */
+    (function () {
+        var SEL='.service-card,.why-card,.review-card,.doctor-card,.about-section,.cta-band,.faq-item,.stat-card,.info-card';
+        var vh=window.innerHeight||800;
+        var els=[].slice.call(document.querySelectorAll(SEL)).filter(function(el){
+            if(el.getBoundingClientRect().top<vh*0.9)return false; el.classList.add('reveal'); return true;});
+        function rv(el){el.classList.add('in');}
+        if(els.length&&'IntersectionObserver'in window){
+            var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){rv(e.target);io.unobserve(e.target);}});},{threshold:.1,rootMargin:'0px 0px -5% 0px'});
+            els.forEach(function(el){io.observe(el);}); setTimeout(function(){els.forEach(rv);},6000);
+        } else els.forEach(rv);
+        [].slice.call(document.querySelectorAll('.stat .num, .stat-info h3')).forEach(function(n){
+            var m=n.textContent.trim().match(/^(\d[\d.,]*)(.*)$/); if(!m)return;
+            var t=parseFloat(m[1].replace(/[.,]/g,'')),suf=m[2]||''; if(!t||t>1000000)return; var st=null;
+            function step(ts){if(!st)st=ts;var p=Math.min((ts-st)/1200,1);n.textContent=Math.floor((0.5-Math.cos(p*Math.PI)/2)*t)+suf;if(p<1)requestAnimationFrame(step);else n.textContent=m[1]+suf;}
+            requestAnimationFrame(step);
+        });
+    })();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

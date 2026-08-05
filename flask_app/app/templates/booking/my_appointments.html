@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Lịch hẹn của tôi — NALI Dental{% endblock %}
+{% block content %}
+<div class="about-hero"><div><h1>Lịch Hẹn Của Tôi</h1><p>Theo dõi các lịch hẹn đã đặt tại NALI</p></div></div>
+<section class="section" style="max-width:900px;">
+  {% if appts %}
+  <div class="appt-table-wrap">
+    <table class="appt-table">
+      <thead><tr><th>Mã</th><th>Ngày</th><th>Giờ</th><th>Ghi chú</th><th>Trạng thái</th></tr></thead>
+      <tbody>
+        {% for a in appts %}
+        <tr>
+          <td>#{{ a.id }}</td>
+          <td>{{ a.appointment_date.strftime('%d/%m/%Y') if a.appointment_date else '' }}</td>
+          <td>{{ a.appointment_time.strftime('%H:%M') if a.appointment_time else '' }}</td>
+          <td>{{ a.notes or '—' }}</td>
+          <td><span class="badge-status s-{{ a.status }}">
+            {{ {'pending':'Chờ xác nhận','confirmed':'Đã xác nhận','completed':'Hoàn thành','cancelled':'Đã huỷ'}[a.status] }}
+          </span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-message"><i class="fas fa-calendar"></i><p>Bạn chưa có lịch hẹn nào.</p>
+    <a href="{{ url_for('booking.book') }}" class="order-btn" style="margin-top:14px;display:inline-flex;">Đặt lịch ngay</a></div>
+  {% endif %}
+</section>
+<div style="height:50px"></div>
+<style>
+.appt-table-wrap { overflow-x:auto; background:#fff; border-radius:16px; box-shadow:0 6px 22px rgba(45,100,180,.08); }
+.appt-table { width:100%; border-collapse:collapse; }
+.appt-table th, .appt-table td { padding:14px 18px; text-align:left; border-bottom:1px solid #eef3fa; }
+.appt-table th { background:#f8fbff; color:#64748b; font-size:.85rem; text-transform:uppercase; letter-spacing:.5px; }
+.badge-status { padding:5px 12px; border-radius:20px; font-size:.8rem; font-weight:700; }
+.s-pending{background:#fff3e0;color:#e67e22;} .s-confirmed{background:#e7f1ff;color:#2c7ad1;}
+.s-completed{background:#e6f7ed;color:#1e7a44;} .s-cancelled{background:#fdecec;color:#c0392b;}
+[data-theme="dark"] .appt-table-wrap{background:#1e293b;} [data-theme="dark"] .appt-table th{background:#0f172a;color:#94a3b8;} [data-theme="dark"] .appt-table td{border-color:#334155;color:#e2e8f0;}
+</style>
+{% endblock %}

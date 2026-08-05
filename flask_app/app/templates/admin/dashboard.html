@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Quản trị — Tổng quan{% endblock %}
+{% block head %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>{% endblock %}
+{% block content %}
+{% include 'partials/admin_nav.html' %}
+<div class="admin-wrap">
+  <div class="admin-stats">
+    <div class="stat-card"><div class="ic" style="background:linear-gradient(135deg,#ffa726,#fb8c00)"><i class="fas fa-clock"></i></div><div><h3>{{ stats.pending }}</h3><p>Chờ xác nhận</p></div></div>
+    <div class="stat-card"><div class="ic" style="background:linear-gradient(135deg,#4da6ff,#2c7ad1)"><i class="fas fa-calendar"></i></div><div><h3>{{ stats.appointments }}</h3><p>Tổng lịch hẹn</p></div></div>
+    <div class="stat-card"><div class="ic" style="background:linear-gradient(135deg,#26de81,#20bf6b)"><i class="fas fa-users"></i></div><div><h3>{{ stats.patients }}</h3><p>Khách hàng</p></div></div>
+    <div class="stat-card"><div class="ic" style="background:linear-gradient(135deg,#a55eea,#8854d0)"><i class="fas fa-tooth"></i></div><div><h3>{{ stats.products }}</h3><p>Dịch vụ</p></div></div>
+    <div class="stat-card"><div class="ic" style="background:linear-gradient(135deg,#ef5350,#e53935)"><i class="fas fa-user-md"></i></div><div><h3>{{ stats.doctors }}</h3><p>Bác sĩ</p></div></div>
+  </div>
+
+  <div class="charts-2">
+    <div class="admin-card"><h2><i class="fas fa-chart-column"></i> Lịch hẹn 7 ngày tới</h2><canvas id="chartWeek" height="120"></canvas></div>
+    <div class="admin-card"><h2><i class="fas fa-chart-pie"></i> Trạng thái lịch hẹn</h2><canvas id="chartStatus" height="120"></canvas></div>
+  </div>
+
+  <div class="admin-card">
+    <h2><i class="fas fa-clock"></i> Lịch hẹn chờ xác nhận</h2>
+    <table class="admin-table">
+      <thead><tr><th>Khách hàng</th><th>Điện thoại</th><th>Ngày</th><th>Giờ</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        {% for a in pending %}
+        <tr>
+          <td>{{ a.customer_name }}</td><td>{{ a.customer_phone }}</td>
+          <td>{{ a.appointment_date.strftime('%d/%m/%Y') if a.appointment_date }}</td>
+          <td>{{ a.appointment_time.strftime('%H:%M') if a.appointment_time }}</td>
+          <td>
+            <form method="post" action="{{ url_for('admin.appointment_status', aid=a.id) }}" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="status" value="confirmed">
+              <button class="btn-sm btn-green"><i class="fas fa-check"></i> Xác nhận</button>
+            </form>
+            <form method="post" action="{{ url_for('admin.appointment_status', aid=a.id) }}" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="status" value="cancelled">
+              <button class="btn-sm btn-red"><i class="fas fa-times"></i> Huỷ</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">Không có lịch hẹn chờ.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  if(typeof Chart==='undefined')return;
+  var status={{ status_counts|tojson }};
+  new Chart(document.getElementById('chartStatus'),{type:'doughnut',
+    data:{labels:['Chờ xác nhận','Đã xác nhận','Hoàn thành','Đã huỷ'],
+      datasets:[{data:[status.pending,status.confirmed,status.completed,status.cancelled],
+        backgroundColor:['#ffa726','#4da6ff','#26de81','#ef5350'],borderWidth:0}]},
+    options:{cutout:'62%',plugins:{legend:{position:'bottom'}}}});
+  new Chart(document.getElementById('chartWeek'),{type:'bar',
+    data:{labels:{{ week_labels|tojson }},datasets:[{label:'Lịch hẹn',data:{{ week_counts|tojson }},
+      backgroundColor:'rgba(77,166,255,.75)',borderRadius:8,maxBarThickness:44}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+})();
+</script>
+{% endblock %}

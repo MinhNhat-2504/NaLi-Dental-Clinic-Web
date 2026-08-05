@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% from 'partials/service_card.html' import service_card with context %}
+{% block title %}Dịch vụ — NALI Dental{% endblock %}
+{% block content %}
+<div class="about-hero"><div><h1>Dịch Vụ Nha Khoa</h1><p>Tìm kiếm và khám phá các dịch vụ tại NALI</p></div></div>
+
+<section class="section">
+    <form method="get" action="{{ url_for('main.services') }}" class="svc-search">
+        <input type="text" name="q" value="{{ q }}" placeholder="🔍 Tìm dịch vụ... (vd: implant, tẩy trắng, niềng răng)">
+        <button type="submit"><i class="fas fa-search"></i> Tìm</button>
+        {% if q %}<a class="svc-clear" href="{{ url_for('main.services') }}">Xóa lọc</a>{% endif %}
+    </form>
+
+    {% if q %}<p style="text-align:center;color:#64748b;margin-bottom:24px;">Kết quả cho “<b>{{ q }}</b>”: {{ pagination.total }} dịch vụ</p>{% endif %}
+
+    {% if services %}
+        <div class="services-grid">
+            {% for p in services %}{{ service_card(p) }}{% endfor %}
+        </div>
+
+        {% if pagination.pages > 1 %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('main.services', q=q, page=pagination.prev_num) }}" class="pg-btn"><i class="fas fa-chevron-left"></i></a>
+            {% endif %}
+            {% for n in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=1) %}
+                {% if n %}
+                    <a href="{{ url_for('main.services', q=q, page=n) }}" class="pg-btn {{ 'active' if n==pagination.page }}">{{ n }}</a>
+                {% else %}<span class="pg-dots">…</span>{% endif %}
+            {% endfor %}
+            {% if pagination.has_next %}
+                <a href="{{ url_for('main.services', q=q, page=pagination.next_num) }}" class="pg-btn"><i class="fas fa-chevron-right"></i></a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-message"><i class="fas fa-inbox"></i><p>Không tìm thấy dịch vụ phù hợp.</p></div>
+    {% endif %}
+</section>
+<div style="height:50px"></div>
+
+<style>
+.svc-search { max-width: 640px; margin: 0 auto 36px; display: flex; gap: 10px; align-items: center; }
+.svc-search input { flex: 1; padding: 14px 18px; border: 2px solid #e3ecf7; border-radius: 30px; font-size: 1rem; font-family: inherit; outline: none; }
+.svc-search input:focus { border-color: var(--nali); }
+.svc-search button { padding: 14px 24px; border: none; border-radius: 30px; background: linear-gradient(135deg,var(--nali),var(--nali-dark)); color: #fff; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.svc-clear { color: #94a3b8; text-decoration: none; font-size: .9rem; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin-top: 40px; align-items: center; }
+.pg-btn { min-width: 42px; height: 42px; padding: 0 12px; border-radius: 10px; border: 1px solid #e3ecf7; background: #fff; color: var(--nali-dark); display: flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 600; transition: .2s; }
+.pg-btn:hover { border-color: var(--nali); transform: translateY(-2px); }
+.pg-btn.active { background: linear-gradient(135deg,var(--nali),var(--nali-dark)); color: #fff; border-color: transparent; }
+.pg-dots { color: #94a3b8; padding: 0 4px; }
+[data-theme="dark"] .svc-search input, [data-theme="dark"] .pg-btn { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+</style>
+{% endblock %}

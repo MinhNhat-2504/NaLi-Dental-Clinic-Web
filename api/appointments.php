@@ -166,7 +166,8 @@ elseif ($method === 'DELETE') {
     } else {
         echo json_encode(['success' => false, 'message' => 'Lỗi: ' . $stmt->error]);
     }
-}
+
+    }
 
 $conn->close();
 ?>

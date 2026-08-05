@@ -870,3 +870,104 @@ img {
 .slide-up {
     animation: slideUp 0.5s ease-out;
 }
+
+/* ========== SCROLL REVEAL (hiệu ứng cuộn hiện dần) ========== */
+/* Lớp .reveal do JS gắn; nếu JS lỗi, phần tử vẫn hiện bình thường (an toàn). */
+.reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s cubic-bezier(.2,.7,.2,1), transform 0.7s cubic-bezier(.2,.7,.2,1);
+    will-change: opacity, transform;
+}
+.reveal.in {
+    opacity: 1;
+    transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; transition: none; }
+}
+
+/* ========== DARK MODE ========== */
+:root[data-theme="dark"] {
+    --primary-light: #14304d;
+    --text-dark: #e2e8f0;  --text-medium: #cbd5e1;  --text-light: #94a3b8;  --text-muted: #94a3b8;
+    --bg-light: #0f172a;   --bg-white: #1e293b;      --border-color: #334155;
+    --ink: #e2e8f0;        --nali-dark: #6cb2ff;
+}
+[data-theme="dark"] body { background: #0f172a !important; color: #e2e8f0; }
+
+/* Bề mặt thẻ / khối */
+[data-theme="dark"] .service-card, [data-theme="dark"] .why-card, [data-theme="dark"] .review-card,
+[data-theme="dark"] .card, [data-theme="dark"] .doctor-card, [data-theme="dark"] .news-card,
+[data-theme="dark"] .stats-bar, [data-theme="dark"] .group-filter, [data-theme="dark"] .search-filter-section,
+[data-theme="dark"] .specialty-filter, [data-theme="dark"] .feature-card, [data-theme="dark"] .about-section,
+[data-theme="dark"] .empty-message, [data-theme="dark"] .stat {
+    background: #1e293b !important; border-color: #334155 !important; color: #e2e8f0;
+}
+/* Tiêu đề sáng */
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4,
+[data-theme="dark"] .section-head h2, [data-theme="dark"] .service-card h3, [data-theme="dark"] .why-card h4 {
+    color: #f1f5f9 !important;
+}
+/* Chữ thường / mô tả */
+[data-theme="dark"] p, [data-theme="dark"] .service-card p, [data-theme="dark"] .why-card p,
+[data-theme="dark"] .review-card .quote, [data-theme="dark"] .section-head p, [data-theme="dark"] li,
+[data-theme="dark"] .svc-meta, [data-theme="dark"] .price-box small, [data-theme="dark"] .reviewer small {
+    color: #94a3b8 !important;
+}
+/* Nút lọc */
+[data-theme="dark"] .filter-btn { background: #1e293b !important; border-color: #334155 !important; color: #cbd5e1 !important; }
+[data-theme="dark"] .filter-btn.active { background: linear-gradient(135deg, #4da6ff, #2c7ad1) !important; color: #fff !important; }
+/* Ô nhập liệu */
+[data-theme="dark"] input, [data-theme="dark"] textarea, [data-theme="dark"] select, [data-theme="dark"] .form-control {
+    background: #0f172a !important; border-color: #334155 !important; color: #e2e8f0 !important;
+}
+[data-theme="dark"] input::placeholder, [data-theme="dark"] textarea::placeholder { color: #64748b !important; }
+[data-theme="dark"] .stat + .stat { border-color: #334155 !important; }
+
+/* ========== HEADER KÍNH MỜ (thu gọn khi cuộn) ========== */
+html { scroll-behavior: smooth; }
+.site-header { transition: background .3s ease, box-shadow .3s ease; }
+.site-header.scrolled {
+    background: rgba(61, 143, 232, .78);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .18);
+}
+.site-header .header-container { transition: padding .3s ease; }
+.site-header.scrolled .header-container { padding-top: 8px; padding-bottom: 8px; }
+[data-theme="dark"] .site-header.scrolled { background: rgba(15, 23, 42, .8); }
+
+/* ========== THANH TIẾN TRÌNH CUỘN ========== */
+#naliProgress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: linear-gradient(90deg, #4da6ff, #26de81, #ffd45e);
+    z-index: 10000; transition: width .08s linear; pointer-events: none;
+}
+
+/* ========== NÚT VỀ ĐẦU TRANG ========== */
+#naliTop {
+    position: fixed; left: 22px; bottom: 86px; z-index: 9998;
+    width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer;
+    background: #fff; color: #3d8fe8; font-size: 1.05rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,.18);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; visibility: hidden; transform: translateY(12px);
+    transition: opacity .3s, transform .3s, visibility .3s, background .3s, color .3s;
+}
+#naliTop.show { opacity: 1; visibility: visible; transform: none; }
+#naliTop:hover { transform: translateY(-3px) scale(1.08); }
+[data-theme="dark"] #naliTop { background: #1e293b; color: #6cb2ff; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
+
+/* ========== MICRO-INTERACTION: phản hồi khi bấm ========== */
+.btn:active, .order-btn:active, .btn-hero:active, .filter-btn:active { transform: scale(.97); }
+
+/* Nút chuyển dark mode (nổi góc dưới-trái, không đụng chat widget) */
+#naliThemeToggle {
+    position: fixed; left: 22px; bottom: 24px; z-index: 9998;
+    width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer;
+    background: #fff; color: #3d8fe8; font-size: 1.25rem; box-shadow: 0 6px 18px rgba(0,0,0,.18);
+    display: flex; align-items: center; justify-content: center; transition: transform .2s, background .3s, color .3s;
+}
+#naliThemeToggle:hover { transform: scale(1.1) rotate(12deg); }
+[data-theme="dark"] #naliThemeToggle { background: #1e293b; color: #ffd45e; box-shadow: 0 6px 18px rgba(0,0,0,.5); }

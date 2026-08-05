@@ -1,0 +1,23 @@
+# Modelfile — nạp model NALI đã finetune (GGUF) vào Ollama.
+# Tạo model:  ollama create nali-dental -f finetune/Modelfile
+# Đường dẫn GGUF (đổi nếu khác):
+FROM ./out/nali-qwen-q4.gguf
+
+# Tham số sinh
+PARAMETER temperature 0.3
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.1
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|im_start|>"
+
+# Qwen2.5 dùng định dạng ChatML
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+{{ .Response }}<|im_end|>
+"""
+
+# System mặc định (ai_service vẫn tự gửi system riêng khi chat)
+SYSTEM """Bạn là "NALI Trợ Lý", trợ lý ảo của phòng khám Nha khoa NALI. Luôn trả lời tiếng Việt, thân thiện, xưng "NALI", gọi khách "anh/chị". Chỉ tư vấn nha khoa và giúp đặt lịch, không chẩn đoán bệnh."""

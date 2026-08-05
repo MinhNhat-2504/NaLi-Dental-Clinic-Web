@@ -1,0 +1,12 @@
+# ===== Finetune dependencies (only needed for training, not for the web) =====
+# Needs an NVIDIA GPU + CUDA. Install:  pip install -r finetune/requirements.txt
+# Install torch separately for your CUDA (https://pytorch.org/get-started/locally/)
+#   e.g. CUDA 12.1:  pip install torch --index-url https://download.pytorch.org/whl/cu121
+
+transformers==4.46.2     # load Qwen2.5 + chat template
+trl==0.12.1              # SFTTrainer (supervised finetuning)
+peft==0.13.2             # LoRA / QLoRA adapters
+bitsandbytes==0.44.1     # 4-bit quantization (QLoRA) - Windows & Linux
+datasets==3.1.0          # load the JSONL dataset
+accelerate==1.1.1        # device management / speedup
+sentencepiece==0.2.0     # tokenizer helper

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Đặt lịch — NALI Dental{% endblock %}
+{% block content %}
+<div class="contact-header"><div><h1><i class="fas fa-calendar-check"></i> Đặt Lịch Tư Vấn</h1><p>Miễn phí tư vấn • Xác nhận trong 5 phút</p></div></div>
+<div class="auth-wrap" style="min-height:auto;padding-top:40px;">
+  <div class="auth-card" style="max-width:560px;">
+    <h1 style="font-size:1.4rem;"><i class="fas fa-tooth"></i> Thông tin lịch hẹn</h1>
+    <p class="auth-sub">Điền thông tin để NALI phục vụ bạn tốt nhất</p>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="fg">{{ form.customer_name.label }}{{ form.customer_name(class="fc") }}
+        {% for e in form.customer_name.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+      <div class="grid2">
+        <div class="fg">{{ form.customer_phone.label }}{{ form.customer_phone(class="fc") }}
+          {% for e in form.customer_phone.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+        <div class="fg">{{ form.customer_email.label }}{{ form.customer_email(class="fc") }}
+          {% for e in form.customer_email.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+      </div>
+      <div class="fg">{{ form.product_id.label }}{{ form.product_id(class="fc") }}</div>
+      <div class="grid2">
+        <div class="fg">{{ form.appointment_date.label }}{{ form.appointment_date(class="fc") }}
+          {% for e in form.appointment_date.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+        <div class="fg">{{ form.appointment_time.label }}{{ form.appointment_time(class="fc") }}
+          {% for e in form.appointment_time.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+      </div>
+      <div class="fg">{{ form.notes.label }}{{ form.notes(class="fc", rows=3) }}</div>
+      {{ form.submit(class="auth-btn") }}
+    </form>
+    <p class="auth-alt"><a href="{{ url_for('booking.my_appointments') }}"><i class="fas fa-list"></i> Xem lịch hẹn của tôi</a></p>
+  </div>
+</div>
+{% include 'partials/auth_style.html' %}
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;} @media(max-width:520px){.grid2{grid-template-columns:1fr;}}</style>
+{% endblock %}
+{% block scripts %}
+<script>
+/* Điền sẵn dịch vụ nếu tới từ trang chi tiết (?product=) */
+(function(){var p=new URLSearchParams(location.search).get('product');
+if(p){var sel=document.getElementById('product_id');if(sel)sel.value=p;}})();
+</script>
+{% endblock %}

@@ -1,252 +1,120 @@
-# 🦷 NALI Dental Clinic - Website Nha Khoa Công Nghệ Cao
+# 🦷 NALI Dental Clinic — Website phòng khám nha khoa tích hợp AI
 
-![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+Đây là đồ án môn **Lập trình Python nâng cao** của mình. Ý tưởng là làm một website cho phòng khám
+nha khoa, nhưng thay vì dừng ở mấy chức năng cơ bản, mình muốn thử tích hợp thêm **một con chatbot AI
+biết tư vấn và tự đặt lịch** — nên phần "nâng cao" của đồ án nằm ở chỗ đó.
 
-## 📋 Giới Thiệu
-
-**NALI Dental Clinic** là hệ thống website quản lý phòng khám nha khoa hiện đại, tích hợp công nghệ AI. Website được thiết kế với giao diện thân thiện, tối ưu cho cả desktop và mobile, giúp khách hàng dễ dàng đặt lịch khám và tìm hiểu dịch vụ.
-
-## ✨ Tính Năng Chính
-
-### 👤 Dành cho Khách Hàng
-- **Xem dịch vụ** - Danh sách dịch vụ theo 4 nhóm: Trẻ em, Người lớn, Người cao tuổi, Bệnh lý nền
-- **Đặt lịch hẹn** - Form đặt lịch thông minh với chọn bác sĩ, dịch vụ, thời gian
-- **Tìm hiểu đội ngũ** - Thông tin chi tiết các bác sĩ với chuyên khoa
-- **Kiến thức nha khoa** - Bài viết, tin tức về chăm sóc răng miệng
-- **Đăng ký/Đăng nhập** - Hệ thống xác thực người dùng
-
-### 🔧 Dành cho Admin
-- **Dashboard tổng quan** - Thống kê lịch hẹn, bệnh nhân, doanh thu
-- **Quản lý lịch hẹn** - Thêm, sửa, xóa, lọc lịch hẹn theo ngày/trạng thái
-- **Quản lý bệnh nhân** - Danh sách và thông tin khách hàng
-- **Quản lý dịch vụ** - CRUD sản phẩm/dịch vụ
-- **Quản lý bác sĩ** - Thêm, sửa thông tin bác sĩ
-
-## 🗂️ Cấu Trúc Dự Án
-
-```
-nali/
-├── 📁 api/                      # RESTful API endpoints
-│   ├── appointments.php         # CRUD lịch hẹn
-│   ├── patients.php             # CRUD bệnh nhân
-│   ├── products.php             # CRUD dịch vụ
-│   ├── doctors.php              # CRUD bác sĩ
-│   └── dashboard.php            # Thống kê dashboard
-│
-├── 📁 includes/                 # Components tái sử dụng
-│   └── components.php           # Header & Footer components
-│
-├── 📁 images/                   # Hình ảnh
-│
-├── 📄 Trang chính
-│   ├── index.php                # Redirect → services.php
-│   ├── services.php             # Trang dịch vụ (trang chủ)
-│   ├── contact.php              # Đặt lịch hẹn
-│   ├── team.php                 # Đội ngũ bác sĩ
-│   ├── news.php                 # Kiến thức nha khoa
-│   └── about.php                # Giới thiệu
-│
-├── 📄 Xác thực
-│   ├── auth.php                 # Đăng nhập/Đăng ký khách hàng
-│   ├── login.php                # Xử lý đăng nhập
-│   ├── register.php             # Xử lý đăng ký
-│   └── logout.php               # Đăng xuất
-│
-├── 📄 Admin Panel
-│   ├── admin_panel.php          # Giao diện quản trị
-│   └── admin_login.php          # Đăng nhập admin
-│
-├── 📄 CSS
-│   ├── common.css               # CSS chung (Design System)
-│   ├── style.css                # CSS bổ sung
-│   └── animations.css           # Hiệu ứng animation
-│
-├── 📄 JavaScript
-│   ├── script.js                # JS chính
-│   ├── animations.js            # JS animation
-│   └── header-user.js           # JS header
-│
-├── 📄 Config & Database
-│   ├── config.php               # Cấu hình kết nối DB
-│   ├── database_complete.sql    # SQL tạo database
-│   └── nali_dental_complete.sql # SQL đầy đủ với data mẫu
-│
-└── 📄 README.md                 # File này
-```
-
-## 🗄️ Cơ Sở Dữ Liệu
-
-### Các Bảng Chính
-
-| Bảng | Mô tả |
-|------|-------|
-| `patients` | Thông tin bệnh nhân/khách hàng |
-| `users` | Tài khoản admin |
-| `appointments` | Lịch hẹn khám |
-| `products` | Dịch vụ nha khoa |
-| `doctors` | Thông tin bác sĩ |
-| `services` | Danh mục dịch vụ |
-| `categories` | Phân loại |
-
-### Kết Nối Database
-
-```php
-// config.php
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "nali_dental";
-$port = 3306; // Hoặc 3307 tùy cấu hình XAMPP
-```
-
-## 🚀 Cài Đặt & Chạy
-
-### Yêu Cầu
-- XAMPP (Apache + MySQL)
-- PHP 7.4+
-- MySQL 5.7+
-
-### Các Bước Cài Đặt
-
-1. **Clone/Copy dự án vào thư mục XAMPP**
-   ```bash
-   cd C:\xampp\htdocs\
-   # Copy folder nali vào đây
-   ```
-
-2. **Khởi động XAMPP**
-   - Mở XAMPP Control Panel
-   - Start **Apache** và **MySQL**
-
-3. **Tạo Database**
-   - Truy cập http://localhost/phpmyadmin
-   - Tạo database mới: `nali_dental`
-   - Import file `database_complete.sql` hoặc `nali_dental_complete.sql`
-
-4. **Cấu hình kết nối** (nếu cần)
-   - Mở `config.php`
-   - Kiểm tra port MySQL (3306 hoặc 3307)
-
-5. **Truy cập website**
-   - Trang chính: http://localhost/nali/
-   - Admin Panel: http://localhost/nali/admin_panel.php
-
-### Tài Khoản Mặc Định
-
-| Loại | Username | Password |
-|------|----------|----------|
-| Admin | admin | admin123 |
-
-## 🎨 Design System
-
-### CSS Variables (common.css)
-
-```css
-:root {
-    --primary: #4da6ff;        /* Màu chính - xanh dương */
-    --primary-dark: #3d8fe8;   /* Màu chính đậm */
-    --primary-light: #e8f4ff;  /* Màu chính nhạt */
-    --secondary: #28a745;      /* Màu phụ - xanh lá */
-    --accent: #ff6b6b;         /* Màu nhấn - đỏ cam */
-    --text-dark: #333;
-    --text-light: #666;
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
-}
-```
-
-### Components Tái Sử Dụng
-
-```php
-// Sử dụng Header & Footer
-require_once 'includes/components.php';
-
-renderHeader('services');  // Tham số: tên trang hiện tại
-renderFooter();
-```
-
-## 📱 Responsive Design
-
-Website được tối ưu cho các thiết bị:
-
-| Breakpoint | Thiết bị |
-|------------|----------|
-| > 992px | Desktop |
-| 768px - 992px | Tablet |
-| 375px - 768px | Mobile |
-| < 375px | Mobile nhỏ (iPhone SE) |
-
-### Tính Năng Mobile
-- ✅ Menu hamburger với overlay
-- ✅ Touch-friendly buttons (min 48px)
-- ✅ Font-size 16px (ngăn zoom iOS)
-- ✅ Smooth scrolling
-- ✅ Touch feedback thay hover
-
-## 🔌 API Endpoints
-
-### Appointments API (`/api/appointments.php`)
-
-| Method | Action | Mô tả |
-|--------|--------|-------|
-| GET | `?action=list` | Lấy danh sách lịch hẹn |
-| GET | `?action=get&id=1` | Lấy chi tiết 1 lịch hẹn |
-| POST | `action=add` | Thêm lịch hẹn mới |
-| POST | `action=update` | Cập nhật lịch hẹn |
-| POST | `action=delete` | Xóa lịch hẹn |
-
-### Dashboard API (`/api/dashboard.php`)
-
-```javascript
-// Response example
-{
-    "today_appointments": 5,
-    "total_patients": 120,
-    "pending_appointments": 8,
-    "monthly_revenue": 15000000
-}
-```
-
-## 📝 Changelog
-
-### Version 1.0.0 (2026-02-02)
-
-#### Backend
-- ✅ Cấu trúc API RESTful cho CRUD operations
-- ✅ Admin Panel với quản lý lịch hẹn đầy đủ
-- ✅ Hệ thống xác thực (đăng nhập/đăng ký)
-- ✅ Database với các bảng patients, appointments, products, doctors
-
-#### Frontend
-- ✅ Design System với CSS Variables
-- ✅ Components tái sử dụng (Header/Footer)
-- ✅ Responsive hoàn chỉnh cho mobile
-- ✅ Đồng bộ giao diện tất cả các trang
-
-#### Các Trang
-- ✅ **services.php** - Trang dịch vụ với filter theo nhóm
-- ✅ **contact.php** - Form đặt lịch multi-step
-- ✅ **team.php** - Danh sách bác sĩ với modal chi tiết
-- ✅ **news.php** - Bài viết với tìm kiếm/lọc
-- ✅ **about.php** - Giới thiệu phòng khám
-- ✅ **auth.php** - Đăng nhập/Đăng ký khách hàng
-
-## 📞 Thông Tin Liên Hệ
-
-**NALI Dental Clinic**
-- 📱 Hotline: **0945 457 512**
-- 📧 Email: nalidental@gmail.com
-- ⏰ Giờ làm việc: T2 - CN: 08:00 - 20:00
-
-**Chi nhánh:**
-- 🏥 Bình Thạnh: 69/68 Đặng Thùy Trâm
-- 🏥 Quận 1: 123 Nguyễn Huệ
-- 🏥 Gò Vấp: 456 Quang Trung
+Web chính viết bằng **Flask** (đúng yêu cầu môn học), còn phần AI mình tách ra một service Python riêng.
 
 ---
 
-© 2026 NALI Dental Clinic. All rights reserved.
+## Tính năng chính
+
+**Phía khách hàng**
+- Đăng ký / đăng nhập tài khoản
+- Xem danh sách dịch vụ, có **tìm kiếm** và **phân trang**
+- **Đặt lịch hẹn** online (có kiểm tra ngày/giờ hợp lệ), nhận **email xác nhận**
+- Xem lịch hẹn của mình, gửi góp ý / phản hồi
+- **Chatbot AI** tư vấn dịch vụ, báo giá và đặt lịch bằng hội thoại
+- Giao diện có **dark mode**, slider so sánh Trước/Sau, hiệu ứng cuộn...
+
+**Phía quản trị**
+- Dashboard thống kê + biểu đồ (lịch hẹn, trạng thái)
+- Quản lý dịch vụ (thêm/sửa/xóa), lịch hẹn, bệnh nhân, phản hồi
+- Tìm kiếm ở từng trang quản lý
+
+---
+
+## Công nghệ sử dụng
+
+- **Backend web:** Python, Flask (Blueprint + app factory), Flask-WTF, Flask-SQLAlchemy, Flask-Login, Flask-Mail, Flask-Migrate
+- **Cơ sở dữ liệu:** MySQL
+- **Frontend:** Jinja2, HTML/CSS/JS thuần (không dùng framework nặng)
+- **Lập trình mạng:** urllib gọi API ngoài (thời tiết Open-Meteo) + tự viết REST API JSON
+- **AI service:** FastAPI + RAG + LLM (Qwen2.5-3B mình tự finetune bằng QLoRA, chạy qua Ollama), có fallback offline
+- **Khác:** Docker (đóng gói cả hệ thống), pytest (kiểm thử)
+
+---
+
+## Điểm mình tâm đắc nhất: con chatbot 🤖
+
+Chatbot không chỉ trả lời câu hỏi cho có. Mình làm nó theo hướng **RAG** (lấy đúng dữ liệu dịch vụ/giá
+của phòng khám rồi mới trả lời, tránh bịa), và cho nó **tự đặt lịch** vào database luôn — đặt xong là
+thấy ngay trong trang admin.
+
+Phần LLM mình **finetune lại model mở Qwen2.5-3B** bằng kỹ thuật QLoRA trên chính dữ liệu nha khoa,
+để nó trả lời đúng giọng và hiểu nghiệp vụ của NALI hơn. Nếu không có model finetune / mất mạng thì
+service tự chuyển sang chế độ offline nên demo không bao giờ "chết".
+
+---
+
+## Cách chạy
+
+Cần: Python 3.11, MySQL (XAMPP hoặc MySQL 8).
+
+**1. Chuẩn bị database**
+```bash
+# Import DB, hoặc để Flask tự dựng:
+cd flask_app
+flask --app run.py init-db
+flask --app run.py seed-db     # tạo dữ liệu mẫu + tài khoản admin
+```
+
+**2. Chạy web Flask**
+```bash
+cd flask_app
+pip install -r requirements.txt
+python run.py                  # mở http://127.0.0.1:5000
+```
+
+**3. Chạy AI service (cho chatbot)**
+```bash
+cd ai_service
+pip install -r requirements.txt
+python main.py                 # http://127.0.0.1:8000
+```
+> Muốn dùng model đã finetune thì cài Ollama và nạp model `nali-dental` (xem `ai_service/finetune/README.md`).
+> Muốn bật gửi email thật thì điền tài khoản Gmail vào `flask_app/.env` (xem hướng dẫn trong repo).
+
+**Chạy test:**
+```bash
+cd flask_app && pytest -q
+```
+
+---
+
+## Cấu trúc thư mục (rút gọn)
+
+```
+flask_app/          # Web chính bằng Flask (bản được chấm)
+  app/
+    __init__.py     # app factory
+    models.py       # model SQLAlchemy
+    forms.py        # form Flask-WTF
+    main / auth / booking / admin / api   # các blueprint
+    templates/      # giao diện Jinja2
+  tests/            # test pytest
+ai_service/         # Service AI (FastAPI + RAG + LLM)
+  finetune/         # script finetune Qwen2.5-3B (QLoRA)
+docker-compose.yml  # đóng gói toàn hệ thống
+```
+
+*(Trong repo còn có bản web PHP ban đầu — là phiên bản giao diện gốc trước khi mình xây lại bằng Flask.)*
+
+---
+
+## Tài khoản demo
+
+| Vai trò | Tài khoản | Mật khẩu |
+|---------|-----------|----------|
+| Admin   | `admin`   | `admin123` |
+| Khách   | `lananh@gmail.com` | `password123` |
+
+---
+
+## Ghi chú
+
+- Model finetune (~vài GB) không đẩy lên GitHub, cần train lại bằng script trong `ai_service/finetune/`.
+- File `.env` chứa thông tin nhạy cảm nên đã được bỏ qua, bạn tự tạo lại theo mẫu.
+
+Cảm ơn thầy/cô đã xem đồ án của mình 💙
