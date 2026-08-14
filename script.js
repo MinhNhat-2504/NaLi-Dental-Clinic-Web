@@ -8,6 +8,26 @@ let cart = [];
 // Biến tạm để lưu dịch vụ đang xem
 let currentSelectedProduct = null;
 
+// P1: small global feedback/accessibility layer for every public page using this script.
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('img:not([alt])').forEach(function (image) {
+        image.alt = image.dataset.alt || 'Hình minh hoạ NALI Dental';
+    });
+
+    document.querySelectorAll('form').forEach(function (form) {
+        form.addEventListener('submit', function () {
+            const submit = form.querySelector('button[type="submit"], input[type="submit"]');
+            if (!submit || submit.disabled || form.dataset.noLoader === 'true') return;
+            submit.classList.add('is-loading');
+            submit.setAttribute('aria-busy', 'true');
+            window.setTimeout(function () {
+                submit.classList.remove('is-loading');
+                submit.removeAttribute('aria-busy');
+            }, 12000);
+        });
+    });
+});
+
 // Hàm format tiền tệ thống nhất
 function formatCurrency(amount) {
     return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
@@ -80,7 +100,7 @@ function renderAppointmentsList(){
     const container = document.getElementById('appointmentsList');
     if(!container) return;
     if(appointments.length === 0){
-        container.innerHTML = '<p>Chưa có lịch hẹn.</p>';
+        container.innerHTML = '<div class="empty-message"><i class="fas fa-calendar-plus" aria-hidden="true"></i><h3>Chưa có lịch hẹn</h3><p>Chọn một dịch vụ phù hợp, sau đó gửi yêu cầu để phòng khám xác nhận lịch với bạn.</p><a class="btn-primary" href="services.php">Đặt lịch ngay</a></div>';
         return;
     }
     container.innerHTML = '';
@@ -89,7 +109,7 @@ function renderAppointmentsList(){
         item.className = 'appointment-item';
         item.innerHTML = `
             <div style="display:flex; gap:12px; align-items:flex-start;">
-                <img src="${app.image}" onerror="this.src='https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=200'" style="width:70px;height:50px;object-fit:cover;border-radius:6px; flex-shrink:0;">
+                <img src="${app.image}" onerror="this.onerror=null;this.src='images/service-whitening-ai.webp'" style="width:70px;height:50px;object-fit:cover;border-radius:6px; flex-shrink:0;">
                 <div style="flex:1;">
                     <div style="font-weight:700;color:#007bff">${app.name}</div>
                     <div style="font-size:0.85rem;color:#666; margin-top:4px;">
@@ -133,8 +153,9 @@ function cancelAppointment(id){
 async function renderProducts() {
     const container = document.getElementById('productList');
     if (!container) return;
-    const fallbackImage = "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=500";
-    container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin fa-2x"></i> Đang tải...</div>';
+    const fallbackImage = "images/service-whitening-ai.webp";
+    container.setAttribute('aria-busy', 'true');
+    container.innerHTML = '<div class="skeleton" aria-label="Đang tải danh sách dịch vụ"></div><div class="skeleton" aria-hidden="true"></div><div class="skeleton" aria-hidden="true"></div>';
 
     try {
         const res = await fetch('api/products.php');
@@ -161,7 +182,10 @@ async function renderProducts() {
     } catch (err) {
         console.error('Lỗi tải sản phẩm:', err);
         container.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:40px;">Lỗi tải dịch vụ. Vui lòng thử lại.</div>';
+    } finally {
+        container.removeAttribute('aria-busy');
     }
+}
 // End of renderProducts
 
 // Add item to cart directly when user clicks "Đặt Lịch" (popup removed)
@@ -363,7 +387,7 @@ function proceedToPayment() {
 
 // 2. Phân loại và hiển thị sản phẩm vào 4 nhóm
 async function renderProducts() {
-    const fallbackImage = "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=500";
+    const fallbackImage = "images/service-whitening-ai.webp";
     // 4 container cho từng nhóm
     const containers = {
         children: document.getElementById('children-services'),
@@ -422,8 +446,6 @@ async function renderProducts() {
     }
 
 }
-}
-
 
 // Khi người dùng xác nhận trong modal thanh toán
 async function finalizePayment() {

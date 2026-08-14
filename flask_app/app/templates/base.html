@@ -3,6 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block meta %}
+    <meta name="description" content="NALI Dental: tham khảo dịch vụ nha khoa, giá dự kiến và gửi yêu cầu đặt lịch trực tuyến.">
+    <link rel="canonical" href="{{ request.base_url }}">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="vi_VN">
+    <meta property="og:title" content="NALI Dental Clinic">
+    <meta property="og:description" content="Tham khảo dịch vụ nha khoa và gửi yêu cầu đặt lịch trực tuyến cùng NALI Dental.">
+    <meta property="og:image" content="{{ url_for('static', filename='images/service-whitening-ai.webp', _external=True) }}">
+    <meta name="twitter:card" content="summary_large_image">
+    {% endblock %}
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Dentist","name":"NALI Dental Clinic","url":"{{ request.url_root }}","telephone":"+84945457512","openingHours":"Mo-Su 08:00-20:00","address":{"@type":"PostalAddress","streetAddress":"69/68 Đặng Thùy Trâm","addressLocality":"Bình Thạnh","addressRegion":"Hồ Chí Minh","addressCountry":"VN"},"department":[{"@type":"Dentist","name":"NALI Dental - Bình Thạnh","address":"69/68 Đặng Thùy Trâm, Bình Thạnh, Hồ Chí Minh"},{"@type":"Dentist","name":"NALI Dental - Quận 1","address":"123 Nguyễn Huệ, Quận 1, Hồ Chí Minh"},{"@type":"Dentist","name":"NALI Dental - Gò Vấp","address":"456 Quang Trung, Gò Vấp, Hồ Chí Minh"}]}</script>
     <title>{% block title %}NALI Dental Clinic{% endblock %}</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
@@ -30,6 +41,7 @@
                 {% set ep = request.endpoint or '' %}
                 <a href="{{ url_for('main.about') }}" class="nav-link {{ 'active' if ep=='main.about' }}"><i class="fas fa-info-circle"></i> Về NALI</a>
                 <a href="{{ url_for('main.services') }}" class="nav-link {{ 'active' if ep in ['main.services','main.service_detail'] }}"><i class="fas fa-tooth"></i> Dịch vụ</a>
+                <a href="{{ url_for('main.knowledge') }}" class="nav-link {{ 'active' if ep in ['main.knowledge','main.knowledge_detail'] }}"><i class="fas fa-newspaper"></i> Kiến thức</a>
                 <a href="{{ url_for('booking.book') }}" class="nav-link {{ 'active' if ep=='booking.book' }}"><i class="fas fa-calendar-check"></i> Đặt lịch</a>
                 <a href="{{ url_for('main.doctors') }}" class="nav-link {{ 'active' if ep=='main.doctors' }}"><i class="fas fa-user-md"></i> Bác sĩ</a>
                 <a href="{{ url_for('main.contact') }}" class="nav-link {{ 'active' if ep=='main.contact' }}"><i class="fas fa-map-marker-alt"></i> Liên hệ</a>

@@ -6,15 +6,16 @@
   <div class="admin-card">
     <h2><i class="fas fa-comment-dots"></i> Phản hồi khách hàng</h2>
     <table class="admin-table">
-      <thead><tr><th>ID</th><th>Khách</th><th>Đánh giá</th><th>Loại</th><th>Nội dung</th><th>Ngày</th></tr></thead>
+      <thead><tr><th>ID</th><th>Khách</th><th>Đánh giá</th><th>Loại</th><th>Nội dung</th><th>Trạng thái</th><th>Ngày</th></tr></thead>
       <tbody>
         {% for f in items %}
-        <tr><td>#{{ f.id }}</td><td><b>{{ f.name }}</b><br><small style="color:#94a3b8;">{{ f.email or f.phone }}</small></td>
+        <tr><td>#{{ f.id }}</td><td><b>{{ f.name }}</b><br><small style="color:#64748b;">{{ f.email or f.phone }}</small></td>
           <td style="color:#f59e0b;">{{ '★' * (f.rating or 0) }}</td>
           <td>{{ {'khen':'Khen ngợi','gop-y':'Góp ý','phan-anh':'Phản ánh'}.get(f.type, f.type) }}</td>
           <td style="max-width:340px;">{{ f.message }}</td>
+          <td><form method="post" action="{{ url_for('admin.feedback_status', fid=f.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><select name="status" onchange="this.form.submit()"><option value="pending" {{ 'selected' if f.status=='pending' }}>Chờ duyệt</option><option value="approved" {{ 'selected' if f.status=='approved' }}>Công khai</option><option value="rejected" {{ 'selected' if f.status=='rejected' }}>Từ chối</option></select></form></td>
           <td>{{ f.created_at.strftime('%d/%m/%Y') if f.created_at else '—' }}</td></tr>
-        {% else %}<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px;">Chưa có phản hồi.</td></tr>{% endfor %}
+        {% else %}<tr><td colspan="7" style="text-align:center;color:#64748b;padding:24px;">Chưa có phản hồi.</td></tr>{% endfor %}
       </tbody>
     </table>
     {% if pagination.pages > 1 %}

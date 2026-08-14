@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Do not expose management or setup endpoints to search engines.
+Disallow: /admin_panel.php
+Disallow: /setup_database.php
+Disallow: /api/
+
+Sitemap: /sitemap.xml

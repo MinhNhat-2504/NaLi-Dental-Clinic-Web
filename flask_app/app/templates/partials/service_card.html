@@ -1,14 +1,11 @@
 {% macro service_card(p) %}
 <a class="service-card" href="{{ url_for('main.service_detail', pid=p.id) }}" style="text-decoration:none;color:inherit;">
     <div class="service-thumb">
-        <img src="{{ url_for('static', filename='images/' ~ service_card_image(p.target_group)) }}" alt="{{ p.name }}" loading="lazy"
-             onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/default.jpg') }}';">
-        {% if p.price and p.price|float >= 10000000 %}<span class="promo-tag">Trả góp 0%</span>{% endif %}
+        <img src="{{ url_for('static', filename='images/' ~ service_card_image(p.target_group, p.name)) }}" alt="{{ p.name }}" loading="lazy"
+             onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/logo.png') }}';">
     </div>
     <div class="service-card-content">
         <div class="svc-meta">
-            <span class="stars"><i class="fas fa-star"></i> {{ svc_rating(p.id) }}</span>
-            <span class="reviews">({{ svc_reviews(p.id) }} đánh giá)</span>
             <span class="dur"><i class="far fa-clock"></i> {{ p.duration }}′</span>
         </div>
         <h3>{{ p.name }}</h3>

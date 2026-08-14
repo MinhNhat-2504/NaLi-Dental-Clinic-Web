@@ -8,7 +8,7 @@
             background:
                 radial-gradient(1200px 500px at 85% -10%, rgba(255,255,255,.18), transparent 60%),
                 linear-gradient(135deg, rgba(77,166,255,.90) 0%, rgba(61,143,232,.90) 45%, rgba(37,103,201,.93) 100%),
-                url('../images/hero-tech.jpg') right center/cover no-repeat;
+                url('../images/hero-tech.webp') right center/cover no-repeat;
             color: #fff; overflow: hidden; padding: 70px 20px 90px;
         }
         .hero::before, .hero::after {
@@ -28,6 +28,9 @@
         .btn-hero.ghost { border-color: rgba(255,255,255,.6); color: #fff; }
         .btn-hero.ghost:hover { background: rgba(255,255,255,.15); }
         .hero-visual { display: flex; justify-content: center; }
+        .hero-portrait { position:relative; min-height:440px; align-items:center; }
+        .hero-portrait > img { width:min(100%,410px); height:440px; object-fit:cover; object-position:center; border:6px solid rgba(255,255,255,.22); border-radius:32px; box-shadow:0 28px 60px rgba(9,44,95,.35); }
+        .hero-card-floating { position:absolute; right:-20px; bottom:8px; max-width:340px; }
         .hero-card {
             background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28); border-radius: 24px;
             padding: 28px; backdrop-filter: blur(10px); width: 100%; max-width: 360px; box-shadow: 0 20px 50px rgba(0,0,0,.2);
@@ -88,13 +91,13 @@
         .cat-tag { position: absolute; top: 14px; left: 14px; color: #fff; font-size: .75rem; font-weight: 700; padding: 5px 12px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
         .promo-tag { position: absolute; top: 14px; right: 14px; background: #ff4757; color: #fff; font-size: .72rem; font-weight: 700; padding: 5px 11px; border-radius: 20px; }
         .service-card-content { padding: 20px 22px 22px; display: flex; flex-direction: column; flex: 1; }
-        .svc-meta { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: #94a3b8; margin-bottom: 10px; }
+        .svc-meta { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: #64748b; margin-bottom: 10px; }
         .svc-meta .stars { color: #f59e0b; font-weight: 700; }
         .svc-meta .dur { margin-left: auto; }
         .service-card h3 { font-size: 1.18rem; font-weight: 700; margin-bottom: 8px; }
         .service-card p { color: #64748b; font-size: .92rem; line-height: 1.6; margin-bottom: 18px; flex: 1; }
         .svc-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .price-box small { display: block; color: #94a3b8; font-size: .72rem; }
+        .price-box small { display: block; color: #64748b; font-size: .72rem; }
         .price-box .price { color: var(--nali-dark); font-size: 1.3rem; font-weight: 800; }
         .price-box .price.free { font-size: 1rem; }
         .order-btn { background: linear-gradient(135deg,var(--nali),var(--nali-dark)); color: #fff; border: none; padding: 11px 18px; border-radius: 12px; font-size: .9rem; font-weight: 700; cursor: pointer; transition: .25s; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
@@ -116,7 +119,7 @@
         .reviewer { display: flex; align-items: center; gap: 12px; }
         .reviewer .ava { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg,var(--nali),var(--nali-dark)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; }
         .reviewer b { display: block; font-size: .95rem; }
-        .reviewer small { color: #94a3b8; }
+        .reviewer small { color: #64748b; }
 
         /* CTA band */
         .cta-band { max-width: 1160px; margin: 75px auto 0; background: linear-gradient(135deg,#2c7ad1,#4da6ff); border-radius: 26px; padding: 55px 40px; text-align: center; color: #fff; position: relative; overflow: hidden; }
@@ -124,8 +127,20 @@
         .cta-band p { opacity: .95; margin-bottom: 26px; font-size: 1.05rem; }
         .cta-band .btn-hero.primary { color: var(--nali-dark); }
 
-        .empty-message { text-align: center; color: #94a3b8; padding: 60px 20px; background: #fff; border-radius: 18px; }
+        .empty-message { text-align: center; color: #64748b; padding: 60px 20px; background: #fff; border-radius: 18px; }
         .empty-message i { font-size: 3.5rem; color: #dbe6f3; margin-bottom: 16px; }
+
+        /* Nhịp nền tối: tạo điểm nghỉ giữa các khối thẻ sáng. */
+        .care-journey { margin:72px 0 0; padding:72px 20px; color:#eff8ff; background:linear-gradient(120deg,#102c4d,#173c67 58%,#1f5a87); }
+        .care-journey-inner { max-width:1160px; margin:0 auto; display:grid; grid-template-columns:.8fr 1.2fr; gap:52px; align-items:center; }
+        .care-journey .eyebrow { color:#9fdbff; font-weight:800; text-transform:uppercase; letter-spacing:1.4px; font-size:.78rem; }
+        .care-journey h2 { margin:10px 0 14px; font-size:2.15rem; line-height:1.2; color:#fff; }.care-journey p { color:#c8dced; line-height:1.75; }
+        .care-steps { list-style:none; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+        .care-steps li { display:flex; gap:15px; align-items:flex-start; min-width:0; padding:18px; border:1px solid rgba(190,224,248,.20); border-radius:16px; background:rgba(255,255,255,.07); }
+        .care-steps b { color:#99dcff; font-size:1.1rem; letter-spacing:.04em; }.care-steps span { color:#fff; font-weight:700; }.care-steps small { display:block; margin-top:5px; color:#c8dced; font-weight:400; line-height:1.45; }
+
+        .about-facility { display:grid; grid-template-columns:1fr 1fr; overflow:hidden; margin-bottom:26px; background:#fff; border:1px solid #e6eff8; border-radius:22px; box-shadow:0 12px 32px rgba(45,100,180,.09); }
+        .about-facility img { width:100%; height:100%; min-height:290px; object-fit:cover; }.about-facility > div { align-self:center; padding:42px 36px; }.about-facility h2 { margin:9px 0 14px; font-size:1.85rem; color:var(--ink); }.about-facility p { color:#475569; line-height:1.8; }
 
         /* ===== Slider so sánh Trước / Sau ===== */
         .ba-wrap { position: relative; max-width: 900px; margin: 0 auto; border-radius: 20px; overflow: hidden;
@@ -210,6 +225,8 @@
             .services-grid { grid-template-columns: 1fr; }
             .cta-band { padding: 40px 22px; }
             .cta-band h2 { font-size: 1.5rem; }
+            .care-journey { margin-top:54px; padding:54px 20px; }.care-journey-inner { grid-template-columns:1fr; gap:28px; }.care-journey h2 { font-size:1.7rem; }.care-steps { grid-template-columns:1fr; }
+            .about-facility { grid-template-columns:1fr; }.about-facility img { min-height:220px; }.about-facility > div { padding:28px 24px; }
         }
         @media (max-width: 480px) {
             .stats-bar { grid-template-columns: 1fr 1fr; }

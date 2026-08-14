@@ -135,7 +135,34 @@ class Feedback(db.Model):
     rating = db.Column(db.SmallInteger)
     type = db.Column(db.String(50))
     message = db.Column(db.Text)
+    status = db.Column(db.Enum("pending", "approved", "rejected"), default="pending")
     created_at = db.Column(db.TIMESTAMP, default=datetime.utcnow)
+
+
+class BlogPost(db.Model):
+    """Bài viết kiến thức dùng chung bảng blog_posts với bản PHP."""
+    __tablename__ = "blog_posts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String(180), unique=True, nullable=False)
+    title = db.Column(db.String(255), nullable=False)
+    excerpt = db.Column(db.Text)
+    content = db.Column(db.Text)
+    cover_image = db.Column(db.String(255))
+    category = db.Column(db.String(100))
+    status = db.Column(db.Enum("draft", "published"), default="draft")
+    published_at = db.Column(db.DateTime)
+    created_at = db.Column(db.TIMESTAMP, default=datetime.utcnow)
+
+
+class FAQ(db.Model):
+    __tablename__ = "faqs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    question = db.Column(db.String(500), nullable=False)
+    answer = db.Column(db.Text, nullable=False)
+    sort_order = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.SmallInteger, default=1)
 
 
 @login_manager.user_loader

@@ -7,6 +7,7 @@ require_once 'includes/components.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Về Chúng Tôi - NALI Dental Clinic</title>
+    <?php renderSeo('Về NALI Dental Clinic', 'Tìm hiểu định hướng, dịch vụ và trải nghiệm đặt lịch nha khoa trực tuyến của NALI Dental.'); ?>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="favicon.png">
@@ -20,7 +21,7 @@ require_once 'includes/components.php';
         /* Hero Section */
         .about-hero {
             background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
-                        url('images/hero-tech.jpg') center/cover no-repeat;
+                        url('images/hero-tech.webp') center/cover no-repeat;
             min-height: 400px;
             display: flex;
             align-items: center;
@@ -283,8 +284,7 @@ require_once 'includes/components.php';
 <div class="about-container">
     
     <section class="about-section slide-up">
-        <img src="images/clinic-intro.jpg" alt="Phòng khám NALI" class="about-img" 
-             onerror="this.src='https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800'">
+        <img src="images/service-whitening-ai.webp" alt="Không gian tư vấn nha khoa NALI" class="about-img">
         <div class="about-content">
             <h2>Về NALI Dental Clinic</h2>
             <p>Được thành lập với sứ mệnh <strong>"Kiến tạo nụ cười hoàn mỹ"</strong>, NALI Dental Clinic không chỉ là một phòng khám nha khoa truyền thống. Chúng tôi là đơn vị tiên phong trong việc kết hợp y học hiện đại với công nghệ thông tin.</p>
@@ -293,8 +293,7 @@ require_once 'includes/components.php';
     </section>
 
     <section class="about-section reverse slide-up">
-        <img src="images/ai-tech.jpg" alt="Công nghệ AI" class="about-img"
-             onerror="this.src='https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800'">
+        <img src="images/service-implant-ai.webp" alt="Tư vấn kế hoạch điều trị nha khoa" class="about-img">
         <div class="about-content">
             <h2>Sức Mạnh Của Trí Tuệ Nhân Tạo</h2>
             <p>Điểm khác biệt lớn nhất của NALI chính là <strong>Trợ lý ảo NALI AI</strong>, được tích hợp sâu vào hệ thống website với khả năng:</p>
@@ -314,20 +313,20 @@ require_once 'includes/components.php';
 <section class="stats-section">
     <div class="stats-grid">
         <div class="stat-item">
-            <h3>10+</h3>
-            <p>Năm kinh nghiệm</p>
+            <h3><i class="fas fa-list-check"></i></h3>
+            <p>Dịch vụ theo nhóm</p>
         </div>
         <div class="stat-item">
-            <h3>50,000+</h3>
-            <p>Khách hàng hài lòng</p>
+            <h3><i class="fas fa-calendar-check"></i></h3>
+            <p>Đặt lịch trực tuyến</p>
         </div>
         <div class="stat-item">
-            <h3>20+</h3>
-            <p>Bác sĩ chuyên môn</p>
+            <h3><i class="fas fa-robot"></i></h3>
+            <p>Trợ lý AI hỗ trợ</p>
         </div>
         <div class="stat-item">
-            <h3>5</h3>
-            <p>Chi nhánh toàn quốc</p>
+            <h3><i class="fas fa-comments"></i></h3>
+            <p>Tra cứu thông tin nhanh</p>
         </div>
     </div>
 </section>
@@ -341,7 +340,7 @@ require_once 'includes/components.php';
                 <i class="fas fa-user-md"></i>
             </div>
             <h3>Đội Ngũ Chuyên Gia</h3>
-            <p>100% Bác sĩ tốt nghiệp Đại học Y Dược, có chứng chỉ hành nghề và nhiều năm kinh nghiệm lâm sàng.</p>
+            <p>Người dùng có thể xem thông tin bác sĩ, lựa chọn nhu cầu và gửi yêu cầu đặt lịch trực tiếp trên hệ thống.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">

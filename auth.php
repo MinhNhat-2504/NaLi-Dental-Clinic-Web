@@ -13,6 +13,7 @@ if ($isLoggedIn) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng Nhập / Đăng Ký - NALI Dental Clinic</title>
+    <?php renderSeo('Tài khoản NALI Dental', 'Đăng nhập hoặc đăng ký tài khoản để sử dụng các tiện ích đặt lịch của NALI Dental.'); ?>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="favicon.png">

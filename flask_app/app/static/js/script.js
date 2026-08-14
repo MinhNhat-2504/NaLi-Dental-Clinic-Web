@@ -89,7 +89,7 @@ function renderAppointmentsList(){
         item.className = 'appointment-item';
         item.innerHTML = `
             <div style="display:flex; gap:12px; align-items:flex-start;">
-                <img src="${app.image}" onerror="this.src='https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=200'" style="width:70px;height:50px;object-fit:cover;border-radius:6px; flex-shrink:0;">
+                <img src="${app.image}" onerror="this.onerror=null;this.src='/static/images/service-whitening-ai.webp'" style="width:70px;height:50px;object-fit:cover;border-radius:6px; flex-shrink:0;">
                 <div style="flex:1;">
                     <div style="font-weight:700;color:#007bff">${app.name}</div>
                     <div style="font-size:0.85rem;color:#666; margin-top:4px;">
@@ -133,7 +133,7 @@ function cancelAppointment(id){
 async function renderProducts() {
     const container = document.getElementById('productList');
     if (!container) return;
-    const fallbackImage = "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=500";
+    const fallbackImage = "/static/images/service-whitening-ai.webp";
     container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin fa-2x"></i> Đang tải...</div>';
 
     try {
@@ -363,7 +363,7 @@ function proceedToPayment() {
 
 // 2. Phân loại và hiển thị sản phẩm vào 4 nhóm
 async function renderProducts() {
-    const fallbackImage = "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=500";
+    const fallbackImage = "/static/images/service-whitening-ai.webp";
     // 4 container cho từng nhóm
     const containers = {
         children: document.getElementById('children-services'),

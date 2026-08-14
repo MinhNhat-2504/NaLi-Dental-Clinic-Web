@@ -1,5 +1,8 @@
 .git/
 .gitignore
+.env
+**/.env
+certbot/
 ai_service/.venv/
 ai_service/venv/
 ai_service/__pycache__/

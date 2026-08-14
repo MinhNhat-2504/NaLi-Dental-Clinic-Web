@@ -48,8 +48,8 @@ CLINIC_FACTS: list[Document] = [
     ),
     Document(
         "Thanh toán và trả góp",
-        "Phòng khám nhận thanh toán tiền mặt, chuyển khoản và quẹt thẻ. "
-        "Các dịch vụ lớn như Implant, niềng răng có hỗ trợ trả góp 0%.",
+        "Phương thức thanh toán và chính sách hỗ trợ sẽ được nhân viên xác nhận khi khách đặt lịch. "
+        "Không tự khẳng định ưu đãi hoặc điều kiện thanh toán khi chưa có xác nhận.",
         {"topic": "thanh_toan"},
     ),
     Document(

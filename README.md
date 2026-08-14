@@ -54,10 +54,40 @@ Cần: Python 3.11, MySQL (XAMPP hoặc MySQL 8).
 
 **1. Chuẩn bị database**
 ```bash
+# Tạo flask_app/.env từ flask_app/.env.example rồi điền DB_PASS.
+# DB_PASS phải trùng mật khẩu MySQL đang chạy; không để trống và không dùng 123456 khi deploy.
+# Local dùng AUTO_CREATE_SCHEMA=1 để tự tạo các bảng nội dung (faqs, blog_posts...) còn thiếu.
+# Production: đặt AUTO_CREATE_SCHEMA=0 và chạy init-db/migration trước khi nhận traffic.
 # Import DB, hoặc để Flask tự dựng:
 cd flask_app
 flask --app run.py init-db
 flask --app run.py seed-db     # tạo dữ liệu mẫu + tài khoản admin
+flask --app run.py seed-content # chèn FAQ và bài kiến thức tham khảo; không tạo đánh giá khách hàng giả
+```
+
+> Lưu ý: `seed-db` không còn dùng mật khẩu admin ghi sẵn trong code nữa — bạn phải đặt biến môi trường
+> `INITIAL_ADMIN_PASSWORD` trước khi chạy, ví dụ: `INITIAL_ADMIN_PASSWORD=matkhaucuaban flask --app run.py seed-db`.
+
+**Nâng cấp database cũ bằng migration**
+
+Khi lấy mã mới trên một database NALI đã có sẵn, chạy migration trước khi mở ứng dụng để bổ sung cột/bảng mới (ví dụ `feedback.status`):
+
+```bash
+cd flask_app
+flask --app run.py db upgrade
+```
+
+Với thay đổi model sau này, luôn tạo và áp dụng migration cùng lúc:
+
+```bash
+flask --app run.py db migrate -m "mo ta thay doi schema"
+flask --app run.py db upgrade
+```
+
+Nếu khởi tạo database hoàn toàn mới bằng `init-db`, đánh dấu schema đó ở revision hiện tại để Alembic không áp lại migration cũ:
+
+```bash
+flask --app run.py db stamp head
 ```
 
 **2. Chạy web Flask**
@@ -80,6 +110,13 @@ python main.py                 # http://127.0.0.1:8000
 ```bash
 cd flask_app && pytest -q
 ```
+
+**Triển khai thật (VPS + tên miền)**
+
+Mình đã chuẩn bị sẵn bộ Docker cho production: `docker-compose.flask.prod.yml` gồm MySQL,
+Flask chạy qua gunicorn, nginx và certbot (HTTPS). Container tự chạy migration trước khi
+khởi động, và sẽ từ chối chạy nếu thiếu các biến bắt buộc (`SECRET_KEY`, `MYSQL_ROOT_PASSWORD`...).
+Các bước cụ thể xem trong `DEPLOY.md`.
 
 ---
 
@@ -107,7 +144,7 @@ docker-compose.yml  # đóng gói toàn hệ thống
 
 | Vai trò | Tài khoản | Mật khẩu |
 |---------|-----------|----------|
-| Admin   | `admin`   | `admin123` |
+| Admin   | `admin`   | `admin123` *(DB mẫu cũ; DB mới seed thì dùng mật khẩu bạn đặt qua `INITIAL_ADMIN_PASSWORD`)* |
 | Khách   | `lananh@gmail.com` | `password123` |
 
 ---

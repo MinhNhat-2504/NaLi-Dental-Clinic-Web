@@ -1,6 +1,10 @@
 <?php
 require_once 'includes/components.php';
 require_once 'config.php';
+require_once 'content_repository.php';
+ensureContentSchema($conn);
+$publicFaqs = contentRows($conn, "SELECT question, answer FROM faqs WHERE is_active=1 ORDER BY sort_order,id");
+$approvedReviews = contentRows($conn, "SELECT name, rating, type, message FROM feedback WHERE status='approved' ORDER BY created_at DESC LIMIT 6");
 
 // Bắt tín hiệu group trên URL
 $group = $_GET['group'] ?? '';
@@ -35,10 +39,6 @@ $groups = [
     'chronic'  => ['label' => 'Bệnh Lý Nền', 'icon' => '🏥', 'color' => '#a55eea', 'grad' => 'linear-gradient(135deg,#b06bf0,#8854d0)'],
 ];
 
-/** Đánh giá & lượt review ổn định theo id (không đổi mỗi lần tải) */
-function svcRating($id) { return number_format(4.7 + (($id * 7) % 3) * 0.1, 1); }
-function svcReviews($id) { return 48 + ($id * 37) % 420; }
-
 /**
  * Ảnh placeholder yếu trong repo -> sẽ thay bằng ô gradient + icon cho "có chủ đích".
  * Nếu sau này bạn bỏ ẢNH THẬT vào images/ với đúng tên, hãy xoá tên đó khỏi danh sách này.
@@ -60,26 +60,26 @@ function svcIcon($name) {
     return 'fa-tooth';
 }
 
-/** Render 1 thẻ dịch vụ */
-function serviceCardImage($group, $fallback = '') {
+/** Chọn ảnh AI riêng cho sáu dịch vụ chính; các dịch vụ khác giữ ảnh riêng từ dữ liệu. */
+function serviceCardImage($service) {
     $images = [
-        'adults'   => 'service-adults-v2.png',
-        'children' => 'service-children-v2.png',
-        'elderly'  => 'service-elderly-v2.png',
-        'chronic'  => 'service-adults-v2.png',
+        'Tẩy trắng răng Laser' => 'service-whitening-ai.webp',
+        'Bọc răng sứ Titan' => 'service-veneer-ai.webp',
+        'Niềng răng Invisalign' => 'service-aligner-ai.webp',
+        'Cấy ghép Implant' => 'service-implant-ai.webp',
+        'Nhổ răng khôn' => 'service-extraction-ai.webp',
+        'Điều trị tủy răng' => 'service-root-canal-ai.webp',
     ];
-    return $images[$group] ?? ($fallback ?: 'service-adults-v2.png');
+    $name = $service['name'] ?? '';
+    return $images[$name] ?? ($service['image'] ?? 'service-whitening-ai.webp');
 }
 
 function renderServiceCard($service, $groups) {
     $g = $groups[$service['target_group']] ?? ['label'=>'Dịch vụ','color'=>'#4da6ff'];
-    $imageFile = serviceCardImage($service['target_group'] ?? '', $service['image'] ?? '');
+    $imageFile = serviceCardImage($service);
     $imgSrc = 'images/' . $imageFile;
     $price = (float)$service['price'];
-    $rating = svcRating($service['id']);
-    $reviews = svcReviews($service['id']);
     $duration = (int)($service['duration'] ?? 30);
-    $installment = $price >= 10000000; // dịch vụ lớn -> trả góp 0%
     $weak = false;
     $priceText = $price > 0 ? number_format($price, 0, ',', '.') . 'đ' : 'Miễn phí tư vấn';
     ?>
@@ -88,8 +88,6 @@ function renderServiceCard($service, $groups) {
          data-desc="<?php echo htmlspecialchars($service['description']); ?>"
          data-price="<?php echo htmlspecialchars($priceText); ?>"
          data-dur="<?php echo $duration; ?>"
-         data-rating="<?php echo $rating; ?>"
-         data-reviews="<?php echo $reviews; ?>"
         data-img="<?php echo htmlspecialchars($imgSrc); ?>"
          data-grad="<?php echo htmlspecialchars($g['grad']); ?>"
          data-icon="<?php echo svcIcon($service['name']); ?>">
@@ -100,15 +98,13 @@ function renderServiceCard($service, $groups) {
                 </div>
             <?php else: ?>
                 <img src="<?php echo htmlspecialchars($imgSrc); ?>" alt="<?php echo htmlspecialchars($service['name']); ?>" loading="lazy"
-                     onerror="this.onerror=null;this.src='images/default.jpg';">
+                     onerror="this.onerror=null;this.src='images/logo.png';">
             <?php endif; ?>
-            <?php if ($installment): ?><span class="promo-tag">Trả góp 0%</span><?php endif; ?>
         </div>
         <div class="service-card-content">
             <div class="svc-meta">
-                <span class="stars"><i class="fas fa-star"></i> <?php echo $rating; ?></span>
-                <span class="reviews">(<?php echo $reviews; ?> đánh giá)</span>
                 <span class="dur"><i class="far fa-clock"></i> <?php echo $duration; ?>′</span>
+                <span class="svc-group"><?php echo htmlspecialchars($g['label']); ?></span>
             </div>
             <h3><?php echo htmlspecialchars($service['name']); ?></h3>
             <p><?php echo htmlspecialchars($service['description']); ?></p>
@@ -136,10 +132,12 @@ function renderServiceCard($service, $groups) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($title); ?> - NALI Dental Clinic</title>
+    <?php renderSeo($title . ' - NALI Dental Clinic', 'Tham khảo dịch vụ nha khoa, mức giá và thời lượng dự kiến; gửi yêu cầu đặt lịch trực tuyến cùng NALI Dental.'); ?>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="favicon.png">
     <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="content-pages.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -154,7 +152,7 @@ function renderServiceCard($service, $groups) {
             background:
                 radial-gradient(1200px 500px at 85% -10%, rgba(255,255,255,.18), transparent 60%),
                 linear-gradient(135deg, rgba(77,166,255,.90) 0%, rgba(61,143,232,.90) 45%, rgba(37,103,201,.93) 100%),
-                url('images/hero-tech.jpg') right center/cover no-repeat;
+                url('images/hero-tech.webp') right center/cover no-repeat;
             color: #fff; overflow: hidden; padding: 70px 20px 90px;
         }
         .hero::before, .hero::after {
@@ -370,24 +368,27 @@ function renderServiceCard($service, $groups) {
     <section class="hero">
         <div class="hero-inner">
             <div>
-                <span class="hero-badge"><i class="fas fa-award"></i> Phòng khám nha khoa được tin tưởng #1</span>
+                <span class="hero-badge"><i class="fas fa-calendar-check"></i> Nền tảng tham khảo dịch vụ và đặt lịch nha khoa</span>
                 <h1>Nụ cười khỏe đẹp bắt đầu từ <span>NALI Dental</span></h1>
-                <p class="lead">Hệ thống nha khoa công nghệ cao với đội ngũ bác sĩ chuyên sâu, trang thiết bị hiện đại và quy trình vô trùng chuẩn Bộ Y tế. Chăm sóc tận tâm cho mọi lứa tuổi.</p>
+                <p class="lead">Tham khảo dịch vụ, giá hiển thị và thời lượng dự kiến trước khi gửi yêu cầu đặt lịch. Chỉ định, chi phí và quy trình phù hợp sẽ được phòng khám xác nhận sau khi thăm khám.</p>
                 <div class="hero-cta">
                     <a href="contact.php" class="btn-hero primary"><i class="fas fa-calendar-check"></i> Đặt lịch hẹn ngay</a>
                     <a href="#dichvu" class="btn-hero ghost"><i class="fas fa-tooth"></i> Khám phá dịch vụ</a>
                 </div>
             </div>
             <div class="hero-visual">
+                <div class="hero-portrait-wrap">
+                    <img class="hero-human-portrait" src="images/hero-human-ai.webp" alt="Hình minh hoạ bác sĩ tư vấn cùng khách hàng trong không gian nha khoa" fetchpriority="high">
+                </div>
                 <div class="hero-card">
                     <div class="doc">
                         <div class="doc-ava">🦷</div>
-                        <div><b>NALI Dental Clinic</b><small>Đánh giá 4.9/5 · hơn 12.000 khách</small></div>
+                        <div><b>NALI Dental Clinic</b><small>Thông tin dịch vụ và yêu cầu hẹn trực tuyến</small></div>
                     </div>
-                    <div class="row"><i class="fas fa-user-md"></i> 20+ bác sĩ chuyên khoa giàu kinh nghiệm</div>
-                    <div class="row"><i class="fas fa-shield-heart"></i> Vô trùng khép kín, an toàn tuyệt đối</div>
-                    <div class="row"><i class="fas fa-clock"></i> Mở cửa cả tuần · 08:00 – 20:00</div>
-                    <div class="row"><i class="fas fa-hand-holding-dollar"></i> Hỗ trợ trả góp 0% cho dịch vụ lớn</div>
+                    <div class="row"><i class="fas fa-list-check"></i> Xem thông tin và giá tham khảo theo từng dịch vụ</div>
+                    <div class="row"><i class="fas fa-calendar-check"></i> Gửi yêu cầu đặt lịch trực tuyến</div>
+                    <div class="row"><i class="fas fa-comments"></i> Nhận hỗ trợ nhanh từ trợ lý AI</div>
+                    <div class="row"><i class="fas fa-circle-info"></i> Xác nhận chi phí và lịch hẹn trước khi điều trị</div>
                 </div>
             </div>
         </div>
@@ -395,14 +396,41 @@ function renderServiceCard($service, $groups) {
 
     <!-- ===== STATS ===== -->
     <div class="stats-bar">
-        <div class="stat"><div class="num">15+</div><div class="lbl">Năm kinh nghiệm</div></div>
-        <div class="stat"><div class="num">12K+</div><div class="lbl">Khách hàng tin tưởng</div></div>
-        <div class="stat"><div class="num">20+</div><div class="lbl">Bác sĩ chuyên khoa</div></div>
-        <div class="stat"><div class="num">98%</div><div class="lbl">Khách hàng hài lòng</div></div>
+        <div class="stat"><div class="num"><?php echo $totalServices; ?></div><div class="lbl">Dịch vụ đang hiển thị</div></div>
+        <div class="stat"><div class="num"><?php echo count($groups); ?></div><div class="lbl">Nhóm chăm sóc</div></div>
+        <div class="stat"><div class="num"><i class="fas fa-calendar-check"></i></div><div class="lbl">Đặt lịch trực tuyến</div></div>
+        <div class="stat"><div class="num"><i class="fas fa-robot"></i></div><div class="lbl">Trợ lý AI hỗ trợ</div></div>
     </div>
 
+    <section class="intro-media-band" aria-labelledby="introMediaTitle">
+        <div class="intro-media-copy">
+            <span class="eyebrow">Bắt đầu thật nhẹ nhàng</span>
+            <h2 id="introMediaTitle">Hiểu quy trình trước khi đến khám</h2>
+            <p>Video giới thiệu giúp khách lần đầu hình dung hành trình tại phòng khám. Hiện website dùng poster minh hoạ; thay bằng video quay thực tế đã được phê duyệt trước khi công khai.</p>
+            <a class="btn-hero primary" href="#quytrinh"><i class="fas fa-play"></i> Xem quy trình 4 bước</a>
+        </div>
+        <div class="video-poster" role="img" aria-label="Poster minh hoạ video giới thiệu quy trình nha khoa">
+            <img src="images/hero-human-ai.webp" alt="Hình minh hoạ cho video giới thiệu NALI Dental" loading="lazy">
+            <span class="video-play" aria-hidden="true"><i class="fas fa-play"></i></span>
+            <span class="video-note">Poster minh hoạ · video thực tế sẽ cập nhật</span>
+        </div>
+    </section>
+
+    <section class="visit-process" id="quytrinh" aria-labelledby="processTitle">
+        <div class="visit-process-heading">
+            <span class="eyebrow">Hành trình tại NALI</span>
+            <h2 id="processTitle">Bốn bước để bạn an tâm hơn</h2>
+        </div>
+        <ol class="process-steps">
+            <li><span>01</span><div><i class="fas fa-calendar-check"></i><h3>Đặt lịch</h3><p>Gửi nhu cầu và chọn thời gian phù hợp.</p></div></li>
+            <li><span>02</span><div><i class="fas fa-tooth"></i><h3>Khám &amp; chụp phim</h3><p>Bác sĩ đánh giá tình trạng thực tế.</p></div></li>
+            <li><span>03</span><div><i class="fas fa-clipboard-check"></i><h3>Tư vấn phác đồ</h3><p>Xác nhận lựa chọn, chi phí và thời gian.</p></div></li>
+            <li><span>04</span><div><i class="fas fa-shield-heart"></i><h3>Điều trị &amp; theo dõi</h3><p>Nhận hướng dẫn chăm sóc sau điều trị.</p></div></li>
+        </ol>
+    </section>
+
     <!-- ===== DỊCH VỤ ===== -->
-    <section class="section" id="dichvu">
+    <section class="section service-editorial" id="dichvu">
         <div class="section-head">
             <span class="eyebrow">Bảng giá dịch vụ</span>
             <h2>Dịch vụ nha khoa toàn diện</h2>
@@ -420,41 +448,60 @@ function renderServiceCard($service, $groups) {
         <?php endif; ?>
     </section>
 
-    <!-- ===== TRƯỚC & SAU ===== -->
-    <section class="section">
+    <!-- ===== THƯ VIỆN MINH HOẠ ===== -->
+    <section class="case-library" aria-labelledby="caseLibraryTitle">
+        <div class="case-library-head">
+            <span class="eyebrow">Thư viện ca điều trị</span>
+            <h2 id="caseLibraryTitle">Xem cách một kế hoạch được hình dung</h2>
+            <p>Chỉ hiển thị ảnh minh hoạ cho đến khi có ca thực tế được bệnh nhân đồng ý công bố. Kết quả điều trị khác nhau theo từng tình trạng.</p>
+            <div class="case-filters" aria-label="Lọc thư viện ca điều trị">
+                <button type="button" class="case-filter active">Tất cả</button>
+                <button type="button" class="case-filter">Thẩm mỹ</button>
+                <button type="button" class="case-filter">Phục hình</button>
+                <button type="button" class="case-filter">Chỉnh nha</button>
+            </div>
+        </div>
+        <div class="case-library-stage">
         <div class="section-head">
-            <span class="eyebrow">Kết quả thực tế</span>
-            <h2>Trước &amp; Sau khi điều trị</h2>
-            <p>Kéo thanh trượt để thấy sự khác biệt sau một liệu trình Tẩy trắng răng Laser tại NALI.</p>
+            <span class="eyebrow">Hình minh hoạ dịch vụ</span>
+            <h2>Thay đổi màu răng sau khi chăm sóc</h2>
+            <p>Hình minh hoạ nhằm giúp bạn hình dung dịch vụ. Kết quả và thời gian điều trị thực tế phụ thuộc tình trạng răng miệng của từng người.</p>
         </div>
         <div class="ba-wrap" id="baWrap">
-            <img src="images/after.jpg" alt="Sau khi tẩy trắng răng tại NALI" loading="lazy">
+            <img src="images/after.webp" alt="Hình minh hoạ răng trắng sáng" loading="lazy">
             <div class="ba-before" id="baBefore">
-                <img src="images/before.jpg" alt="Trước khi tẩy trắng răng" loading="lazy">
+                <img src="images/before.webp" alt="Hình minh hoạ màu răng ban đầu" loading="lazy">
             </div>
             <div class="ba-handle" id="baHandle"><span class="ba-grab"><i class="fas fa-arrows-left-right"></i></span></div>
             <span class="ba-label l">TRƯỚC</span>
             <span class="ba-label r">SAU</span>
         </div>
+        <aside class="case-library-note"><i class="fas fa-lock"></i><strong>Quyền riêng tư bệnh nhân được ưu tiên</strong><span>Ca thực tế chỉ được đăng khi có văn bản đồng ý.</span></aside>
+        </div>
+    </section>
+
+    <section class="facility-section" aria-labelledby="facilityTitle">
+        <div class="facility-image"><img src="images/clinic-space-ai.webp" alt="Hình minh hoạ không gian tiếp đón và phòng điều trị nha khoa hiện đại" loading="lazy"></div>
+        <div class="facility-copy"><span class="eyebrow">Không gian chăm sóc</span><h2 id="facilityTitle">Một không gian sáng, sạch và dễ chịu</h2><p>Hình minh hoạ định hướng trải nghiệm không gian. Khi có ảnh cơ sở thực tế, hãy thay ảnh này bằng ảnh đã được phê duyệt để khách biết chính xác nơi họ sẽ đến.</p><a href="contact.php" class="btn-secondary">Xem thông tin chi nhánh <i class="fas fa-arrow-right"></i></a></div>
     </section>
 
     <!-- ===== VÌ SAO CHỌN NALI ===== -->
-    <section class="section">
+    <section class="section trust-section">
         <div class="section-head">
             <span class="eyebrow">Cam kết của chúng tôi</span>
             <h2>Vì sao khách hàng chọn NALI?</h2>
             <p>Không chỉ là điều trị — chúng tôi mang đến trải nghiệm chăm sóc răng miệng an tâm và chuyên nghiệp.</p>
         </div>
         <div class="why-grid">
-            <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#4da6ff,#2c7ad1)"><i class="fas fa-user-md"></i></div><h4>Bác sĩ chuyên sâu</h4><p>Đội ngũ hơn 20 bác sĩ tốt nghiệp chính quy, nhiều năm kinh nghiệm và tu nghiệp quốc tế.</p></div>
-            <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#26de81,#20bf6b)"><i class="fas fa-microscope"></i></div><h4>Công nghệ hiện đại</h4><p>Máy scan 3D, chụp X-quang kỹ thuật số, laser và vật liệu nhập khẩu chính hãng.</p></div>
-            <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#ff9f43,#f39c12)"><i class="fas fa-shield-heart"></i></div><h4>Vô trùng tuyệt đối</h4><p>Quy trình tiệt trùng khép kín đạt chuẩn Bộ Y tế, dụng cụ dùng riêng cho từng khách.</p></div>
-            <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#a55eea,#8854d0)"><i class="fas fa-hand-holding-heart"></i></div><h4>Bảo hành & trả góp</h4><p>Chính sách bảo hành minh bạch, hỗ trợ trả góp 0% giúp bạn an tâm điều trị.</p></div>
+            <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#4da6ff,#2c7ad1)"><i class="fas fa-user-md"></i></div><h4>Tư vấn theo nhu cầu</h4><p>Thông tin dịch vụ được trình bày theo từng nhóm khách hàng để bạn dễ tham khảo trước khi đặt lịch.</p></div>
+            <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#26de81,#20bf6b)"><i class="fas fa-microscope"></i></div><h4>Thông tin rõ ràng</h4><p>Mô tả, thời lượng dự kiến và mức giá tham khảo được hiển thị trực tiếp trên từng dịch vụ.</p></div>
+            <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#ff9f43,#f39c12)"><i class="fas fa-calendar-check"></i></div><h4>Đặt lịch thuận tiện</h4><p>Gửi yêu cầu hẹn trực tuyến để phòng khám liên hệ xác nhận thời gian và nhu cầu của bạn.</p></div>
+            <div class="why-card"><div class="why-ico" style="background:linear-gradient(135deg,#a55eea,#8854d0)"><i class="fas fa-comments"></i></div><h4>Hỗ trợ trước khi đến</h4><p>Chatbot AI hỗ trợ tra cứu thông tin cơ bản; nhân viên sẽ xác nhận các nội dung chuyên môn và chi phí.</p></div>
         </div>
     </section>
 
     <!-- ===== CẢM NHẬN KHÁCH HÀNG ===== -->
-    <section class="section">
+    <section class="section testimonial-section">
         <div class="section-head">
             <span class="eyebrow">Khách hàng nói gì</span>
             <h2>Hàng nghìn nụ cười hài lòng</h2>
@@ -514,7 +561,7 @@ function renderServiceCard($service, $groups) {
                 ['Tôi có được tư vấn miễn phí trước khi điều trị không?',
                  'Có. Buổi khám và tư vấn đầu tiên tại NALI là miễn phí. Bác sĩ sẽ kiểm tra tổng quát, giải thích tình trạng và đề xuất phương án phù hợp với ngân sách của bạn.'],
                 ['NALI có hỗ trợ trả góp không?',
-                 'Có. Các dịch vụ lớn như Cấy ghép Implant, Niềng răng Invisalign được hỗ trợ trả góp 0% lãi suất. Bạn chỉ cần mang CCCD khi đến làm thủ tục.'],
+                 'Vui lòng liên hệ trực tiếp để được xác nhận phương thức thanh toán và các chính sách áp dụng tại thời điểm đặt lịch.'],
                 ['Điều trị tại NALI có đau không?',
                  'NALI sử dụng gây tê hiện đại và thiết bị ít xâm lấn (máy siêu âm Piezotome, laser). Đa số khách hàng chỉ cảm thấy tê nhẹ. Với người sợ đau, bác sĩ sẽ tư vấn thêm phương án giảm ê buốt.'],
                 ['Các dịch vụ có được bảo hành không?',
@@ -534,6 +581,20 @@ function renderServiceCard($service, $groups) {
         </div>
     </section>
 
+    <!-- ===== Nội dung được duyệt từ cơ sở dữ liệu ===== -->
+    <?php if ($approvedReviews): ?>
+    <section class="section public-review-section">
+        <div class="section-head"><span class="eyebrow">Phản hồi đã duyệt</span><h2>Khách hàng chia sẻ</h2><p>Các phản hồi dưới đây được khách gửi và quản trị viên duyệt trước khi công khai.</p></div>
+        <div class="why-grid">
+        <?php foreach ($approvedReviews as $review): ?><article class="why-card review-card"><div class="review-icon"><i class="fas fa-quote-left"></i></div><div class="stars"><?= str_repeat('★', max(0, min(5, (int)$review['rating']))) ?></div><p>“<?= htmlspecialchars($review['message']) ?>”</p><b><?= htmlspecialchars($review['name']) ?></b><?php if ($review['type']): ?><small><?= htmlspecialchars($review['type']) ?></small><?php endif; ?></article><?php endforeach; ?>
+        </div><div class="content-actions" style="justify-content:center"><a href="reviews.php" class="btn-hero ghost">Xem tất cả phản hồi</a></div>
+    </section>
+    <?php endif; ?>
+    <section class="section public-faq-section">
+        <div class="section-head"><span class="eyebrow">Giải đáp đã duyệt</span><h2>Câu hỏi thường gặp</h2><p>Câu trả lời được quản trị viên cập nhật; với nội dung điều trị cụ thể, hãy xác nhận cùng bác sĩ khi thăm khám.</p></div>
+        <?php if ($publicFaqs): ?><div class="faq-list"><?php foreach ($publicFaqs as $faq): ?><div class="faq-item"><button class="faq-q" type="button"><span><?= htmlspecialchars($faq['question']) ?></span><i class="fas fa-chevron-down"></i></button><div class="faq-a"><p><?= nl2br(htmlspecialchars($faq['answer'])) ?></p></div></div><?php endforeach; ?></div><?php else: ?><div class="content-empty">Chưa có câu hỏi được công bố. Vui lòng liên hệ để nhận thông tin chính xác theo nhu cầu.</div><?php endif; ?>
+    </section>
+
     <!-- ===== CTA ===== -->
     <div class="cta-band">
         <h2>Sẵn sàng cho nụ cười mới?</h2>
@@ -551,8 +612,6 @@ function renderServiceCard($service, $groups) {
             <div class="svc-modal-media" id="svcModalMedia"></div>
             <div class="svc-modal-body">
                 <div class="svc-meta">
-                    <span class="stars"><i class="fas fa-star"></i> <span id="svcModalRating"></span></span>
-                    <span class="reviews">(<span id="svcModalReviews"></span> đánh giá)</span>
                     <span class="dur"><i class="far fa-clock"></i> <span id="svcModalDur"></span>′</span>
                 </div>
                 <h3 id="svcModalName"></h3>
@@ -595,8 +654,6 @@ function renderServiceCard($service, $groups) {
             setText('svcModalDesc', card.dataset.desc);
             setText('svcModalPrice', card.dataset.price);
             setText('svcModalDur', card.dataset.dur);
-            setText('svcModalRating', card.dataset.rating);
-            setText('svcModalReviews', card.dataset.reviews);
             media.innerHTML = card.dataset.img
                 ? '<img src="' + card.dataset.img + '" alt="">'
                 : '<div class="thumb-fallback" style="background:' + card.dataset.grad + '"><i class="fas ' + card.dataset.icon + '"></i></div>';

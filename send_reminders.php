@@ -1,0 +1,7 @@
+<?php
+/** Run hourly from cron/Task Scheduler. Requires REMINDER_CRON_TOKEN outside CLI. */
+require_once 'config.php'; require_once 'booking_repository.php'; ensureBookingSchema($conn);
+if(PHP_SAPI!=='cli' && !hash_equals((string)getenv('REMINDER_CRON_TOKEN'),(string)($_GET['token']??''))){http_response_code(403);exit('Forbidden');}
+$rows=$conn->query("SELECT r.appointment_id,a.customer_name,a.customer_email,a.appointment_date,a.appointment_time FROM appointment_reminders r JOIN appointments a ON a.id=r.appointment_id WHERE r.sent_at IS NULL AND a.status='confirmed' AND r.scheduled_for<=NOW() AND r.scheduled_for>=DATE_SUB(NOW(),INTERVAL 2 HOUR)");$sent=0;
+while($a=$rows->fetch_assoc()){if(!$a['customer_email'])continue;$subject='Nhắc lịch hẹn NALI Dental';$body="Xin chào {$a['customer_name']},\n\nBạn có lịch hẹn vào {$a['appointment_time']} ngày {$a['appointment_date']}. Nếu cần đổi lịch, vui lòng thao tác trước 4 giờ.\n\nNALI Dental";$ok=(getenv('MAIL_ENABLED')==='1')?@mail($a['customer_email'],$subject,$body,'From: '.(getenv('MAIL_FROM')?:'no-reply@example.invalid')):false;$id=(int)$a['appointment_id'];if($ok){$s=$conn->prepare('UPDATE appointment_reminders SET sent_at=NOW(),last_error=NULL WHERE appointment_id=?');$s->bind_param('i',$id);$s->execute();$sent++;}else{$e='Email is not configured or could not be delivered.';$s=$conn->prepare('UPDATE appointment_reminders SET last_error=? WHERE appointment_id=?');$s->bind_param('si',$e,$id);$s->execute();}}
+echo "Reminder run complete: {$sent} sent\n";

@@ -4,38 +4,48 @@
 <div class="contact-header"><div><h1><i class="fas fa-calendar-check"></i> Đặt Lịch Tư Vấn</h1><p>Miễn phí tư vấn • Xác nhận trong 5 phút</p></div></div>
 <div class="auth-wrap" style="min-height:auto;padding-top:40px;">
   <div class="auth-card" style="max-width:560px;">
+    <div class="booking-progress" aria-label="Tiến trình đặt lịch"><span class="active">1. Dịch vụ</span><span>2. Thời gian</span><span>3. Liên hệ</span></div>
+    {% if rescheduling %}<p class="booking-edit-note"><i class="fas fa-pen"></i> Bạn đang đổi lịch hẹn #{{ rescheduling.id }}.</p>{% endif %}
     <h1 style="font-size:1.4rem;"><i class="fas fa-tooth"></i> Thông tin lịch hẹn</h1>
     <p class="auth-sub">Điền thông tin để NALI phục vụ bạn tốt nhất</p>
     <form method="post" novalidate>
       {{ form.hidden_tag() }}
-      <div class="fg">{{ form.customer_name.label }}{{ form.customer_name(class="fc") }}
+      <div class="fg" data-booking-step="3">{{ form.customer_name.label }}{{ form.customer_name(class="fc") }}
         {% for e in form.customer_name.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
-      <div class="grid2">
+      <div class="grid2" data-booking-step="3">
         <div class="fg">{{ form.customer_phone.label }}{{ form.customer_phone(class="fc") }}
           {% for e in form.customer_phone.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
         <div class="fg">{{ form.customer_email.label }}{{ form.customer_email(class="fc") }}
           {% for e in form.customer_email.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
       </div>
-      <div class="fg">{{ form.product_id.label }}{{ form.product_id(class="fc") }}</div>
-      <div class="grid2">
+      <div class="fg" data-booking-step="1">{{ form.product_id.label }}{{ form.product_id(class="fc") }}</div>
+      <div class="grid2" data-booking-step="2">
         <div class="fg">{{ form.appointment_date.label }}{{ form.appointment_date(class="fc") }}
           {% for e in form.appointment_date.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
-        <div class="fg">{{ form.appointment_time.label }}{{ form.appointment_time(class="fc") }}
+        <div class="fg">{{ form.appointment_time.label }}{{ form.appointment_time(class="fc", style="display:none") }}<div class="slot-picker" id="slotPicker" aria-live="polite">Chọn ngày để xem khung giờ còn trống.</div>
           {% for e in form.appointment_time.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
       </div>
-      <div class="fg">{{ form.notes.label }}{{ form.notes(class="fc", rows=3) }}</div>
-      {{ form.submit(class="auth-btn") }}
+      <div class="fg" data-booking-step="3">{{ form.notes.label }}{{ form.notes(class="fc", rows=3) }}</div>
+      <div class="booking-actions"><button type="button" class="booking-back" data-booking-back>Quay lại</button><button type="button" class="auth-btn" data-booking-next>Tiếp tục</button>{{ form.submit(class="auth-btn", data_booking_submit="1") }}</div>
     </form>
     <p class="auth-alt"><a href="{{ url_for('booking.my_appointments') }}"><i class="fas fa-list"></i> Xem lịch hẹn của tôi</a></p>
   </div>
 </div>
 {% include 'partials/auth_style.html' %}
-<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;} @media(max-width:520px){.grid2{grid-template-columns:1fr;}}</style>
+<style>
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}.booking-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:22px;font-size:.76rem;font-weight:700;text-align:center;color:#64748b;}.booking-progress span{padding:8px 4px;border-bottom:3px solid #dbe7f4;}.booking-progress .active{color:#2c7ad1;border-color:#4da6ff;}.booking-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-top:22px;}.booking-actions .auth-btn{margin:0;}.booking-back{border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:10px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;}.slot-picker{display:flex;flex-wrap:wrap;gap:8px;min-height:38px;padding-top:8px;color:#64748b;font-size:.85rem;}.slot-btn{border:1px solid #bfdbfe;background:#f8fbff;color:#1d4f82;border-radius:9px;padding:8px 11px;font:inherit;font-weight:700;cursor:pointer;}.slot-btn:hover,.slot-btn.selected{background:#2c7ad1;color:#fff;border-color:#2c7ad1;}.booking-edit-note{margin:-8px 0 18px;padding:9px 12px;background:#eef7ff;color:#245a8d;border-radius:10px;font-size:.88rem;}[hidden]{display:none!important;}@media(max-width:520px){.grid2{grid-template-columns:1fr;}.booking-actions{justify-content:stretch;}.booking-actions>*{flex:1;}}
+</style>
 {% endblock %}
 {% block scripts %}
 <script>
-/* Điền sẵn dịch vụ nếu tới từ trang chi tiết (?product=) */
-(function(){var p=new URLSearchParams(location.search).get('product');
-if(p){var sel=document.getElementById('product_id');if(sel)sel.value=p;}})();
+(function(){
+  var step=1, steps=document.querySelectorAll('[data-booking-step]'), labels=document.querySelectorAll('.booking-progress span');
+  var next=document.querySelector('[data-booking-next]'), back=document.querySelector('[data-booking-back]'), submit=document.querySelector('[data-booking-submit]');
+  var dateInput=document.getElementById('appointment_date'), timeInput=document.getElementById('appointment_time'), picker=document.getElementById('slotPicker');
+  var p=new URLSearchParams(location.search).get('product'); if(p){var sel=document.getElementById('product_id');if(sel)sel.value=p;}
+  function show(n){step=n; steps.forEach(function(el){el.hidden=String(el.dataset.bookingStep)!==String(n);}); labels.forEach(function(el,i){el.classList.toggle('active',i+1===n);}); back.hidden=n===1; next.hidden=n===3; submit.hidden=n!==3;}
+  function slots(){if(!dateInput.value){picker.textContent='Chọn ngày để xem khung giờ còn trống.';return;} picker.textContent='Đang kiểm tra khung giờ…'; var qs='?date='+encodeURIComponent(dateInput.value); var rid=new URLSearchParams(location.search).get('reschedule'); if(rid)qs+='&reschedule='+encodeURIComponent(rid); fetch('{{ url_for('booking.available_slots') }}'+qs).then(function(r){return r.json();}).then(function(data){if(!data.success){picker.textContent=data.message||'Không tải được khung giờ.';return;} if(!data.slots.length){picker.textContent='Ngày này đã kín lịch. Vui lòng chọn ngày khác.';return;} picker.innerHTML=data.slots.map(function(slot){return '<button type="button" class="slot-btn" data-slot="'+slot+'">'+slot+'</button>';}).join(''); picker.querySelectorAll('[data-slot]').forEach(function(btn){btn.addEventListener('click',function(){timeInput.value=btn.dataset.slot;picker.querySelectorAll('.slot-btn').forEach(function(x){x.classList.toggle('selected',x===btn);});});}); if(timeInput.value){var selected=picker.querySelector('[data-slot="'+timeInput.value+'"]');if(selected)selected.click();}}).catch(function(){picker.textContent='Không thể tải khung giờ. Vui lòng thử lại.';});}
+  next.addEventListener('click',function(){if(step===1){show(2);slots();}else if(step===2){if(!dateInput.value||!timeInput.value){picker.insertAdjacentHTML('beforeend','<small class="err">Vui lòng chọn ngày và khung giờ.</small>');return;}show(3);}});back.addEventListener('click',function(){show(step-1);});dateInput.addEventListener('change',function(){timeInput.value='';slots();});show(1); if(dateInput.value)slots();
+})();
 </script>
 {% endblock %}

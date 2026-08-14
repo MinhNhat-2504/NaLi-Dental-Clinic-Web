@@ -78,6 +78,7 @@ if (isset($_POST['register_btn'])) {
     <meta charset="UTF-8">
     <title>Đăng Ký - NALI Dental</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="clinic-ui.css">
 </head>
 <body class="bg-light">
     <div class="container mt-5">

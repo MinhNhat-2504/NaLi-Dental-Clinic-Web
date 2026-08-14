@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}{{ post.title }} | NALI Dental{% endblock %}
+{% block content %}
+<main class="container" style="max-width:850px;padding:56px 18px 80px"><p class="eyebrow">{{ post.category or 'Kiến thức' }}</p><h1>{{ post.title }}</h1>{% if post.cover_image %}<img src="{{ url_for('static', filename='images/' + post.cover_image) if '/' not in post.cover_image else post.cover_image }}" alt="{{ post.title }}" loading="lazy" style="width:100%;max-height:420px;object-fit:cover;border-radius:16px;margin:20px 0">{% endif %}<p><b>{{ post.excerpt }}</b></p><div style="line-height:1.8;white-space:pre-line">{{ post.content or '' }}</div></main>
+{% endblock %}

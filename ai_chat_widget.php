@@ -86,6 +86,7 @@ if (!defined('AI_SERVICE_URL')) {
     padding: 10px 13px; border-radius: 14px; max-width: 82%; font-size: .9rem; line-height: 1.45;
     white-space: pre-wrap; word-wrap: break-word;
 }
+.nali-msg time { display:block; font-size:.65rem; opacity:.65; margin-top:5px; }
 .nali-msg.bot .bubble { background: #fff; color: #333; border: 1px solid #e3eefc; border-bottom-left-radius: 4px; }
 .nali-msg.user { justify-content: flex-end; }
 .nali-msg.user .bubble { background: linear-gradient(135deg, #4da6ff, #3d8fe8); color: #fff; border-bottom-right-radius: 4px; }
@@ -134,7 +135,7 @@ if (!defined('AI_SERVICE_URL')) {
     function addMsg(text, who) {
         const wrap = document.createElement('div');
         wrap.className = 'nali-msg ' + who;
-        wrap.innerHTML = '<div class="bubble">' + render(text) + '</div>';
+        wrap.innerHTML = '<div class="bubble">' + render(text) + '<time>' + new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}) + '</time></div>';
         body.appendChild(wrap);
         body.scrollTop = body.scrollHeight;
         return wrap;
