@@ -14,6 +14,56 @@ $isLoggedIn = isset($_SESSION['auth']) && $_SESSION['auth'] === true;
 $userName = $isLoggedIn ? ($_SESSION['auth_user']['name'] ?? 'Khách') : '';
 $userRole = $isLoggedIn ? ($_SESSION['auth_user']['role'] ?? 'user') : '';
 
+/** In thẻ SEO cơ bản cho các trang công khai. URL ảnh được tạo theo host đang truy cập. */
+function renderSeo($title, $description, $image = 'images/service-whitening-ai.webp') {
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = preg_replace('/[^A-Za-z0-9.:-]/', '', $_SERVER['HTTP_HOST'] ?? 'localhost');
+    $path = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
+    $base = $scheme . '://' . $host;
+    $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+    $siteBase = $base . ($scriptDir ? $scriptDir : '');
+    $pageUrl = $base . $path;
+    $imageUrl = $siteBase . '/' . ltrim($image, '/');
+    $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+    $safeDescription = htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
+    $safePageUrl = htmlspecialchars($pageUrl, ENT_QUOTES, 'UTF-8');
+    $safeImageUrl = htmlspecialchars($imageUrl, ENT_QUOTES, 'UTF-8');
+    echo "\n    <meta name=\"description\" content=\"{$safeDescription}\">\n";
+    echo "    <link rel=\"canonical\" href=\"{$safePageUrl}\">\n";
+    echo "    <meta property=\"og:type\" content=\"website\">\n";
+    echo "    <meta property=\"og:locale\" content=\"vi_VN\">\n";
+    echo "    <meta property=\"og:title\" content=\"{$safeTitle}\">\n";
+    echo "    <meta property=\"og:description\" content=\"{$safeDescription}\">\n";
+    echo "    <meta property=\"og:url\" content=\"{$safePageUrl}\">\n";
+    echo "    <meta property=\"og:image\" content=\"{$safeImageUrl}\">\n";
+    echo "    <meta name=\"twitter:card\" content=\"summary_large_image\">\n";
+    echo "    <meta name=\"twitter:title\" content=\"{$safeTitle}\">\n";
+    echo "    <meta name=\"twitter:description\" content=\"{$safeDescription}\">\n";
+    echo "    <meta name=\"twitter:image\" content=\"{$safeImageUrl}\">\n";
+    $structuredData = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Dentist',
+        'name' => 'NALI Dental Clinic',
+        'url' => $siteBase,
+        'telephone' => '+84945457512',
+        'image' => $imageUrl,
+        'openingHours' => 'Mo-Su 08:00-20:00',
+        'address' => [
+            '@type' => 'PostalAddress',
+            'streetAddress' => '69/68 Đặng Thùy Trâm',
+            'addressLocality' => 'Bình Thạnh',
+            'addressRegion' => 'Hồ Chí Minh',
+            'addressCountry' => 'VN',
+        ],
+        'department' => [
+            ['@type' => 'Dentist', 'name' => 'NALI Dental - Bình Thạnh', 'address' => ['@type' => 'PostalAddress', 'streetAddress' => '69/68 Đặng Thùy Trâm, Bình Thạnh, Hồ Chí Minh, Việt Nam']],
+            ['@type' => 'Dentist', 'name' => 'NALI Dental - Quận 1', 'address' => ['@type' => 'PostalAddress', 'streetAddress' => '123 Nguyễn Huệ, Quận 1, Hồ Chí Minh, Việt Nam']],
+            ['@type' => 'Dentist', 'name' => 'NALI Dental - Gò Vấp', 'address' => ['@type' => 'PostalAddress', 'streetAddress' => '456 Quang Trung, Gò Vấp, Hồ Chí Minh, Việt Nam']],
+        ],
+    ];
+    echo "    <script type=\"application/ld+json\">" . json_encode($structuredData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "</script>\n";
+}
+
 /**
  * Render Header với Navigation
  * @param string $currentPage - Tên trang hiện tại để đánh dấu active
@@ -24,12 +74,15 @@ function renderHeader($currentPage = '') {
     $navItems = [
         ['href' => 'about.php', 'label' => 'Về NALI', 'icon' => 'fa-info-circle', 'key' => 'about'],
         ['href' => 'services.php', 'label' => 'Dịch vụ', 'icon' => 'fa-tooth', 'key' => 'services'],
-        ['href' => 'contact.php', 'label' => 'Đặt lịch', 'icon' => 'fa-calendar-check', 'key' => 'contact'],
+        ['href' => 'pricing.php', 'label' => 'Bảng giá', 'icon' => 'fa-tags', 'key' => 'pricing'],
+        ['href' => 'booking.php', 'label' => 'Đặt lịch', 'icon' => 'fa-calendar-check', 'key' => 'contact'],
         ['href' => 'news.php', 'label' => 'Kiến thức', 'icon' => 'fa-newspaper', 'key' => 'news'],
         ['href' => 'team.php', 'label' => 'Bác sĩ', 'icon' => 'fa-user-md', 'key' => 'team'],
     ];
     ?>
     <script>/* Áp dark mode sớm (chống nháy sáng) */(function(){try{var t=localStorage.getItem('nali-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <!-- Shared NALI Dental visual system. Loaded after page-level legacy styles. -->
+    <link rel="stylesheet" href="clinic-ui.css">
     <header class="site-header">
         <div class="header-container">
             <a href="services.php" class="site-logo">
@@ -37,7 +90,7 @@ function renderHeader($currentPage = '') {
                 <span>NALI Dental</span>
             </a>
             
-            <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()" aria-label="Menu">
+            <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()" aria-label="Mở menu điều hướng" aria-controls="mainNav" aria-expanded="false">
                 <i class="fas fa-bars" id="menuIcon"></i>
             </button>
             
@@ -140,6 +193,9 @@ function renderHeader($currentPage = '') {
         
         nav.classList.toggle('show');
         overlay.classList.toggle('show');
+        const isOpen = nav.classList.contains('show');
+        const toggle = document.getElementById('menuToggle');
+        if (toggle) toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         
         // Ngăn scroll body khi menu mở
         document.body.style.overflow = nav.classList.contains('show') ? 'hidden' : '';
@@ -151,12 +207,21 @@ function renderHeader($currentPage = '') {
         
         nav.classList.remove('show');
         overlay.classList.remove('show');
+        const toggle = document.getElementById('menuToggle');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
         document.body.style.overflow = '';
     }
     
     // Đóng menu khi nhấn vào link
     document.querySelectorAll('.main-nav .nav-link').forEach(link => {
         link.addEventListener('click', closeMobileMenu);
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && document.getElementById('mainNav')?.classList.contains('show')) {
+            closeMobileMenu();
+            document.getElementById('menuToggle')?.focus();
+        }
     });
     
     // Đóng menu khi nhấn nút Back
@@ -195,15 +260,26 @@ function renderFooter() {
     ?>
     <footer class="site-footer">
         <div class="footer-main">
+            <div class="footer-section">
+                <h4>Thông tin</h4>
+                <ul class="footer-links">
+                    <li><a href="pricing.php">Bảng giá tham khảo</a></li>
+                    <li><a href="warranty.php">Chính sách bảo hành</a></li>
+                    <li><a href="reviews.php">Phản hồi khách hàng</a></li>
+                    <li><a href="trust.php">Giấy phép & chứng nhận</a></li>
+                    <li><a href="privacy.php">Chính sách dữ liệu cá nhân</a></li>
+                    <li><a href="terms.php">Điều khoản sử dụng</a></li>
+                </ul>
+            </div>
             <div class="footer-brand">
                 <div class="logo">
-                    <img src="images/Gemini_Generated_Image_krshx6krshx6krsh.png" alt="NALI Dental Clinic Logo" style="height: 60px; margin-bottom: 10px;">
+                    <img src="images/logo.png" alt="NALI Dental Clinic Logo" style="height: 60px; margin-bottom: 10px; object-fit: contain;">
                 </div>
                 <div class="logo" style="margin-bottom: 15px;">
                     <span>🦷</span>
                     <span>NALI Dental Clinic</span>
                 </div>
-                <p>Hệ thống Nha khoa Công nghệ cao tích hợp AI - Mang đến nụ cười hoàn hảo cho bạn.</p>
+                <p>Thông tin dịch vụ, đặt lịch và hỗ trợ tra cứu cơ bản cho khách hàng NALI Dental.</p>
                 <div class="social-links">
                     <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
                     <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
@@ -248,6 +324,8 @@ function renderFooter() {
     if (is_file($__aiWidget)) {
         include $__aiWidget;
     }
+    $__analytics = __DIR__ . '/../analytics.php';
+    if (is_file($__analytics)) { include $__analytics; }
     ?>
     <!-- Thanh tiến trình cuộn + nút về đầu trang -->
     <div id="naliProgress"></div>

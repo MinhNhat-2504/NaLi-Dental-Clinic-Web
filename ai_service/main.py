@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import sys
+import time
 
 # Ép stdout/stderr sang UTF-8 để log tiếng Việt không lỗi trên console Windows
 for _stream in (sys.stdout, sys.stderr):
@@ -25,7 +26,7 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -63,6 +64,18 @@ class _State:
 
 
 state = _State()
+_chat_rate: dict[str, list[float]] = {}
+
+
+def _allow_chat(request: Request, session_id: str) -> bool:
+    """Simple bounded in-memory limiter: 20 chat requests / 5 minutes per IP+session."""
+    key = f"{request.client.host if request.client else 'unknown'}:{session_id[:80]}"
+    now = time.monotonic(); entries = [t for t in _chat_rate.get(key, []) if now - t < 300]
+    if len(entries) >= 20:
+        _chat_rate[key] = entries
+        return False
+    entries.append(now); _chat_rate[key] = entries
+    return True
 
 
 def _select_primary(retriever: Retriever):
@@ -130,8 +143,10 @@ class ChatResponse(BaseModel):
 
 # ----------------------------- Endpoints -----------------------------
 @app.post("/chat", response_model=ChatResponse)
-def chat(req: ChatRequest) -> ChatResponse:
+def chat(req: ChatRequest, request: Request) -> ChatResponse:
     """Điểm vào chính: nhận câu hỏi, trả câu trả lời của trợ lý AI."""
+    if not _allow_chat(request, req.session_id):
+        raise HTTPException(status_code=429, detail="Bạn đã gửi quá nhiều tin nhắn. Vui lòng thử lại sau vài phút.")
     message = req.message.strip()
 
     if state.primary is not None:

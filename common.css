@@ -34,6 +34,11 @@
     box-sizing: border-box;
 }
 
+/* Không để một carousel/flex child mở rộng viewport trên màn hình hẹp. */
+body > * { min-width: 0; }
+main, section, .container, .hero-inner, .services-grid, .service-card, .service-card-content,
+.doctor-grid, .doctor-card, .news-card, .contact-form, .booking-form { min-width: 0; }
+
 body {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     background-color: var(--bg-light);
@@ -174,7 +179,7 @@ img {
 /* ========== PAGE HERO SECTION ========== */
 .page-hero {
     background: linear-gradient(135deg, rgba(77, 166, 255, 0.9), rgba(61, 143, 232, 0.9)), 
-                url('images/dental-bg.jpg') center/cover;
+                url('images/dental-bg.webp') center/cover;
     padding: 60px 20px;
     text-align: center;
     color: white;

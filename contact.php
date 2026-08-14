@@ -42,6 +42,7 @@ require_once 'includes/components.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đặt Lịch Hẹn - NALI Dental Clinic</title>
+    <?php renderSeo('Đặt lịch hẹn - NALI Dental Clinic', 'Gửi yêu cầu đặt lịch khám nha khoa trực tuyến. NALI Dental sẽ xác nhận thời gian và nhu cầu tư vấn của bạn.'); ?>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="favicon.png">

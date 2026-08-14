@@ -7,13 +7,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def _env(name: str, default: str = "") -> str:
+    """Production must receive sensitive settings explicitly."""
+    value = os.getenv(name)
+    if os.getenv("APP_ENV") == "production" and not value and name in {"SECRET_KEY", "DB_PASS"}:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value if value is not None else default
+
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "nali-dev-secret-key-doi-khi-deploy")
+    SECRET_KEY = _env("SECRET_KEY", "dev-only-change-me")
 
     # --- Cơ sở dữ liệu (dùng chung MySQL nali_dental với bản PHP) ---
     DB_USER = os.getenv("DB_USER", "root")
-    DB_PASS = os.getenv("DB_PASS", "123456")
+    DB_PASS = _env("DB_PASS", "")
     DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_PORT = os.getenv("DB_PORT", "3306")
     DB_NAME = os.getenv("DB_NAME", "nali_dental")
@@ -21,6 +28,9 @@ class Config:
         f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Local/demo: tự tạo bảng model còn thiếu (blog_posts, faqs...) để app không chết.
+    # Production phải chạy migration rõ ràng trước khi deploy.
+    AUTO_CREATE_SCHEMA = os.getenv("AUTO_CREATE_SCHEMA", "1" if os.getenv("APP_ENV") != "production" else "0") == "1"
 
     # --- Flask-Mail (email xác nhận đặt lịch) ---
     MAIL_SERVER = os.getenv("MAIL_SERVER", "smtp.gmail.com")

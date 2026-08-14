@@ -6,12 +6,10 @@
 <section class="section">
   <div class="detail-wrap">
     <div class="detail-media">
-      <img src="{{ url_for('static', filename='images/' ~ service_card_image(p.target_group)) }}" alt="{{ p.name }}" onerror="this.src='{{ url_for('static', filename='images/default.jpg') }}'">
+      <img src="{{ url_for('static', filename='images/' ~ service_card_image(p.target_group, p.name)) }}" alt="{{ p.name }}" onerror="this.src='{{ url_for('static', filename='images/logo.png') }}'">
     </div>
     <div class="detail-info">
-      <div class="svc-meta"><span class="stars"><i class="fas fa-star"></i> {{ svc_rating(p.id) }}</span>
-        <span class="reviews">({{ svc_reviews(p.id) }} đánh giá)</span>
-        <span class="dur"><i class="far fa-clock"></i> {{ p.duration }} phút</span></div>
+      <div class="svc-meta"><span class="dur"><i class="far fa-clock"></i> {{ p.duration }} phút</span></div>
       <h2>{{ p.name }}</h2>
       <p class="desc">{{ p.description }}</p>
       <div class="detail-price">
@@ -21,7 +19,7 @@
       <ul class="detail-benefits">
         <li><i class="fas fa-check-circle"></i> Bác sĩ chuyên khoa trực tiếp thực hiện</li>
         <li><i class="fas fa-check-circle"></i> Vô trùng khép kín, an toàn tuyệt đối</li>
-        <li><i class="fas fa-check-circle"></i> Bảo hành &amp; hỗ trợ trả góp 0%</li>
+        <li><i class="fas fa-check-circle"></i> Chi phí và chính sách được xác nhận trước khi điều trị</li>
       </ul>
       <a href="{{ url_for('booking.book', product=p.id) }}" class="btn-hero primary" style="color:#fff;background:linear-gradient(135deg,var(--nali),var(--nali-dark));"><i class="fas fa-calendar-check"></i> Đặt lịch dịch vụ này</a>
     </div>
@@ -38,7 +36,7 @@
 .detail-info h2 { font-size:1.9rem; font-weight:800; margin:8px 0 14px; }
 .detail-info .desc { color:#64748b; line-height:1.8; margin-bottom:20px; }
 .detail-price { background:#f2f8ff; border-radius:14px; padding:16px 20px; margin-bottom:20px; }
-.detail-price small { display:block; color:#94a3b8; } .detail-price b { font-size:1.7rem; color:var(--nali-dark); }
+.detail-price small { display:block; color:#64748b; } .detail-price b { font-size:1.7rem; color:var(--nali-dark); }
 .detail-benefits { list-style:none; padding:0; margin:0 0 24px; } .detail-benefits li { padding:7px 0; color:#475569; }
 .detail-benefits i { color:#26de81; margin-right:8px; }
 [data-theme="dark"] .detail-price { background:#14304d; } [data-theme="dark"] .detail-info .desc, [data-theme="dark"] .detail-benefits li { color:#94a3b8; }

@@ -200,3 +200,15 @@ def feedback():
     page = request.args.get("page", 1, type=int)
     pagination = Feedback.query.order_by(Feedback.id.desc()).paginate(page=page, per_page=10, error_out=False)
     return render_template("admin/feedback.html", pagination=pagination, items=pagination.items)
+
+
+@admin_bp.route("/phan-hoi/<int:fid>/trang-thai", methods=["POST"])
+@admin_required
+def feedback_status(fid):
+    item = Feedback.query.get_or_404(fid)
+    status = request.form.get("status")
+    if status in ("pending", "approved", "rejected"):
+        item.status = status
+        db.session.commit()
+        flash("Đã cập nhật trạng thái phản hồi.", "success")
+    return redirect(url_for("admin.feedback"))

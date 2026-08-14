@@ -1,5 +1,12 @@
 <?php
 require_once 'includes/components.php';
+require_once 'config.php';
+require_once 'content_repository.php';
+ensureContentSchema($conn);
+
+// Chỉ công khai nhân sự có trong CSDL; không xuất số điện thoại cá nhân.
+$doctorResult = $conn->query("SELECT u.id, u.full_name, u.specialty, p.slug, p.is_published, p.introduction, p.photo FROM users u LEFT JOIN doctor_profiles p ON p.user_id=u.id WHERE u.role = 'doctor' ORDER BY u.id ASC");
+$publicDoctors = $doctorResult ? $doctorResult->fetch_all(MYSQLI_ASSOC) : [];
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -7,6 +14,7 @@ require_once 'includes/components.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đội Ngũ Bác Sĩ - NALI Dental Clinic</title>
+    <?php renderSeo('Đội ngũ bác sĩ - NALI Dental Clinic', 'Xem thông tin đội ngũ bác sĩ và gửi yêu cầu đặt lịch tư vấn tại NALI Dental.'); ?>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="favicon.png">
@@ -20,7 +28,7 @@ require_once 'includes/components.php';
         body { background-color: #f8f9fa; }
 
         .team-header {
-            background: linear-gradient(rgba(0, 123, 255, 0.8), rgba(0, 70, 147, 0.8)), url('images/dental-bg.jpg');
+            background: linear-gradient(rgba(0, 123, 255, 0.8), rgba(0, 70, 147, 0.8)), url('images/dental-bg.webp');
             background-size: cover;
             background-position: center;
             height: 250px;
@@ -583,7 +591,7 @@ require_once 'includes/components.php';
 
     <div class="container">
         <!-- Bộ lọc chuyên khoa -->
-        <div class="specialty-filter">
+        <div class="specialty-filter" hidden>
             <h3><i class="fas fa-filter"></i> Lọc theo Đối tượng khách hàng</h3>
             <div class="filter-buttons">
                 <button class="filter-btn active" data-specialty="all" onclick="filterBySpecialty('all')">
@@ -606,7 +614,32 @@ require_once 'includes/components.php';
 
         <!-- Bọc lưới bác sĩ trong box trắng căn giữa -->
         <div class="team-content-box">
-            <div class="doctor-grid stagger-container">
+            <div class="doctor-grid actual-doctor-grid">
+                <?php if ($publicDoctors): ?>
+                    <?php foreach ($publicDoctors as $index => $doctor): ?>
+                        <?php $photo = $doctor['photo'] ?: ($index % 2 === 0 ? 'images/doctor-male-elderly.webp' : 'images/doctor-female-pediatric.webp'); ?>
+                        <article class="doctor-card reveal hover-lift">
+                            <div class="doctor-img-box">
+                                <img src="<?= htmlspecialchars($photo, ENT_QUOTES, 'UTF-8') ?>" alt="Ảnh minh hoạ chuyên môn - <?= htmlspecialchars($doctor['full_name'], ENT_QUOTES, 'UTF-8') ?>" class="doctor-img" loading="lazy">
+                            </div>
+                            <div class="doctor-info">
+                                <p class="doctor-role"><?= htmlspecialchars($doctor['specialty'] ?: 'Bác sĩ nha khoa', ENT_QUOTES, 'UTF-8') ?></p>
+                                <h3 class="doctor-name"><?= htmlspecialchars($doctor['full_name'], ENT_QUOTES, 'UTF-8') ?></h3>
+                                <p class="doctor-desc">Thông tin chuyên môn được cập nhật từ hệ thống NALI. Vui lòng đặt lịch để được tư vấn phù hợp.</p>
+                                <p class="doctor-note">Ảnh minh hoạ chuyên môn.</p>
+                                <?php if (!empty($doctor['is_published']) && !empty($doctor['slug'])): ?>
+                                    <a class="btn-primary" href="doctor.php?slug=<?= urlencode($doctor['slug']) ?>">Xem hồ sơ</a>
+                                <?php else: ?>
+                                    <a class="btn-primary" href="contact.php">Đặt lịch với bác sĩ</a>
+                                <?php endif; ?>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="empty-state">Đội ngũ bác sĩ đang được cập nhật. Vui lòng liên hệ hotline chung để đặt lịch.</p>
+                <?php endif; ?>
+            </div>
+            <div class="doctor-grid stagger-container legacy-doctor-grid" aria-hidden="true">
 
             <div class="doctor-card reveal hover-lift tilt-effect" 
                  data-doctor="TS. BS. Trần Minh Nhật" 
@@ -616,7 +649,7 @@ require_once 'includes/components.php';
                     <i class="fas fa-info-circle"></i> Xem chi tiết
                 </span>
                 <div class="doctor-img-box">
-                    <img src="images/doc1.jpg" alt="TS. BS. Trần Minh Nhật - Giám Đốc Chuyên Môn" class="doctor-img" onerror="this.src='https://images.unsplash.com/photo-1622253692010-333f2da6031d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                    <img src="images/doctor-male-elderly.webp" alt="TS. BS. Trần Minh Nhật - Giám Đốc Chuyên Môn" class="doctor-img">
                 </div>
                 <div class="doctor-info">
                     <h3 class="doctor-name">TS. BS. Trần Minh Nhật</h3>
@@ -645,7 +678,7 @@ require_once 'includes/components.php';
                     <i class="fas fa-info-circle"></i> Xem chi tiết
                 </span>
                 <div class="doctor-img-box">
-                    <img src="images/doc2.jpg" alt="ThS. BS. Nguyễn Thị Lan - Chuyên Gia Chỉnh Nha" class="doctor-img" onerror="this.src='https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                    <img src="images/doctor-female-pediatric.webp" alt="ThS. BS. Nguyễn Thị Lan - Chuyên Gia Chỉnh Nha" class="doctor-img">
                 </div>
                 <div class="doctor-info">
                     <h3 class="doctor-name">ThS. BS. Nguyễn Thị Lan</h3>
@@ -674,7 +707,7 @@ require_once 'includes/components.php';
                     <i class="fas fa-info-circle"></i> Xem chi tiết
                 </span>
                 <div class="doctor-img-box">
-                    <img src="images/doc3.jpg" alt="BS. Lê Văn Hùng - Nha Khoa Thẩm Mỹ & Tiểu Phẫu" class="doctor-img" onerror="this.src='https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                    <img src="images/doctor-male-elderly.webp" alt="BS. Lê Văn Hùng - Nha Khoa Thẩm Mỹ & Tiểu Phẫu" class="doctor-img">
                 </div>
                 <div class="doctor-info">
                     <h3 class="doctor-name">BS. Lê Văn Hùng</h3>
@@ -703,7 +736,7 @@ require_once 'includes/components.php';
                     <i class="fas fa-info-circle"></i> Xem chi tiết
                 </span>
                 <div class="doctor-img-box">
-                    <img src="images/doc4.jpg" alt="BS. Phạm Thị Mai - Nha Khoa Nội Nha" class="doctor-img" onerror="this.src='https://images.unsplash.com/photo-1594824476967-48c8b964273f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                    <img src="images/doctor-female-pediatric.webp" alt="BS. Phạm Thị Mai - Nha Khoa Nội Nha" class="doctor-img">
                 </div>
                 <div class="doctor-info">
                     <h3 class="doctor-name">BS. Phạm Thị Mai</h3>
@@ -732,7 +765,7 @@ require_once 'includes/components.php';
                     <i class="fas fa-info-circle"></i> Xem chi tiết
                 </span>
                 <div class="doctor-img-box">
-                    <img src="images/doc5.jpg" alt="BS. CK1. Hoàng Minh Tuấn - Nha Khoa Trẻ Em" class="doctor-img" onerror="this.src='https://images.unsplash.com/photo-1537368910025-700350fe46c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                    <img src="images/doctor-male-elderly.webp" alt="BS. CK1. Hoàng Minh Tuấn - Nha Khoa Trẻ Em" class="doctor-img">
                 </div>
                 <div class="doctor-info">
                     <h3 class="doctor-name">BS. CK1. Hoàng Minh Tuấn</h3>
@@ -760,7 +793,7 @@ require_once 'includes/components.php';
                     <i class="fas fa-info-circle"></i> Xem chi tiết
                 </span>
                 <div class="doctor-img-box">
-                    <img src="images/doc6.jpg" alt="ThS. BS. Vũ Thu Hằng - Nha Chu & Nha Công Cộng" class="doctor-img" onerror="this.src='https://images.unsplash.com/photo-1551601651-2a8555f1a136?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                    <img src="images/doctor-female-pediatric.webp" alt="ThS. BS. Vũ Thu Hằng - Nha Chu & Nha Công Cộng" class="doctor-img">
                 </div>
                 <div class="doctor-info">
                     <h3 class="doctor-name">ThS. BS. Vũ Thu Hằng</h3>
@@ -789,7 +822,7 @@ require_once 'includes/components.php';
                     <i class="fas fa-info-circle"></i> Xem chi tiết
                 </span>
                 <div class="doctor-img-box">
-                    <img src="images/doctor-female-pediatric.jpg" alt="BS. Nguyễn Thị Hương - Nha Khoa Trẻ Em" class="doctor-img" onerror="this.src='https://images.unsplash.com/photo-1594824476967-48c8b964273f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                    <img src="images/doctor-female-pediatric.webp" alt="BS. Nguyễn Thị Hương - Nha Khoa Trẻ Em" class="doctor-img" onerror="this.onerror=null;this.src='images/logo.png'">
                 </div>
                 <div class="doctor-info">
                     <h3 class="doctor-name">BS. Nguyễn Thị Hương</h3>
@@ -818,13 +851,13 @@ require_once 'includes/components.php';
                     <i class="fas fa-info-circle"></i> Xem chi tiết
                 </span>
                 <div class="doctor-img-box">
-                    <img src="images/doctor-male-elderly.jpg" alt="PGS.TS. BS. Đỗ Văn Minh - Chuyên gia Người cao tuổi" class="doctor-img" onerror="this.src='https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                    <img src="images/doctor-male-elderly.webp" alt="PGS.TS. BS. Đỗ Văn Minh - Chuyên gia Người cao tuổi" class="doctor-img" onerror="this.onerror=null;this.src='images/logo.png'">
                 </div>
                 <div class="doctor-info">
                     <h3 class="doctor-name">PGS.TS. BS. Đỗ Văn Minh</h3>
                     <p class="doctor-role">Chuyên gia Người cao tuổi & Bệnh lý nền</p>
                     <p class="doctor-desc">
-                        20+ năm kinh nghiệm chăm sóc răng miệng cho người cao tuổi, chuyên phục hình toàn hàm và điều trị an toàn cho bệnh nhân có bệnh lý nền.
+                        Tập trung tư vấn chăm sóc răng miệng cho người cao tuổi, phục hình toàn hàm và nhu cầu có bệnh lý nền.
                     </p>
                 </div>
                 <div class="doctor-overlay">
@@ -895,7 +928,7 @@ require_once 'includes/components.php';
     // ========== DOCTOR DETAIL DATABASE ==========
     const doctorDetails = {
         "TS. BS. Trần Minh Nhật": {
-            avatar: "images/doc1.jpg",
+            avatar: "images/doctor-male-elderly.webp",
             name: "TS. BS. Trần Minh Nhật",
             role: "Giám Đốc Chuyên Môn - Chuyên gia Phục hình & Implant",
             education: [
@@ -936,7 +969,7 @@ require_once 'includes/components.php';
             ]
         },
         "ThS. BS. Nguyễn Thị Lan": {
-            avatar: "images/doc2.jpg",
+            avatar: "images/doctor-female-pediatric.webp",
             name: "ThS. BS. Nguyễn Thị Lan",
             role: "Chuyên gia Chỉnh nha - Invisalign Provider",
             education: [
@@ -976,7 +1009,7 @@ require_once 'includes/components.php';
             ]
         },
         "BS. Lê Văn Hùng": {
-            avatar: "images/doc3.jpg",
+            avatar: "images/doctor-male-elderly.webp",
             name: "BS. Lê Văn Hùng",
             role: "Chuyên gia Nha khoa Thẩm mỹ & Tiểu phẫu",
             education: [
@@ -1016,7 +1049,7 @@ require_once 'includes/components.php';
             ]
         },
         "BS. Phạm Thị Mai": {
-            avatar: "images/doc4.jpg",
+            avatar: "images/doctor-female-pediatric.webp",
             name: "BS. Phạm Thị Mai",
             role: "Chuyên gia Nội nha - Điều trị tủy răng",
             education: [

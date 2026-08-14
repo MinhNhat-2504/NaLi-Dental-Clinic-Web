@@ -9,6 +9,8 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 require_once 'config.php';
+require_once 'content_repository.php';
+require_once 'booking_repository.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -28,6 +30,9 @@ $conn->query("CREATE TABLE IF NOT EXISTS feedback (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+ensureContentSchema($conn);
+ensureBookingSchema($conn);
+if (!bookingAllowRequest($conn, 'feedback', 5, 3600)) { http_response_code(429); echo json_encode(['success'=>false,'message'=>'Bạn đã gửi quá nhiều phản hồi.']); exit; }
 $data = json_decode(file_get_contents('php://input'), true) ?: [];
 $name    = trim($data['name'] ?? '');
 $phone   = trim($data['phone'] ?? '');
@@ -41,8 +46,9 @@ if ($name === '' || $message === '') {
     exit;
 }
 
-$stmt = $conn->prepare("INSERT INTO feedback (name, phone, email, rating, type, message) VALUES (?, ?, ?, ?, ?, ?)");
-$stmt->bind_param('sssiss', $name, $phone, $email, $rating, $type, $message);
+$status = 'pending';
+$stmt = $conn->prepare("INSERT INTO feedback (name, phone, email, rating, type, message, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param('sssisss', $name, $phone, $email, $rating, $type, $message, $status);
 
 if ($stmt->execute()) {
     echo json_encode(['success' => true, 'message' => 'Đã ghi nhận phản hồi. Cảm ơn bạn!']);

@@ -52,25 +52,25 @@ body { font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif !importa
     background:
         radial-gradient(900px 380px at 85% -20%, rgba(255,255,255,.15), transparent 60%),
         linear-gradient(135deg, rgba(61,143,232,.92), rgba(37,103,201,.95)),
-        url('images/tay-trang.jpg') center/cover no-repeat !important;   /* nụ cười thật */
+        url('images/tay-trang.webp') center/cover no-repeat !important;   /* nụ cười thật */
 }
 .team-header {
     background:
         radial-gradient(900px 380px at 85% -20%, rgba(255,255,255,.14), transparent 60%),
         linear-gradient(135deg, rgba(26,180,150,.90), rgba(15,120,110,.95)),
-        url('images/hero-tech.jpg') right center/cover no-repeat !important;     /* teal-xanh lá */
+        url('images/hero-tech.webp') right center/cover no-repeat !important;     /* teal-xanh lá */
 }
 .news-header {
     background:
         radial-gradient(900px 380px at 85% -20%, rgba(255,255,255,.13), transparent 60%),
         linear-gradient(135deg, rgba(110,100,230,.90), rgba(70,55,175,.95)),
-        url('images/hero-tech.jpg') right center/cover no-repeat !important;     /* tím-indigo */
+        url('images/hero-tech.webp') right center/cover no-repeat !important;     /* tím-indigo */
 }
 .contact-header {
     background:
         radial-gradient(900px 380px at 85% -20%, rgba(255,255,255,.15), transparent 60%),
         linear-gradient(135deg, rgba(56,150,200,.90), rgba(30,100,170,.95)),
-        url('images/hero-tech.jpg') right center/cover no-repeat !important;     /* cyan-sky */
+        url('images/hero-tech.webp') right center/cover no-repeat !important;     /* cyan-sky */
 }
 
 /* ===== Nút lọc đồng bộ (team.php, news.php) ===== */

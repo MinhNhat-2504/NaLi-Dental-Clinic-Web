@@ -3,6 +3,7 @@ app/__init__.py — App Factory theo mô hình "Large Application Structure".
 create_app() khởi tạo Flask, gắn extension, đăng ký blueprint.
 """
 from datetime import datetime
+import os
 
 from flask import Flask
 
@@ -24,6 +25,15 @@ def create_app(config_class=Config):
 
     # Nạp models (đăng ký user_loader của Flask-Login)
     from . import models  # noqa: F401
+
+    # Giúp môi trường local/demo không lỗi 500 nếu vừa bổ sung model/bảng nội dung.
+    # Production vẫn tắt mặc định; chạy `flask --app run.py init-db` hoặc migration trước deploy.
+    if app.config.get("AUTO_CREATE_SCHEMA"):
+        with app.app_context():
+            try:
+                db.create_all()
+            except Exception as exc:  # Không che mất lỗi cấu hình DB, chỉ ghi rõ trong log.
+                app.logger.warning("Không thể tự tạo schema: %s", exc)
 
     # Đăng ký blueprint
     from .admin import admin_bp
@@ -58,13 +68,21 @@ def create_app(config_class=Config):
     def svc_grad(group):
         return _GRAD.get(group, _GRAD["adults"])
 
-    def service_card_image(group):
-        return {
-            "adults": "service-adults-v2.png",
-            "children": "service-children-v2.png",
-            "elderly": "service-elderly-v2.png",
-            "chronic": "service-adults-v2.png",
-        }.get(group, "service-adults-v2.png")
+    def service_card_image(group, name=""):
+        featured = {
+            "Tẩy trắng răng Laser": "service-whitening-ai.webp",
+            "Bọc răng sứ Titan": "service-veneer-ai.webp",
+            "Niềng răng Invisalign": "service-aligner-ai.webp",
+            "Cấy ghép Implant": "service-implant-ai.webp",
+            "Nhổ răng khôn": "service-extraction-ai.webp",
+            "Điều trị tủy răng": "service-root-canal-ai.webp",
+        }
+        return featured.get(name) or {
+            "adults": "service-whitening-ai.webp",
+            "children": "service-children-ai.webp",
+            "elderly": "service-elderly-ai.webp",
+            "chronic": "service-implant-ai.webp",
+        }.get(group, "service-whitening-ai.webp")
 
     def svc_icon(name):
         n = (name or "").lower()
@@ -113,7 +131,7 @@ def create_app(config_class=Config):
         from .models import Patient, Product, Staff
         if Product.query.count() == 0:
             samples = [
-                ("Tẩy trắng răng Laser", "Làm trắng răng bằng tia Laser an toàn", 2500000, "tay-trang.jpg", "adults", 60),
+                ("Tẩy trắng răng Laser", "Làm trắng răng bằng tia Laser an toàn", 2500000, "service-whitening-ai.webp", "adults", 60),
                 ("Cấy ghép Implant", "Trồng răng Implant công nghệ Hàn Quốc", 18000000, "implant.jpg", "adults", 120),
                 ("Nhổ răng khôn", "Nhổ răng khôn an toàn không đau", 1500000, "nho-rang-khon.jpg", "adults", 45),
                 ("Lấy cao răng", "Làm sạch cao răng, vệ sinh răng miệng", 200000, "cao-voi-rang.jpg", "adults", 30),
@@ -121,9 +139,19 @@ def create_app(config_class=Config):
             for n, d, pr, im, tg, du in samples:
                 db.session.add(Product(name=n, description=d, price=pr, image=im, target_group=tg, duration=du))
         if Staff.query.filter_by(username="admin").first() is None:
-            db.session.add(Staff(username="admin", password=Patient.make_password("admin123"),
+            initial_admin_password = os.getenv("INITIAL_ADMIN_PASSWORD")
+            if not initial_admin_password:
+                raise RuntimeError("Set INITIAL_ADMIN_PASSWORD before running flask seed-db.")
+            db.session.add(Staff(username="admin", password=Patient.make_password(initial_admin_password),
                                  full_name="Quản Trị Viên", role="admin"))
         db.session.commit()
-        print("✔ Đã seed dữ liệu mẫu (admin/admin123).")
+        print("Seed data created; the admin password comes from INITIAL_ADMIN_PASSWORD.")
+
+    @app.cli.command("seed-content")
+    def seed_content():
+        """Chèn FAQ và bài viết thông tin, không tạo đánh giá khách hàng giả."""
+        from .content_seed import seed_information_content
+        faq_added, post_added = seed_information_content()
+        print(f"Added {faq_added} FAQs and {post_added} knowledge posts.")
 
     return app

@@ -34,6 +34,15 @@
     box-sizing: border-box;
 }
 
+/* A flex/grid child must be allowed to shrink, otherwise one long item can widen the viewport on mobile. */
+body > * { min-width: 0; }
+main, section, .container, .hero-inner, .services-grid, .service-card, .service-card-content,
+.content, .card, .doctor-card, .news-card, .contact-form, .booking-form { min-width: 0; }
+
+.doctor-directory-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:28px; }
+@media (max-width: 960px) { .doctor-directory-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width: 640px) { .doctor-directory-grid { grid-template-columns:1fr; } }
+
 body {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     background-color: var(--bg-light);
@@ -174,7 +183,7 @@ img {
 /* ========== PAGE HERO SECTION ========== */
 .page-hero {
     background: linear-gradient(135deg, rgba(77, 166, 255, 0.9), rgba(61, 143, 232, 0.9)), 
-                url('../images/dental-bg.jpg') center/cover;
+                url('../images/dental-bg.webp') center/cover;
     padding: 60px 20px;
     text-align: center;
     color: white;
@@ -890,7 +899,7 @@ img {
 /* ========== DARK MODE ========== */
 :root[data-theme="dark"] {
     --primary-light: #14304d;
-    --text-dark: #e2e8f0;  --text-medium: #cbd5e1;  --text-light: #94a3b8;  --text-muted: #94a3b8;
+    --text-dark: #e2e8f0;  --text-medium: #cbd5e1;  --text-light: #cbd5e1;  --text-muted: #cbd5e1;
     --bg-light: #0f172a;   --bg-white: #1e293b;      --border-color: #334155;
     --ink: #e2e8f0;        --nali-dark: #6cb2ff;
 }
@@ -913,7 +922,7 @@ img {
 [data-theme="dark"] p, [data-theme="dark"] .service-card p, [data-theme="dark"] .why-card p,
 [data-theme="dark"] .review-card .quote, [data-theme="dark"] .section-head p, [data-theme="dark"] li,
 [data-theme="dark"] .svc-meta, [data-theme="dark"] .price-box small, [data-theme="dark"] .reviewer small {
-    color: #94a3b8 !important;
+    color: #cbd5e1 !important;
 }
 /* Nút lọc */
 [data-theme="dark"] .filter-btn { background: #1e293b !important; border-color: #334155 !important; color: #cbd5e1 !important; }

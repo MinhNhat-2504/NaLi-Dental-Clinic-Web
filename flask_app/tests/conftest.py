@@ -28,7 +28,7 @@ def app():
         # Seed dữ liệu mẫu
         for i in range(8):  # >6 để test phân trang
             db.session.add(Product(name=f"Dịch vụ {i} Implant", description="mô tả",
-                                   price=1000000 + i, target_group="adults", duration=30, is_active=1))
+                                   price=1000000 + i, target_group=("adults", "children", "elderly")[i % 3], duration=30, is_active=1))
         db.session.add(Staff(username="admin", password=Patient.make_password("admin123"),
                              full_name="Admin", role="admin"))
         db.session.add(Patient(full_name="Khách Test", email="khach@test.com",

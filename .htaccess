@@ -19,6 +19,7 @@ Options -Indexes
 # 4. BẢO VỆ CHỐNG SQL INJECTION VÀ XSS
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
     
     # Chặn SQL Injection patterns
     RewriteCond %{QUERY_STRING} (\<|%3C).*script.*(\>|%3E) [NC,OR]

@@ -6,10 +6,16 @@
 
 // Cấu hình kết nối Database — ưu tiên biến môi trường (để chạy Docker),
 // nếu không có thì dùng giá trị mặc định cho XAMPP/MySQL local.
+$appEnv = getenv('APP_ENV') ?: 'development';
+$dbPassEnv = getenv('DB_PASS');
+if ($appEnv === 'production' && ($dbPassEnv === false || $dbPassEnv === '')) {
+    http_response_code(500);
+    exit('Missing DB_PASS configuration for production.');
+}
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
 define('DB_PORT', getenv('DB_PORT') ?: '3306'); // Cổng MySQL (3306/3307)
 define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : '123456'); // Mật khẩu MySQL 8
+define('DB_PASS', $dbPassEnv !== false ? $dbPassEnv : '');
 define('DB_NAME', getenv('DB_NAME') ?: 'nali_dental');
 
 // PHP 8.2: tắt chế độ ném exception của mysqli để đoạn kiểm tra connect_error

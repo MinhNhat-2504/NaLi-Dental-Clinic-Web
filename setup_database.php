@@ -13,12 +13,14 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $isCli = (php_sapi_name() === 'cli');
 $nl = $isCli ? "\n" : "<br>";
 function out($m){ global $nl; echo $m . $nl; }
+require_once __DIR__ . '/content_repository.php';
+require_once __DIR__ . '/booking_repository.php';
 
 // --- Kết nối (KHÔNG chọn DB để có thể tạo mới) — ưu tiên biến môi trường (Docker) ---
 $host = getenv('DB_HOST') ?: '127.0.0.1';
 $port = (int)(getenv('DB_PORT') ?: 3306);
 $user = getenv('DB_USER') ?: 'root';
-$pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : '123456';
+$pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : '';
 $conn = @mysqli_connect($host, $user, $pass, null, $port);
 if (!$conn) { out("❌ Không kết nối được MySQL: " . mysqli_connect_error()); exit(1); }
 mysqli_set_charset($conn, 'utf8mb4');
@@ -78,6 +80,8 @@ $ddl = [
 foreach ($ddl as $sql) {
     if (!mysqli_query($conn, $sql)) { out("❌ Lỗi tạo bảng: " . mysqli_error($conn)); }
 }
+ensureContentSchema($conn);
+ensureBookingSchema($conn);
 out("✅ Đã tạo 4 bảng: patients, users, products, appointments");
 
 function tableEmpty($conn, $t){ $r=mysqli_query($conn,"SELECT COUNT(*) FROM `$t`"); return $r && mysqli_fetch_row($r)[0]==0; }
@@ -86,9 +90,9 @@ function tableEmpty($conn, $t){ $r=mysqli_query($conn,"SELECT COUNT(*) FROM `$t`
 if (tableEmpty($conn, 'products')) {
     $services = [
         // name, description, price, image, target_group, duration
-        ['Tẩy trắng răng Laser','Làm trắng răng bằng tia Laser an toàn, hiệu quả tức thì',2500000,'tay-trang.jpg','adults',60],
+        ['Tẩy trắng răng Laser','Làm trắng răng bằng tia Laser an toàn, hiệu quả tức thì',2500000,'service-whitening-ai.webp','adults',60],
         ['Bọc răng sứ Titan','Bọc răng sứ cao cấp, bền đẹp tự nhiên lâu dài',4500000,'boc-rang-su.jpg','adults',90],
-        ['Niềng răng Invisalign','Niềng răng trong suốt, thẩm mỹ, không đau',65000000,'invisalign.jpg','adults',120],
+        ['Niềng răng Invisalign','Niềng răng trong suốt, thẩm mỹ, không đau',65000000,'service-aligner-ai.webp','adults',120],
         ['Cấy ghép Implant','Trồng răng Implant công nghệ Hàn Quốc, bảo hành dài hạn',18000000,'implant.jpg','adults',120],
         ['Nhổ răng khôn','Nhổ răng khôn an toàn, không đau, tiểu phẫu nhẹ nhàng',1500000,'nho-rang-khon.jpg','adults',45],
         ['Điều trị tủy răng','Lấy tủy, điều trị viêm tủy chuyên sâu',2000000,'dieu-tri-tuy.jpg','adults',60],
@@ -114,8 +118,14 @@ if (tableEmpty($conn, 'products')) {
 
 // --- Seed nhân sự (admin + bác sĩ) ---
 if (tableEmpty($conn, 'users')) {
-    $adminPass = password_hash('admin123', PASSWORD_DEFAULT);
-    $docPass   = password_hash('123456', PASSWORD_DEFAULT);
+    $adminPlain = getenv('INITIAL_ADMIN_PASSWORD');
+    $staffPlain = getenv('INITIAL_STAFF_PASSWORD');
+    if ($adminPlain === false || $adminPlain === '' || $staffPlain === false || $staffPlain === '') {
+        out("❌ Missing INITIAL_ADMIN_PASSWORD or INITIAL_STAFF_PASSWORD. Set both environment variables before seeding users.");
+        exit(1);
+    }
+    $adminPass = password_hash($adminPlain, PASSWORD_DEFAULT);
+    $docPass   = password_hash($staffPlain, PASSWORD_DEFAULT);
     $staff = [
         ['admin', $adminPass, 'Quản Trị Viên', 'admin', '', '0901234567'],
         ['bs_nhat', $docPass, 'BS. Trần Minh Nhật', 'doctor', 'Chỉnh nha', '0902222222'],
@@ -127,7 +137,7 @@ if (tableEmpty($conn, 'users')) {
         mysqli_stmt_bind_param($stmt, 'ssssss', $u[0],$u[1],$u[2],$u[3],$u[4],$u[5]);
         mysqli_stmt_execute($stmt);
     }
-    out("✅ Đã thêm nhân sự: admin (mật khẩu: admin123), bác sĩ/lễ tân (mật khẩu: 123456)");
+    out("✅ Đã thêm nhân sự mẫu. Mật khẩu được lấy từ biến môi trường và không được in ra màn hình.");
 } else { out("ℹ️ Bảng users đã có dữ liệu, bỏ qua seed"); }
 
 // --- Seed khách hàng mẫu ---

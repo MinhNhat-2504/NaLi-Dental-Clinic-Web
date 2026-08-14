@@ -148,6 +148,7 @@ $admin_username = $_SESSION['auth_user']['username'] ?? '';
             .stats-grid { grid-template-columns: 1fr 1fr; }
         }
     </style>
+    <link rel="stylesheet" href="clinic-ui.css">
 </head>
 <body>
     <!-- Sidebar -->
@@ -197,6 +198,7 @@ $admin_username = $_SESSION['auth_user']['username'] ?? '';
             <h1 id="pageTitle">📊 Tổng quan</h1>
             <div class="topbar-actions">
                 <a href="services.php"><i class="fas fa-tooth"></i> Dịch vụ</a>
+                <a href="content_admin.php"><i class="fas fa-pen-to-square"></i> Nội dung</a>
                 <a href="logout.php" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
             </div>
         </div>
