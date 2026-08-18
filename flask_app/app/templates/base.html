@@ -35,10 +35,15 @@
             <a href="{{ url_for('main.index') }}" class="site-logo">
                 <span class="logo-icon">🦷</span><span>NALI Dental</span>
             </a>
-            <button class="menu-toggle" id="menuToggle" onclick="document.getElementById('mainNav').classList.toggle('show')" aria-label="Menu">
+            <button class="menu-toggle" id="menuToggle" aria-label="Mở menu" aria-expanded="false" aria-controls="mainNav">
                 <i class="fas fa-bars"></i>
             </button>
+            <div class="nav-backdrop" id="navBackdrop"></div>
             <nav class="main-nav" id="mainNav">
+                <div class="nav-drawer-head">
+                    <span class="nav-drawer-brand"><span class="logo-icon">🦷</span> NALI Dental</span>
+                    <button type="button" class="nav-close" id="navClose" aria-label="Đóng menu"><i class="fas fa-times"></i></button>
+                </div>
                 {% set ep = request.endpoint or '' %}
                 <a href="{{ url_for('main.about') }}" class="nav-link {{ 'active' if ep=='main.about' }}"><i class="fas fa-info-circle"></i> Về NALI</a>
                 <a href="{{ url_for('main.services') }}" class="nav-link {{ 'active' if ep in ['main.services','main.service_detail'] }}"><i class="fas fa-tooth"></i> Dịch vụ</a>
@@ -157,5 +162,29 @@
     })();
     </script>
     {% block scripts %}{% endblock %}
+    <script>
+    /* Ngăn kéo menu mobile: trượt từ trái, đóng khi chạm nền / ✕ / Esc / chọn link */
+    (function () {
+        var nav = document.getElementById('mainNav'), btn = document.getElementById('menuToggle'),
+            bd = document.getElementById('navBackdrop'), cl = document.getElementById('navClose');
+        if (!nav || !btn) return;
+        /* Header có backdrop-filter => position:fixed bị 'nhốt' trong header.
+           Mobile: đưa ngăn kéo + nền mờ ra <body> để phủ toàn màn hình; desktop: trả về header. */
+        var home = nav.parentNode, homeNext = nav.nextSibling;
+        function place() {
+            if (window.innerWidth <= 768) { if (nav.parentNode !== document.body) { document.body.appendChild(bd); document.body.appendChild(nav); } }
+            else if (nav.parentNode === document.body) { home.insertBefore(bd, homeNext); home.insertBefore(nav, homeNext); }
+        }
+        place();
+        function open()  { nav.classList.add('show'); bd.classList.add('show'); btn.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; }
+        function close() { nav.classList.remove('show'); bd.classList.remove('show'); btn.setAttribute('aria-expanded','false'); document.body.style.overflow=''; }
+        btn.addEventListener('click', function(){ nav.classList.contains('show') ? close() : open(); });
+        if (bd) bd.addEventListener('click', close);
+        if (cl) cl.addEventListener('click', close);
+        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
+        nav.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', close); });
+        window.addEventListener('resize', function(){ place(); if (window.innerWidth > 768) close(); });
+    })();
+    </script>
 </body>
 </html>
