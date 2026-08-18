@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Chuyển cọc giữ chỗ — lịch #{{ appt.id }}{% endblock %}
+{% block content %}
+{% set amount_text = '{:,.0f}'.format(appt.deposit_amount or 0)|replace(',', '.') %}
+<div class="contact-header"><div><h1><i class="fas fa-qrcode"></i> Đặt Cọc Giữ Chỗ</h1><p>Lịch hẹn #{{ appt.id }} · {{ appt.appointment_time.strftime('%H:%M') }} ngày {{ appt.appointment_date.strftime('%d/%m/%Y') }}</p></div></div>
+<div class="auth-wrap" style="min-height:auto;padding-top:40px;">
+  <div class="auth-card" style="max-width:520px;text-align:center;">
+    {% if appt.deposit_status == 'paid' %}
+      <h1 style="font-size:1.3rem;color:#1e7a44;"><i class="fas fa-check-circle"></i> NALI đã nhận cọc</h1>
+      <p class="auth-sub">Lịch hẹn của bạn đã được xác nhận. Số cọc {{ amount_text }}đ sẽ trừ vào hoá đơn.</p>
+    {% else %}
+      <h1 style="font-size:1.3rem;">Quét mã để chuyển <b style="color:var(--nali)">{{ amount_text }}đ</b></h1>
+      <p class="auth-sub">Mở app ngân hàng bất kỳ → quét QR. Số tiền và nội dung đã điền sẵn.</p>
+      {% if qr_url %}<img src="{{ qr_url }}" alt="Mã QR chuyển khoản" style="width:100%;max-width:340px;border-radius:14px;border:1px solid #e3ecf7;">{% endif %}
+      <div class="dep-info">
+        <div><small>Ngân hàng</small><b>{{ bank.BANK_ID }}</b></div>
+        <div><small>Số tài khoản</small><b>{{ bank.BANK_ACCOUNT_NO }}</b></div>
+        <div><small>Chủ tài khoản</small><b>{{ bank.BANK_ACCOUNT_NAME }}</b></div>
+        <div><small>Nội dung CK</small><b>{{ note }}</b></div>
+      </div>
+      {% if appt.deposit_status == 'reported' %}
+        <p class="dep-wait"><i class="fas fa-hourglass-half"></i> Bạn đã báo chuyển khoản — lễ tân sẽ đối soát và xác nhận trong giờ làm việc.</p>
+      {% else %}
+        <form method="post" action="{{ url_for('booking.deposit_reported', appointment_id=appt.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="auth-btn" type="submit"><i class="fas fa-paper-plane"></i> Tôi đã chuyển khoản</button>
+        </form>
+        <p style="color:#94a3b8;font-size:.85rem;margin-top:10px;">Chưa chuyển ngay cũng không sao — bạn có thể quay lại trang này từ mục "Lịch hẹn của tôi". Không cọc thì lễ tân vẫn gọi xác nhận như bình thường.</p>
+      {% endif %}
+    {% endif %}
+    <p class="auth-alt"><a href="{{ url_for('booking.my_appointments') }}"><i class="fas fa-list"></i> Về lịch hẹn của tôi</a></p>
+  </div>
+</div>
+{% include 'partials/auth_style.html' %}
+<style>
+.dep-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;text-align:left;}
+.dep-info div{background:#f8fbff;border-radius:10px;padding:10px 12px;} .dep-info small{display:block;color:#94a3b8;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;} .dep-info b{color:#1a2b47;word-break:break-all;}
+.dep-wait{background:#fff7e6;color:#b45309;border-radius:10px;padding:12px;}
+[data-theme="dark"] .dep-info div{background:#0f172a;} [data-theme="dark"] .dep-info b{color:#e2e8f0;}
+</style>
+{% endblock %}

@@ -10,12 +10,13 @@
       <button type="submit"><i class="fas fa-search"></i></button>
     </form>
     <table class="admin-table">
-      <thead><tr><th>ID</th><th>Họ tên</th><th>Email</th><th>Điện thoại</th><th>Giới tính</th><th>Ngày tạo</th></tr></thead>
+      <thead><tr><th>ID</th><th>Họ tên</th><th>Email</th><th>Điện thoại</th><th>Giới tính</th><th>Ngày tạo</th><th>Hồ sơ</th></tr></thead>
       <tbody>
         {% for p in items %}
         <tr><td>#{{ p.id }}</td><td><b>{{ p.full_name }}</b></td><td>{{ p.email }}</td>
           <td>{{ p.phone }}</td><td>{{ p.gender }}</td>
-          <td>{{ p.created_at.strftime('%d/%m/%Y') if p.created_at else '—' }}</td></tr>
+          <td>{{ p.created_at.strftime('%d/%m/%Y') if p.created_at else '—' }}</td>
+          <td><a class="btn-sm btn-gray" href="{{ url_for('admin.patient_records', pid=p.id) }}"><i class="fas fa-notes-medical"></i> Hồ sơ</a></td></tr>
         {% else %}<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px;">Không có bệnh nhân.</td></tr>{% endfor %}
       </tbody>
     </table>

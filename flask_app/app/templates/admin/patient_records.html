@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Hồ sơ {{ patient.full_name }} — Quản trị{% endblock %}
+{% block content %}
+{% include 'partials/admin_nav.html' %}
+<div class="admin-wrap">
+  <div class="admin-card">
+    <h2><i class="fas fa-notes-medical"></i> Hồ sơ bệnh nhân: {{ patient.full_name }}</h2>
+    <p style="color:#64748b;margin-bottom:16px;">{{ patient.email }} · {{ patient.phone }}{% if patient.birthday %} · Sinh {{ patient.birthday.strftime('%d/%m/%Y') }}{% endif %}
+      · <a href="{{ url_for('admin.patients') }}">← Danh sách bệnh nhân</a></p>
+    {% for r in records %}
+    <div class="rec">
+      <div class="rec-head">
+        <b><i class="fas fa-calendar-day"></i> {{ r.visit_date.strftime('%d/%m/%Y') }}</b>
+        <span>BS: {{ doctors[r.doctor_id].full_name if r.doctor_id in doctors else '—' }}
+          {% if r.appointment_id %}· lịch #{{ r.appointment_id }} <a class="btn-sm btn-gray" style="padding:3px 9px;" href="{{ url_for('admin.record_for_appointment', aid=r.appointment_id) }}"><i class="fas fa-pen"></i></a>{% endif %}</span>
+      </div>
+      <div class="rec-grid">
+        <div><small>Chẩn đoán</small><p>{{ r.diagnosis or '—' }}</p></div>
+        <div><small>Điều trị</small><p>{{ r.treatment or '—' }}</p></div>
+        <div><small>Đơn thuốc / dặn dò</small><p>{{ r.prescription or '—' }}</p></div>
+        <div><small>Tái khám</small><p>{{ r.next_visit_date.strftime('%d/%m/%Y') if r.next_visit_date else 'Không' }}</p></div>
+      </div>
+    </div>
+    {% else %}<p style="color:#94a3b8;padding:20px;text-align:center;">Chưa có hồ sơ khám. Ghi hồ sơ từ trang <a href="{{ url_for('admin.appointments') }}">Lịch hẹn</a> (nút 📋).</p>{% endfor %}
+  </div>
+</div>
+<style>
+.rec{border:1px solid #e3ecf7;border-radius:14px;padding:16px 18px;margin-bottom:14px;}
+.rec-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;color:#1a2b47;} .rec-head span{color:#64748b;font-size:.9rem;}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;} .rec-grid small{color:#94a3b8;text-transform:uppercase;font-size:.72rem;letter-spacing:.5px;} .rec-grid p{margin:2px 0 0;white-space:pre-line;color:#334155;}
+[data-theme="dark"] .rec{border-color:#334155;} [data-theme="dark"] .rec-grid p{color:#e2e8f0;} [data-theme="dark"] .rec-head{color:#f1f5f9;}
+</style>
+{% endblock %}

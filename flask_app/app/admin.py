@@ -12,7 +12,7 @@ from sqlalchemy import or_
 from .extensions import db
 from .forms import AdminAppointmentForm, ProductForm
 from .mailer import send_email
-from .models import Appointment, ChatLog, Feedback, Patient, Product, Staff
+from .models import Appointment, ChatLog, Feedback, MedicalRecord, Patient, Product, Staff
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -212,6 +212,89 @@ def feedback_status(fid):
         db.session.commit()
         flash("Đã cập nhật trạng thái phản hồi.", "success")
     return redirect(url_for("admin.feedback"))
+
+
+# ---------- Đặt cọc: lễ tân xác nhận đã nhận tiền ----------
+@admin_bp.route("/lich-hen/<int:aid>/coc", methods=["POST"])
+@admin_required
+def appointment_deposit(aid):
+    """Đánh dấu đã nhận cọc -> lịch tự chuyển 'confirmed' + email cho khách."""
+    from datetime import datetime as _dt
+    appt = Appointment.query.get_or_404(aid)
+    action = request.form.get("action", "paid")
+    if action == "paid" and appt.deposit_status in ("pending", "reported"):
+        appt.deposit_status = "paid"
+        appt.deposit_paid_at = _dt.now()
+        if appt.status == "pending":
+            appt.status = "confirmed"
+        db.session.commit()
+        send_email("NALI đã nhận cọc — lịch hẹn được xác nhận", appt.customer_email,
+                   f"Xin chào {appt.customer_name},\n\nNALI đã nhận được tiền cọc "
+                   f"{int(appt.deposit_amount or 0):,}đ cho lịch hẹn #{appt.id} "
+                   f"({appt.appointment_time} ngày {appt.appointment_date}). Lịch hẹn đã được XÁC NHẬN, "
+                   f"số cọc sẽ trừ vào hoá đơn khi khám.\n\nHẹn gặp bạn tại NALI!".replace(",", "."))
+        flash(f"Đã ghi nhận cọc cho lịch #{aid} và xác nhận lịch.", "success")
+    elif action == "cancel_deposit" and appt.deposit_status:
+        appt.deposit_status = None
+        appt.deposit_amount = None
+        db.session.commit()
+        flash(f"Đã bỏ yêu cầu cọc của lịch #{aid}.", "success")
+    return redirect(request.referrer or url_for("admin.appointments"))
+
+
+# ---------- Hồ sơ bệnh nhân (medical_records) ----------
+def _patient_for_appointment(appt):
+    """Tìm tài khoản bệnh nhân gắn với lịch hẹn: theo user_id, rồi email, rồi SĐT."""
+    if appt.user_id:
+        p = db.session.get(Patient, appt.user_id)
+        if p:
+            return p
+    if appt.customer_email:
+        p = Patient.query.filter_by(email=appt.customer_email).first()
+        if p:
+            return p
+    return Patient.query.filter_by(phone=appt.customer_phone).first()
+
+
+@admin_bp.route("/lich-hen/<int:aid>/ho-so", methods=["GET", "POST"])
+@admin_required
+def record_for_appointment(aid):
+    """Ghi/sửa hồ sơ khám cho một lịch hẹn (mỗi lịch 1 hồ sơ)."""
+    from .forms import MedicalRecordForm
+    appt = Appointment.query.get_or_404(aid)
+    patient = _patient_for_appointment(appt)
+    rec = MedicalRecord.query.filter_by(appointment_id=aid).first()
+    form = MedicalRecordForm(obj=rec)
+    if request.method == "GET" and rec is None:
+        form.visit_date.data = appt.appointment_date
+    if form.validate_on_submit():
+        if rec is None:
+            rec = MedicalRecord(appointment_id=aid, patient_id=patient.id if patient else None,
+                                doctor_id=current_user.id)
+            db.session.add(rec)
+        rec.visit_date = form.visit_date.data
+        rec.diagnosis = form.diagnosis.data
+        rec.treatment = form.treatment.data
+        rec.prescription = form.prescription.data
+        rec.next_visit_date = form.next_visit_date.data
+        if form.mark_completed.data and appt.status in ("pending", "confirmed"):
+            appt.status = "completed"
+        db.session.commit()
+        flash(f"Đã lưu hồ sơ khám cho lịch #{aid}.", "success")
+        return redirect(url_for("admin.appointments"))
+    return render_template("admin/record_form.html", form=form, appt=appt, patient=patient, rec=rec)
+
+
+@admin_bp.route("/benh-nhan/<int:pid>/ho-so")
+@admin_required
+def patient_records(pid):
+    """Toàn bộ hồ sơ khám của một bệnh nhân."""
+    patient = Patient.query.get_or_404(pid)
+    records = (MedicalRecord.query.filter_by(patient_id=pid)
+               .order_by(MedicalRecord.visit_date.desc(), MedicalRecord.id.desc()).all())
+    doctor_ids = {r.doctor_id for r in records if r.doctor_id}
+    doctors = {s.id: s for s in Staff.query.filter(Staff.id.in_(doctor_ids)).all()} if doctor_ids else {}
+    return render_template("admin/patient_records.html", patient=patient, records=records, doctors=doctors)
 
 
 # ---------- Chất lượng chatbot AI ----------

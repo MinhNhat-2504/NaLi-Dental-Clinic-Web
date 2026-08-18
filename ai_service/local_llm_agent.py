@@ -153,6 +153,10 @@ class LocalLLMAgent:
         wants_booking = any(k in _strip_accents(message) for k in _BOOK_KEYWORDS)
         if booking_active or wants_booking:
             return self._booking.reply(session_id, message, user_context=user_context)
+        # Hỏi về hồ sơ khám/dặn dò/tái khám -> trả lời xác định từ dữ liệu (model 3B hay bịa chi tiết y khoa)
+        rec = FallbackAgent.record_answer(message, user_context)
+        if rec:
+            return rec
 
         history = self._history_for(session_id)
         context = self.retriever.context_for(message, k=4)

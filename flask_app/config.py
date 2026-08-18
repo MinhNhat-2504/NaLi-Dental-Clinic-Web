@@ -59,6 +59,11 @@ class Config:
     # Địa chỉ web công khai để chèn link vào email (Render tự cấp RENDER_EXTERNAL_URL)
     SITE_URL = (os.getenv("SITE_URL") or os.getenv("RENDER_EXTERNAL_URL") or "http://127.0.0.1:5000").rstrip("/")
     TIMEZONE = os.getenv("TIMEZONE", "Asia/Ho_Chi_Minh")
+    # Đặt cọc giữ chỗ qua chuyển khoản (VietQR, 0đ). Để trống BANK_ACCOUNT_NO -> ẩn tính năng cọc.
+    DEPOSIT_AMOUNT = int(os.getenv("DEPOSIT_AMOUNT", "100000"))
+    BANK_ID = os.getenv("BANK_ID", "")                    # mã ngân hàng VietQR: MB, VCB, TCB, ACB, BIDV, VPB...
+    BANK_ACCOUNT_NO = os.getenv("BANK_ACCOUNT_NO", "")
+    BANK_ACCOUNT_NAME = os.getenv("BANK_ACCOUNT_NAME", "NALI DENTAL")
 
     # --- Phân trang ---
     PER_PAGE = int(os.getenv("PER_PAGE", "6"))

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Hồ sơ khám — lịch #{{ appt.id }} — Quản trị{% endblock %}
+{% block content %}
+{% include 'partials/admin_nav.html' %}
+<div class="admin-wrap" style="max-width:640px;">
+  <div class="admin-card">
+    <h2><i class="fas fa-notes-medical"></i> Hồ sơ khám — lịch hẹn #{{ appt.id }}</h2>
+    <p style="color:#64748b;margin-bottom:6px;">Khách: <b>{{ appt.customer_name }}</b> — {{ appt.customer_phone }}
+      · {{ appt.appointment_date.strftime('%d/%m/%Y') if appt.appointment_date }} {{ appt.appointment_time.strftime('%H:%M') if appt.appointment_time }}</p>
+    <p style="color:#64748b;margin-bottom:16px;font-size:.9rem;">
+      {% if patient %}Tài khoản bệnh nhân: <b>{{ patient.full_name }}</b> (#{{ patient.id }}) — <a href="{{ url_for('admin.patient_records', pid=patient.id) }}">xem toàn bộ hồ sơ</a>
+      {% else %}<i class="fas fa-info-circle"></i> Khách chưa có tài khoản — hồ sơ vẫn lưu theo lịch hẹn.{% endif %}
+    </p>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="grid2">
+        <div class="fg">{{ form.visit_date.label }} {{ form.visit_date(class="fc") }}
+          {% for e in form.visit_date.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+        <div class="fg">{{ form.next_visit_date.label }} {{ form.next_visit_date(class="fc") }}
+          <small style="color:#94a3b8;">Để trống nếu không cần tái khám</small></div>
+      </div>
+      <div class="fg">{{ form.diagnosis.label }} {{ form.diagnosis(class="fc", rows=3, placeholder="VD: Sâu răng số 36 mức độ vừa, cao răng nhiều...") }}
+        {% for e in form.diagnosis.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+      <div class="fg">{{ form.treatment.label }} {{ form.treatment(class="fc", rows=3, placeholder="VD: Trám composite răng 36, lấy cao răng 2 hàm") }}</div>
+      <div class="fg">{{ form.prescription.label }} {{ form.prescription(class="fc", rows=3, placeholder="VD: Paracetamol 500mg khi đau; tránh đồ cứng 24h; đánh răng nhẹ vùng trám") }}</div>
+      <label class="fg-check">{{ form.mark_completed() }} {{ form.mark_completed.label.text }}</label>
+      <div style="display:flex;gap:10px;">
+        {{ form.submit(class="auth-btn", style="flex:1;") }}
+        <a href="{{ url_for('admin.appointments') }}" class="btn-sm btn-gray" style="display:flex;align-items:center;padding:0 20px;">Hủy</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% include 'partials/auth_style.html' %}
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}</style>
+{% endblock %}

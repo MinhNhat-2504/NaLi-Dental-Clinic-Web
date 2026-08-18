@@ -20,6 +20,16 @@
 .admin-nav a:hover { background:#f2f8ff; color:var(--nali); }
 .admin-nav a.active { background:linear-gradient(135deg,var(--nali),var(--nali-dark)); color:#fff; }
 .admin-wrap { max-width:1200px; margin:20px auto; padding:0 16px; }
+/* Form trong trang admin (sửa lịch, hồ sơ khám, dịch vụ) — style đồng bộ với form đăng nhập */
+.admin-card .fg { text-align:left; margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
+.admin-card .fg label { font-weight:600; color:#334155; font-size:.92rem; }
+.admin-card .fc { width:100%; padding:11px 14px; border:2px solid #e3ecf7; border-radius:10px; font-size:.97rem; font-family:inherit; outline:none; box-sizing:border-box; background:#fff; color:#1a2b47; }
+.admin-card .fc:focus { border-color:var(--nali); }
+.admin-card .fg-check { display:flex; align-items:center; gap:8px; color:#475569; margin-bottom:16px; }
+.admin-card .fg-check input { width:auto; }
+.admin-card .err { color:#c0392b; font-size:.82rem; }
+.admin-card .auth-btn { width:100%; padding:13px; border:none; border-radius:10px; background:linear-gradient(135deg,var(--nali),var(--nali-dark)); color:#fff; font-weight:700; font-size:1rem; cursor:pointer; font-family:inherit; }
+[data-theme="dark"] .admin-card .fc { background:#0f172a; border-color:#334155; color:#e2e8f0; } [data-theme="dark"] .admin-card .fg label { color:#cbd5e1; }
 .admin-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:18px; margin-bottom:24px; }
 .stat-card { background:#fff; border-radius:16px; padding:22px; box-shadow:0 4px 16px rgba(45,100,180,.08); display:flex; align-items:center; gap:16px; }
 .stat-card .ic { width:54px; height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.3rem; }

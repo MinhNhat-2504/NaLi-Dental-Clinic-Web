@@ -62,6 +62,11 @@ class GeminiAgent:
         user_context: ngữ cảnh khách đã đăng nhập (tên, lịch hẹn sắp tới...) do web
         cung cấp — giúp bot chào đúng tên, nhắc lịch, gợi ý tái khám.
         """
+        # Hỏi về hồ sơ khám/dặn dò/tái khám -> trả lời XÁC ĐỊNH từ dữ liệu, không để LLM diễn giải y khoa
+        from fallback_agent import FallbackAgent
+        rec = FallbackAgent.record_answer(message, user_context)
+        if rec:
+            return rec
         context = self.retriever.context_for(message, k=4)
         who = f"[THÔNG TIN KHÁCH ĐÃ ĐĂNG NHẬP]\n{user_context}\n[HẾT]\n\n" if user_context else ""
         augmented = (

@@ -5,7 +5,7 @@ from datetime import date, time
 
 from flask_wtf import FlaskForm
 from wtforms import (BooleanField, DateField, DecimalField, IntegerField,
-                     PasswordField, SelectField, StringField, SubmitField,
+                     PasswordField, RadioField, SelectField, StringField, SubmitField,
                      TextAreaField, TimeField, ValidationError)
 from wtforms.validators import (DataRequired, Email, EqualTo, Length,
                                 NumberRange, Optional, Regexp)
@@ -43,6 +43,9 @@ class AppointmentForm(FlaskForm):
     appointment_date = DateField("Ngày hẹn", validators=[DataRequired()])
     appointment_time = TimeField("Giờ hẹn", validators=[DataRequired()])
     notes = TextAreaField("Ghi chú", validators=[Optional(), Length(0, 500)])
+    deposit = RadioField("Giữ chỗ", choices=[("none", "Không cọc — lễ tân gọi xác nhận"),
+                                              ("deposit", "Đặt cọc giữ chỗ qua chuyển khoản (ưu tiên xác nhận, trừ vào hoá đơn)")],
+                         default="none", validators=[Optional()])
     submit = SubmitField("Xác nhận đặt lịch")
 
     # --- Validator tùy biến (Flask-WTF) ---
@@ -100,3 +103,15 @@ class FeedbackForm(FlaskForm):
         ("khen", "Khen ngợi"), ("gop-y", "Góp ý"), ("phan-anh", "Phản ánh")])
     message = TextAreaField("Nội dung", validators=[DataRequired(), Length(5, 1000)])
     submit = SubmitField("Gửi phản hồi")
+
+
+class MedicalRecordForm(FlaskForm):
+    """Bác sĩ/admin ghi hồ sơ khám sau buổi hẹn."""
+    visit_date = DateField("Ngày khám", validators=[DataRequired()])
+    diagnosis = TextAreaField("Chẩn đoán / tình trạng", validators=[DataRequired(), Length(2, 2000)])
+    treatment = TextAreaField("Đã điều trị", validators=[Optional(), Length(0, 2000)])
+    prescription = TextAreaField("Đơn thuốc / dặn dò chăm sóc", validators=[Optional(), Length(0, 2000)])
+    next_visit_date = DateField("Hẹn tái khám", validators=[Optional()])
+    mark_completed = BooleanField("Đánh dấu lịch hẹn Hoàn thành", default=True)
+    submit = SubmitField("Lưu hồ sơ")
+

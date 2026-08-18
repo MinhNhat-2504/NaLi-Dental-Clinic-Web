@@ -113,6 +113,38 @@ class FallbackAgent:
                     info["so_dien_thoai"] = m.group(0)
         return info
 
+    # ---------- Hồ sơ khám của khách đã đăng nhập (trả lời XÁC ĐỊNH, không để LLM bịa) ----------
+    _RECORD_KEYWORDS = ("tai kham", "dan do", "dan toi", "dan gi", "lan truoc", "ho so", "don thuoc",
+                        "chan doan", "dieu tri gi", "ket qua kham", "lan kham", "kham gan nhat")
+    _RECORD_FIELDS = (("Lần khám gần nhất:", "Lần khám gần nhất"), ("Chẩn đoán lần đó:", "Chẩn đoán"),
+                      ("Đã điều trị:", "Đã điều trị"), ("Dặn dò của bác sĩ:", "Dặn dò của bác sĩ"),
+                      ("Bác sĩ hẹn tái khám:", "Hẹn tái khám"))
+
+    @classmethod
+    def record_answer(cls, message: str, user_context: str) -> str | None:
+        """Nếu khách hỏi về hồ sơ/dặn dò/tái khám và web đã gửi ngữ cảnh hồ sơ -> trả lời thẳng từ dữ liệu.
+        Trả None nếu câu hỏi không thuộc nhóm này (để luồng khác xử lý)."""
+        if not user_context:
+            return None
+        norm = _strip_accents(message)
+        if not any(k in norm for k in cls._RECORD_KEYWORDS):
+            return None
+        info = cls._parse_user_context(user_context)
+        name = info.get("ho_ten", "")
+        found = []
+        for line in user_context.splitlines():
+            for prefix, label in cls._RECORD_FIELDS:
+                if line.startswith(prefix):
+                    found.append(f"• {label}: {line[len(prefix):].strip()}")
+        greet = f"Dạ chào {name} ạ! " if name else "Dạ "
+        if not found:
+            return (greet + "NALI chưa thấy hồ sơ khám nào của anh/chị trên hệ thống. "
+                    "Sau mỗi buổi khám, bác sĩ sẽ ghi lại kết quả và anh/chị xem được ở mục \"Hồ sơ khám\". "
+                    "Anh/chị muốn *đặt lịch* khám thì nhắn \"đặt lịch\" giúp NALI nhé ạ.")
+        return (greet + "Theo hồ sơ khám của anh/chị tại NALI:\n" + "\n".join(found) +
+                "\n\n👉 Anh/chị cần đặt lịch tái khám thì nhắn \"đặt lịch\" nhé ạ. "
+                "Nếu có đau/sưng bất thường, vui lòng gọi hotline 0945 457 512.")
+
     def reply(self, session_id: str, message: str, user_context: str = "") -> str:
         state = self._state(session_id)
         norm = _strip_accents(message)
@@ -131,6 +163,11 @@ class FallbackAgent:
 
         if state.active:
             return self._handle_booking(session_id, state, message)
+
+        # 1b) Hỏi về hồ sơ/dặn dò/tái khám -> trả lời từ dữ liệu hồ sơ (xác định)
+        rec = self.record_answer(message, user_context)
+        if rec:
+            return rec
 
         # 2) Câu hỏi thông tin -> trả lời bằng RAG
         if "gio thi thi" in norm:  # tránh trùng nhầm, no-op an toàn

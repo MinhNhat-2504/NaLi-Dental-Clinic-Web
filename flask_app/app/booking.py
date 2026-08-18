@@ -4,15 +4,38 @@ Yêu cầu đăng nhập (giống bản PHP). Ghi vào bảng appointments dùng
 """
 from datetime import date, datetime, time, timedelta
 
-from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
+from urllib.parse import quote
+
+from flask import (Blueprint, abort, current_app, flash, jsonify, redirect,
+                   render_template, request, url_for)
 from flask_login import current_user, login_required
 
 from .extensions import db
 from .forms import AppointmentForm
 from .mailer import send_email
-from .models import Appointment, Patient, Product
+from .models import Appointment, MedicalRecord, Patient, Product, Staff
 
 booking_bp = Blueprint("booking", __name__)
+
+
+# ---------- Đặt cọc giữ chỗ (VietQR, 0đ) ----------
+def deposit_enabled() -> bool:
+    cfg = current_app.config
+    return bool(cfg.get("BANK_ID") and cfg.get("BANK_ACCOUNT_NO"))
+
+
+def deposit_transfer_note(appt) -> str:
+    """Nội dung chuyển khoản để lễ tân đối soát: NALI <mã lịch> <SĐT>."""
+    return f"NALI {appt.id} {appt.customer_phone}"
+
+
+def vietqr_url(appt) -> str:
+    """Ảnh QR động của VietQR (miễn phí, không cần đăng ký) đã điền sẵn tiền + nội dung."""
+    cfg = current_app.config
+    amount = int(appt.deposit_amount or cfg["DEPOSIT_AMOUNT"])
+    return (f"https://img.vietqr.io/image/{cfg['BANK_ID']}-{cfg['BANK_ACCOUNT_NO']}-compact2.png"
+            f"?amount={amount}&addInfo={quote(deposit_transfer_note(appt))}"
+            f"&accountName={quote(cfg.get('BANK_ACCOUNT_NAME', 'NALI DENTAL'))}")
 
 # Khung giờ 30 phút, từ 08:00 đến trước 20:00.
 SLOT_TIMES = [time(hour, minute) for hour in range(8, 20) for minute in (0, 30)]
@@ -112,13 +135,65 @@ def book():
         appt.notes = form.notes.data
         appt.total_price = product.price if product else 0
         appt.status = "pending"
+        wants_deposit = deposit_enabled() and form.deposit.data == "deposit" and not existing
+        if wants_deposit:
+            appt.deposit_amount = current_app.config["DEPOSIT_AMOUNT"]
+            appt.deposit_status = "pending"
         db.session.add(appt)
         db.session.commit()
         _send_confirmation_email(appt, product)
+        if wants_deposit:
+            flash(f"Đặt lịch thành công! Mã lịch hẹn #{appt.id}. Quét mã bên dưới để chuyển cọc giữ chỗ.", "success")
+            return redirect(url_for("booking.deposit", appointment_id=appt.id))
         flash((f"Đã đổi lịch hẹn #{appt.id}." if existing else f"Đặt lịch thành công! Mã lịch hẹn #{appt.id}.") + " NALI sẽ gọi xác nhận.", "success")
         return redirect(url_for("booking.my_appointments"))
 
-    return render_template("booking/book.html", form=form, products=products, rescheduling=existing)
+    return render_template("booking/book.html", form=form, products=products, rescheduling=existing,
+                           deposit_enabled=deposit_enabled(), deposit_amount=current_app.config["DEPOSIT_AMOUNT"])
+
+
+@booking_bp.route("/dat-lich/coc/<int:appointment_id>")
+@login_required
+def deposit(appointment_id):
+    """Trang chuyển cọc: QR VietQR điền sẵn số tiền + nội dung, nút 'Tôi đã chuyển'."""
+    appt = db.session.get(Appointment, appointment_id)
+    if not appt or not _owns_appointment(appt):
+        abort(403)
+    if not appt.deposit_status:
+        return redirect(url_for("booking.my_appointments"))
+    return render_template("booking/deposit.html", appt=appt,
+                           qr_url=vietqr_url(appt) if deposit_enabled() else "",
+                           note=deposit_transfer_note(appt), bank=current_app.config)
+
+
+@booking_bp.route("/dat-lich/coc/<int:appointment_id>/da-chuyen", methods=["POST"])
+@login_required
+def deposit_reported(appointment_id):
+    """Khách bấm 'Tôi đã chuyển khoản' -> chờ lễ tân đối soát."""
+    appt = db.session.get(Appointment, appointment_id)
+    if not appt or not _owns_appointment(appt):
+        abort(403)
+    if appt.deposit_status == "pending":
+        appt.deposit_status = "reported"
+        db.session.commit()
+        flash("Cảm ơn bạn! Lễ tân sẽ đối soát và xác nhận lịch trong giờ làm việc.", "success")
+    return redirect(url_for("booking.my_appointments"))
+
+
+@booking_bp.route("/ho-so-kham")
+@login_required
+def my_records():
+    """Hồ sơ khám/điều trị của khách (bác sĩ ghi sau mỗi buổi khám)."""
+    if not isinstance(current_user, Patient):
+        abort(403)
+    records = (MedicalRecord.query.filter_by(patient_id=current_user.id)
+               .order_by(MedicalRecord.visit_date.desc(), MedicalRecord.id.desc()).all())
+    doctor_ids = {r.doctor_id for r in records if r.doctor_id}
+    doctors = {s.id: s for s in Staff.query.filter(Staff.id.in_(doctor_ids)).all()} if doctor_ids else {}
+    upcoming_revisit = next((r for r in sorted(records, key=lambda r: r.next_visit_date or date.max)
+                             if r.next_visit_date and r.next_visit_date >= date.today()), None)
+    return render_template("booking/my_records.html", records=records, doctors=doctors,
+                           upcoming_revisit=upcoming_revisit)
 
 
 @booking_bp.route("/dat-lich/khung-gio")

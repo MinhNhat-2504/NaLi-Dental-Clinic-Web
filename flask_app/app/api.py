@@ -15,7 +15,7 @@ from flask import Blueprint, current_app, jsonify, request
 from flask_login import current_user
 
 from .extensions import csrf
-from .models import Appointment, ChatLog, Patient, Product
+from .models import Appointment, ChatLog, MedicalRecord, Patient, Product
 from .extensions import db
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
@@ -91,12 +91,31 @@ def _user_context() -> str:
         lines.append(f"Lịch hẹn sắp tới: {upcoming.appointment_date.strftime('%d/%m/%Y')} lúc {upcoming.appointment_time.strftime('%H:%M')}{svc}, trạng thái {upcoming.status}")
     else:
         lines.append("Lịch hẹn sắp tới: chưa có")
-    if last_done:
+    # Hồ sơ khám (bác sĩ ghi) — chính xác hơn lịch hẹn "completed"
+    rec = (MedicalRecord.query.filter_by(patient_id=p.id)
+           .order_by(MedicalRecord.visit_date.desc(), MedicalRecord.id.desc()).first())
+    if rec:
+        days = (date.today() - rec.visit_date).days
+        lines.append(f"Lần khám gần nhất: {rec.visit_date.strftime('%d/%m/%Y')} ({days} ngày trước)")
+        if rec.diagnosis:
+            lines.append(f"Chẩn đoán lần đó: {rec.diagnosis[:200]}")
+        if rec.treatment:
+            lines.append(f"Đã điều trị: {rec.treatment[:200]}")
+        if rec.prescription:
+            lines.append(f"Dặn dò của bác sĩ: {rec.prescription[:200]}")
+        if rec.next_visit_date:
+            left = (rec.next_visit_date - date.today()).days
+            when = rec.next_visit_date.strftime('%d/%m/%Y')
+            lines.append(f"Bác sĩ hẹn tái khám: {when} ({'còn ' + str(left) + ' ngày' if left >= 0 else 'đã quá ' + str(-left) + ' ngày, nên nhắc khách đặt lịch tái khám'})")
+        elif days >= 180:
+            lines.append("Gợi ý: đã quá 6 tháng kể từ lần khám gần nhất, nên nhắc khách tái khám/lấy cao răng định kỳ.")
+    elif last_done:
         days = (date.today() - last_done.appointment_date).days
         lines.append(f"Lần khám gần nhất: {last_done.appointment_date.strftime('%d/%m/%Y')} ({days} ngày trước)")
         if days >= 180:
             lines.append("Gợi ý: đã quá 6 tháng kể từ lần khám gần nhất, nên nhắc khách tái khám/lấy cao răng định kỳ.")
-    lines.append("Hướng dẫn: hãy chào khách bằng tên, nếu có lịch sắp tới thì nhắc nhẹ; đừng hỏi lại tên/SĐT khi đặt lịch.")
+    lines.append("Hướng dẫn: hãy chào khách bằng tên, nếu có lịch sắp tới thì nhắc nhẹ; đừng hỏi lại tên/SĐT khi đặt lịch. "
+                 "Không chẩn đoán thêm — chỉ nhắc lại dặn dò của bác sĩ và khuyên tái khám đúng hẹn.")
     return chr(10).join(lines)
 
 
