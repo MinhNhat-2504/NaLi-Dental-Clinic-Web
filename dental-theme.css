@@ -1,0 +1,120 @@
+/* =====================================================================
+   dental-theme.css — Phong cách "nha khoa lâm sàng cao cấp" cho NALI.
+   Nạp CUỐI CÙNG. Chỉ override token màu/bo góc/hero, không đổi bố cục.
+   Ý tưởng: xanh ngọc y tế thay xanh dương fintech, nhiều khoảng trắng,
+   hero nền sáng + ảnh người thật + chữ tối (ngữ pháp web y tế cao cấp).
+   ===================================================================== */
+
+/* ---------- 1. Bảng màu ---------- */
+:root {
+  --primary: #0f8f89;         /* teal lâm sàng */
+  --primary-dark: #0b6f6a;
+  --primary-light: #e3f4f2;
+  --nali: #0f8f89;
+  --nali-dark: #0b6f6a;
+  --secondary: #2f9e6e;
+  --secondary-light: #e6f5ee;
+  --accent: #e8927c;          /* san hô ấm — nhấn nhẹ */
+  --ink: #132b34;
+  --text-dark: #132b34;
+  --text-medium: #35505a;
+  --text-light: #52707a;
+  --text-muted: #6b8790;
+  --bg-light: #f7fbfa;        /* trắng ngả xanh ngọc rất nhẹ */
+  --bg-white: #ffffff;
+  --border-color: #dbe9e7;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 2px 10px rgba(19,43,52,.06);
+  --shadow-md: 0 8px 26px rgba(19,43,52,.09);
+  --shadow-lg: 0 18px 48px rgba(19,43,52,.13);
+}
+:root[data-theme="dark"] {
+  --primary: #3fc1b6; --primary-dark: #2ea59b; --primary-light: #10302e;
+  --nali: #3fc1b6; --nali-dark: #2ea59b;
+  --ink: #e6f1ef; --text-dark: #e6f1ef; --text-medium: #c5d6d3; --text-light: #a9bfbb; --text-muted: #93aba7;
+  --bg-light: #0c1618; --bg-white: #132022; --border-color: #23393b;
+}
+
+body { background: var(--bg-light); color: var(--text-dark); }
+
+/* ---------- 2. Header: sáng, sạch, một đường kẻ mảnh ---------- */
+.site-header {
+  background: rgba(255,255,255,.92) !important;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color); box-shadow: none !important;
+}
+.site-header .site-logo, .site-header .nav-link, .site-header .user-menu, .site-header .menu-toggle { color: var(--ink) !important; }
+.site-header .nav-link:hover { background: var(--primary-light) !important; color: var(--primary-dark) !important; }
+.site-header .nav-link.active { background: var(--primary) !important; color: #fff !important; }
+.site-header .nav-link.btn-login { background: var(--primary) !important; color: #fff !important; }
+.site-header.scrolled { background: rgba(255,255,255,.96) !important; }
+[data-theme="dark"] .site-header { background: rgba(19,32,34,.94) !important; }
+@media (max-width: 768px) {
+  .main-nav { background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%) !important; }
+  .main-nav .nav-link { color: #fff !important; }
+}
+
+/* ---------- 3. Hero: nền sáng, ảnh người, chữ tối ---------- */
+.hero {
+  background:
+    radial-gradient(900px 420px at 92% 10%, rgba(15,143,137,.10), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, var(--bg-light) 100%) !important;
+  color: var(--ink) !important;
+  padding: 84px 20px 110px !important;
+}
+.hero::before, .hero::after { background: var(--primary) !important; opacity: .06 !important; }
+.hero-badge { background: var(--primary-light) !important; border: 1px solid #cfe7e4 !important; color: var(--primary-dark) !important; backdrop-filter: none !important; }
+.hero h1 { color: var(--ink) !important; letter-spacing: -.8px !important; }
+.hero h1 span { color: var(--primary) !important; }
+.hero p.lead { color: var(--text-medium) !important; opacity: 1 !important; }
+.btn-hero.primary { background: var(--primary) !important; color: #fff !important; box-shadow: 0 10px 26px rgba(15,143,137,.28) !important; border-radius: var(--radius-md) !important; }
+.btn-hero.primary:hover { background: var(--primary-dark) !important; }
+.btn-hero.ghost { border-color: var(--border-color) !important; color: var(--ink) !important; background: #fff !important; border-radius: var(--radius-md) !important; }
+.btn-hero.ghost:hover { border-color: var(--primary) !important; color: var(--primary-dark) !important; background: var(--primary-light) !important; }
+.hero-card { background: #fff !important; border: 1px solid var(--border-color) !important; box-shadow: var(--shadow-lg) !important; color: var(--ink) !important; backdrop-filter: none !important; }
+.hero-card .doc small, .hero-card .row { color: var(--text-medium) !important; border-color: var(--border-color) !important; }
+.hero-card .doc-ava { background: var(--primary-light) !important; }
+.hero-card .row i { color: var(--primary) !important; }
+[data-theme="dark"] .hero { background: linear-gradient(180deg, #132022 0%, var(--bg-light) 100%) !important; }
+[data-theme="dark"] .hero-card { background: var(--bg-white) !important; }
+[data-theme="dark"] .btn-hero.ghost { background: var(--bg-white) !important; }
+
+.stats-bar { border: 1px solid var(--border-color); box-shadow: var(--shadow-md) !important; }
+.stat .num { color: var(--primary) !important; }
+
+/* ---------- 4. Nút & bo góc: bớt "pill", chững chạc hơn ---------- */
+.order-btn, .btn-primary, .auth-btn, .filter-btn, .btn { border-radius: var(--radius-md) !important; }
+.order-btn, .btn-primary, .auth-btn { background: var(--primary) !important; box-shadow: 0 6px 16px rgba(15,143,137,.22) !important; }
+.order-btn:hover, .btn-primary:hover, .auth-btn:hover { background: var(--primary-dark) !important; box-shadow: 0 10px 22px rgba(15,143,137,.30) !important; }
+.filter-btn.active { background: var(--primary) !important; box-shadow: 0 6px 16px rgba(15,143,137,.25) !important; }
+.section-head .eyebrow, .eyebrow { color: var(--primary) !important; }
+.price-box .price { color: var(--primary-dark) !important; }
+.svc-meta .stars { color: #d99a2b !important; }
+.rv-btn:hover { background: var(--primary) !important; }
+.faq-item.open .faq-q, .faq-q i { color: var(--primary) !important; }
+.reviewer .ava { background: var(--primary) !important; }
+.why-ico { border-radius: 14px !important; }
+
+/* Hero phụ của các trang con: dịu lại theo teal */
+.about-hero, .team-header, .news-header, .contact-header {
+  background: linear-gradient(135deg, #0f8f89 0%, #0b6f6a 100%) !important;
+}
+.about-hero::before, .team-header::before, .news-header::before, .contact-header::before { opacity: .10 !important; }
+
+/* Dải CTA & footer */
+.cta-band { background: linear-gradient(135deg, #0b6f6a, #0f8f89) !important; }
+.site-footer { background: #0f1f24 !important; }
+.footer-section h4::after { background: var(--primary) !important; }
+.footer-links i, .footer-contact i, .footer-links a:hover { color: var(--primary) !important; }
+.social-links a:hover { background: var(--primary) !important; }
+
+/* Nút nổi & widget chat theo tông mới */
+#naliThemeToggle, #naliTop { color: var(--primary-dark) !important; }
+#naliProgress { background: linear-gradient(90deg, var(--primary), #6fd3c9) !important; }
+#naliChatToggle, .nali-chat-header, .nali-msg.user .bubble, .nali-chat-input button { background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important; }
+#naliChatToggle { box-shadow: 0 8px 22px rgba(15,143,137,.4) !important; }
+.nali-chip { color: var(--primary-dark) !important; border-color: #cfe7e4 !important; }
+.nali-chip:hover, .nali-msg.bot .bubble { background: var(--primary-light) !important; }
+.nali-chat-input input:focus { border-color: var(--primary) !important; }
