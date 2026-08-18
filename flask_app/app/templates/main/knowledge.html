@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Kiến thức nha khoa | NALI Dental{% endblock %}
 {% block content %}
-<section class="page-hero"><div class="container"><p class="eyebrow">NALI Knowledge</p><h1>Kiến thức nha khoa</h1><p>Bài viết tham khảo được xuất bản sau khi biên tập; không thay thế thăm khám trực tiếp.</p></div></section>
+<section class="page-hero"><div class="container"><p class="eyebrow">Cẩm nang NALI</p><h1>Kiến thức nha khoa</h1><p>Bài viết tham khảo được xuất bản sau khi biên tập; không thay thế thăm khám trực tiếp.</p></div></section>
 <main class="container" style="padding:48px 18px 72px"><div class="services-grid">
 {% for p in posts %}<article class="service-card">{% if p.cover_image %}<img src="{{ url_for('static', filename='images/' + p.cover_image) if '/' not in p.cover_image else p.cover_image }}" alt="{{ p.title }}" loading="lazy" style="width:100%;height:180px;object-fit:cover">{% endif %}<div class="service-card-body"><small>{{ p.category or 'Kiến thức' }}</small><h3>{{ p.title }}</h3><p>{{ p.excerpt or 'Xem nội dung bài viết.' }}</p><a class="btn btn-primary" href="{{ url_for('main.knowledge_detail', slug=p.slug) }}">Đọc bài viết</a></div></article>{% else %}<div class="empty-state"><i class="fas fa-newspaper"></i><h3>Chưa có bài viết được xuất bản</h3><p>Quản trị viên có thể biên tập và xuất bản bài viết trong hệ quản trị nội dung.</p></div>{% endfor %}</div></main>
 {% endblock %}

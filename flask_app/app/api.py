@@ -43,18 +43,27 @@ def weather():
     codes = {0: "Trời quang", 1: "Ít mây", 2: "Có mây", 3: "Nhiều mây",
              45: "Sương mù", 51: "Mưa phùn nhẹ", 61: "Mưa nhẹ", 63: "Mưa vừa",
              65: "Mưa to", 80: "Mưa rào", 95: "Dông"}
-    try:
-        with urllib.request.urlopen(url, timeout=8) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-        cur = data.get("current", {})
-        return jsonify({
-            "success": True, "city": "TP. Hồ Chí Minh",
-            "temp": cur.get("temperature_2m"),
-            "desc": codes.get(cur.get("weather_code"), "Đang cập nhật"),
-        })
-    except (urllib.error.URLError, OSError, ValueError) as exc:
-        current_app.logger.warning("Weather API lỗi: %s", exc)
-        return jsonify({"success": False, "city": "TP. Hồ Chí Minh"}), 200
+    # Cache 10 phút để không gọi API ngoài mỗi lần tải trang (chịu được lúc API chậm)
+    import time as _t
+    cache = current_app.extensions.setdefault("nali_weather_cache", {})
+    if cache and _t.time() - cache.get("ts", 0) < 600:
+        return jsonify(cache["data"])
+    last_exc = None
+    for _attempt in range(2):  # thử lại 1 lần nếu mạng cloud chập chờn
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "NALI-Dental/1.0"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            cur = data.get("current", {})
+            out = {"success": True, "city": "TP. Hồ Chí Minh",
+                   "temp": cur.get("temperature_2m"),
+                   "desc": codes.get(cur.get("weather_code"), "Đang cập nhật")}
+            cache.update(ts=_t.time(), data=out)
+            return jsonify(out)
+        except (urllib.error.URLError, OSError, ValueError) as exc:
+            last_exc = exc
+    current_app.logger.warning("Weather API lỗi: %s", last_exc)
+    return jsonify({"success": False, "city": "TP. Hồ Chí Minh"}), 200
 
 
 @api_bp.route("/chat", methods=["POST"])
