@@ -24,10 +24,20 @@ class Config:
     DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_PORT = os.getenv("DB_PORT", "3306")
     DB_NAME = os.getenv("DB_NAME", "nali_dental")
-    SQLALCHEMY_DATABASE_URI = (
-        f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
-    )
+    # Ưu tiên DATABASE_URL (Render/Aiven/TiDB cấp sẵn dạng mysql://user:pass@host:port/db?ssl-mode=REQUIRED)
+    _db_url = os.getenv("DATABASE_URL", "").strip()
+    if _db_url:
+        if _db_url.startswith("mysql://"):
+            _db_url = "mysql+pymysql://" + _db_url[len("mysql://"):]
+        # Chuẩn hoá tham số SSL của Aiven/TiDB cho PyMySQL
+        _db_url = _db_url.replace("?ssl-mode=REQUIRED", "?ssl_verify_cert=false").replace("&ssl-mode=REQUIRED", "&ssl_verify_cert=false")
+        SQLALCHEMY_DATABASE_URI = _db_url
+    else:
+        SQLALCHEMY_DATABASE_URI = (
+            f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+        )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 280}  # DB cloud hay ngắt kết nối nhàn rỗi
     # Local/demo: tự tạo bảng model còn thiếu (blog_posts, faqs...) để app không chết.
     # Production phải chạy migration rõ ràng trước khi deploy.
     AUTO_CREATE_SCHEMA = os.getenv("AUTO_CREATE_SCHEMA", "1" if os.getenv("APP_ENV") != "production" else "0") == "1"

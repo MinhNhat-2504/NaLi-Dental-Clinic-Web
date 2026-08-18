@@ -24,6 +24,20 @@ def _int(name: str, default: int) -> int:
         return default
 
 
+def _parse_database_url() -> dict:
+    """Đọc DATABASE_URL (Render/Aiven/TiDB) dạng mysql://user:pass@host:port/db nếu có."""
+    from urllib.parse import unquote, urlparse
+    url = os.getenv("DATABASE_URL", "").strip()
+    if not url:
+        return {}
+    u = urlparse(url)
+    return {"host": u.hostname, "port": u.port, "user": unquote(u.username or ""),
+            "password": unquote(u.password or ""), "name": (u.path or "/").lstrip("/")}
+
+
+_dburl = _parse_database_url()
+
+
 @dataclass(frozen=True)
 class Settings:
     # Chọn "bộ não": auto | local | gemini | offline
@@ -41,11 +55,11 @@ class Settings:
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash").strip()
 
     # Database (mặc định trùng với config.php của web PHP)
-    db_host: str = os.getenv("DB_HOST", "localhost")
-    db_port: int = _int("DB_PORT", 3306)
-    db_user: str = os.getenv("DB_USER", "root")
-    db_password: str = os.getenv("DB_PASSWORD", "")
-    db_name: str = os.getenv("DB_NAME", "nali_dental")
+    db_host: str = _dburl.get("host") or os.getenv("DB_HOST", "localhost")
+    db_port: int = _dburl.get("port") or _int("DB_PORT", 3306)
+    db_user: str = _dburl.get("user") or os.getenv("DB_USER", "root")
+    db_password: str = _dburl.get("password") or os.getenv("DB_PASSWORD", "")
+    db_name: str = _dburl.get("name") or os.getenv("DB_NAME", "nali_dental")
 
     # Phòng khám
     clinic_open_hour: int = _int("CLINIC_OPEN_HOUR", 8)

@@ -9,3 +9,4 @@ mysql-connector-python==9.0.0  # MySQL driver (pure Python)
 google-generativeai==0.8.3     # Gemini API (fallback LLM brain)
 scikit-learn==1.5.2            # TF-IDF for offline RAG fallback
 numpy==2.1.1                   # vector math (cosine similarity)
+python-multipart==0.0.9   # upload ảnh (FastAPI UploadFile)

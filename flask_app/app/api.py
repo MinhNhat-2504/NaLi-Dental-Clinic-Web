@@ -83,3 +83,9 @@ def chat_proxy():
             "reply": "Xin lỗi, Trợ lý AI tạm thời không phản hồi. Vui lòng gọi hotline 0945 457 512 ạ.",
             "mode": "offline",
         }), 200
+
+
+
+# Route phân tích ảnh răng (tách file cho gọn)
+from ._vision_proxy import register as _register_vision  # noqa: E402
+_register_vision(api_bp)

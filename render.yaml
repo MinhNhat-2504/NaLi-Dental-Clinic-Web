@@ -1,0 +1,63 @@
+# ============================================================
+#  render.yaml — Deploy NALI lên Render (gói FREE) bằng Blueprint.
+#  Render đọc file này và tạo 2 web service: web Flask + AI service.
+#
+#  MySQL: Render không có MySQL free -> dùng Aiven MySQL free (5GB, vĩnh viễn)
+#  hoặc TiDB Cloud Serverless free. Dán chuỗi kết nối vào DATABASE_URL.
+#
+#  Lưu ý free tier: service ngủ sau 15 phút không dùng, thức lại ~30-60s.
+# ============================================================
+services:
+  # ---------------- Web Flask (giao diện chính) ----------------
+  - type: web
+    name: nali-dental-web
+    runtime: python
+    plan: free
+    rootDir: flask_app
+    buildCommand: pip install -r requirements.txt
+    # Chạy migration rồi mới lên gunicorn (giống entrypoint Docker)
+    startCommand: flask --app run.py db upgrade && gunicorn -w 2 -k gthread --threads 4 -b 0.0.0.0:$PORT run:app
+    healthCheckPath: /
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: AUTO_CREATE_SCHEMA
+        value: "0"
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: SECRET_KEY
+        generateValue: true          # Render tự sinh chuỗi bí mật
+      - key: DATABASE_URL
+        sync: false                  # bạn dán chuỗi Aiven/TiDB vào dashboard
+      - key: DB_PASS
+        sync: false                  # đặt bất kỳ (config yêu cầu có giá trị khi production)
+      - key: AI_SERVICE_URL
+        fromService:
+          type: web
+          name: nali-dental-ai
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_DEFAULT_SENDER
+        sync: false
+
+  # ---------------- AI service (chatbot + AI xem ảnh răng) ----------------
+  - type: web
+    name: nali-dental-ai
+    runtime: python
+    plan: free
+    rootDir: ai_service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: LLM_BACKEND
+        value: gemini                # free tier không đủ RAM cho LLM local -> dùng Gemini
+      - key: GEMINI_API_KEY
+        sync: false                  # dán key Gemini (miễn phí) vào dashboard
+      - key: DATABASE_URL
+        sync: false                  # cùng chuỗi với web Flask
