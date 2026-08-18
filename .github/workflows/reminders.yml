@@ -16,14 +16,35 @@ on:
 jobs:
   send-reminders:
     runs-on: ubuntu-latest
+    env:
+      SITE_URL: ${{ secrets.SITE_URL }}
+      CRON_TOKEN: ${{ secrets.CRON_TOKEN }}
     steps:
+      - name: Kiểm tra secret
+        run: |
+          # Bỏ khoảng trắng/xuống dòng thừa lỡ dán vào
+          SITE_URL="$(printf '%s' "$SITE_URL" | tr -d '[:space:]')"
+          SITE_URL="${SITE_URL%/}"
+          CRON_TOKEN="$(printf '%s' "$CRON_TOKEN" | tr -d '[:space:]')"
+          echo "SITE_URL nhận được: '${SITE_URL}' (dài ${#SITE_URL} ký tự)"
+          echo "CRON_TOKEN: dài ${#CRON_TOKEN} ký tự"
+          case "$SITE_URL" in
+            https://*.onrender.com|https://*) ;;
+            *) echo "::error::Secret SITE_URL phải là link dạng https://nali-dental-web.onrender.com (đang là '${SITE_URL}')"; exit 1;;
+          esac
+          [ -n "$CRON_TOKEN" ] || { echo "::error::Secret CRON_TOKEN đang trống"; exit 1; }
+          echo "SITE_URL=$SITE_URL" >> "$GITHUB_ENV"
+          echo "CRON_TOKEN=$CRON_TOKEN" >> "$GITHUB_ENV"
+
       - name: Đánh thức web (Render free ngủ sau 15 phút)
-        run: curl -s -o /dev/null -m 90 "${{ secrets.SITE_URL }}/" || true
+        run: curl -s -o /dev/null -m 90 "$SITE_URL/" || true
 
       - name: Gọi endpoint gửi nhắc lịch
         run: |
+          set +e
           code=$(curl -s -o out.json -w "%{http_code}" -m 120 -X POST \
-            -H "X-Cron-Token: ${{ secrets.CRON_TOKEN }}" \
-            "${{ secrets.SITE_URL }}/api/cron/reminders")
-          echo "HTTP $code"; cat out.json; echo
-          test "$code" = "200"
+            -H "X-Cron-Token: $CRON_TOKEN" "$SITE_URL/api/cron/reminders")
+          rc=$?
+          echo "curl exit=$rc, HTTP $code"; cat out.json 2>/dev/null; echo
+          if [ "$code" = "401" ]; then echo "::error::401 = CRON_TOKEN trên GitHub KHÁC với CRON_TOKEN trên Render (Environment). Dán lại cho trùng."; fi
+          [ "$code" = "200" ]
