@@ -26,7 +26,7 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -36,6 +36,7 @@ from fallback_agent import FallbackAgent
 from gemini_agent import GeminiAgent
 from local_llm_agent import LocalLLMAgent, local_llm_available
 from retriever import Retriever
+from vision_agent import analyze_dental_image
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("nali-ai")
@@ -158,6 +159,20 @@ def chat(req: ChatRequest, request: Request) -> ChatResponse:
 
     reply = state.fallback.reply(req.session_id, message)
     return ChatResponse(reply=reply, mode="offline")
+
+
+
+@app.post("/analyze-image")
+async def analyze_image(file: UploadFile = File(...), request: Request = None) -> dict:
+    """AI đọc ảnh răng (Gemini Vision): nhận xét sơ bộ + gợi ý dịch vụ. Không chẩn đoán."""
+    if request is not None and not _allow_chat(request, "vision:" + (request.client.host if request.client else "x")):
+        raise HTTPException(status_code=429, detail="Bạn gửi ảnh quá nhanh, vui lòng thử lại sau.")
+    if file.content_type not in ("image/jpeg", "image/png", "image/webp"):
+        raise HTTPException(status_code=400, detail="Chỉ nhận ảnh JPG, PNG hoặc WebP.")
+    data = await file.read()
+    if len(data) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Ảnh quá lớn (tối đa 5MB).")
+    return analyze_dental_image(data, file.content_type)
 
 
 @app.post("/reset")

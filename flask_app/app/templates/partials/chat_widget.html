@@ -1,5 +1,5 @@
 <!-- Widget Trợ lý AI — gọi qua proxy Flask /api/chat (server gọi AI service) -->
-<div id="naliChatWidget" data-endpoint="{{ url_for('api.chat_proxy') }}">
+<div id="naliChatWidget" data-endpoint="{{ url_for('api.chat_proxy') }}" data-vision="{{ url_for('api.analyze_image_proxy') }}">
     <button id="naliChatToggle" aria-label="Mở trợ lý AI"><i class="fas fa-robot"></i><span class="nali-chat-badge">AI</span></button>
     <div id="naliChatBox" class="nali-hidden">
         <div class="nali-chat-header">
@@ -12,9 +12,12 @@
             <button class="nali-chip" data-msg="Cho tôi xem bảng giá dịch vụ">💰 Bảng giá</button>
             <button class="nali-chip" data-msg="Tôi muốn đặt lịch khám">📅 Đặt lịch</button>
             <button class="nali-chip" data-msg="Phòng khám làm việc mấy giờ?">🕗 Giờ mở cửa</button>
+            <button class="nali-chip" id="naliChipCam" type="button">📷 AI xem ảnh răng</button>
         </div>
         <form id="naliChatForm" class="nali-chat-input">
             <input id="naliChatText" type="text" placeholder="Nhập câu hỏi cho NALI…" autocomplete="off" />
+            <input id="naliChatImg" type="file" accept="image/jpeg,image/png,image/webp" hidden />
+            <button type="button" id="naliChatCam" class="nali-cam" aria-label="Gửi ảnh răng để AI xem" title="Gửi ảnh răng để AI nhận xét"><i class="fas fa-camera"></i></button>
             <button type="submit" aria-label="Gửi"><i class="fas fa-paper-plane"></i></button>
         </form>
     </div>
@@ -43,6 +46,15 @@
 .nali-msg.user .bubble { background: linear-gradient(135deg,#4da6ff,#3d8fe8); color: #fff; border-bottom-right-radius: 4px; }
 .nali-typing .bubble { color: #888; font-style: italic; }
 .nali-quick { padding: 8px 12px 0; display: flex; gap: 6px; flex-wrap: wrap; background: #f5f9ff; }
+.nali-cam { border: 1px solid #d9e6f7 !important; background: #fff !important; color: #3d8fe8 !important; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; }
+.nali-cam:hover { background: #e8f4ff !important; }
+.nali-msg .bubble img.nali-preview { max-width: 100%; border-radius: 10px; display: block; margin-bottom: 6px; }
+.nali-vision { font-size: .88rem; }
+.nali-vision ul { margin: 6px 0 6px 18px; padding: 0; }
+.nali-vision .lvl { display: inline-block; font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin: 4px 0; }
+.nali-vision .lvl.ok { background: #e6f5ee; color: #1f7a4d; } .nali-vision .lvl.warn { background: #fdf0e3; color: #b54708; } .nali-vision .lvl.hi { background: #fdecea; color: #b42318; }
+.nali-vision .svc { display: inline-block; margin: 3px 4px 0 0; padding: 3px 8px; border-radius: 10px; background: #e8f4ff; color: #2c7ad1; font-size: .78rem; }
+.nali-vision .dis { display: block; margin-top: 8px; font-size: .74rem; color: #888; font-style: italic; }
 .nali-chip { border: 1px solid #cfe4ff; background: #fff; color: #3d8fe8; border-radius: 16px; padding: 5px 10px; font-size: .78rem; cursor: pointer; }
 .nali-chat-input { display: flex; padding: 10px 12px; gap: 8px; background: #fff; border-top: 1px solid #eef3fa; }
 .nali-chat-input input { flex: 1; border: 1px solid #d9e6f7; border-radius: 20px; padding: 10px 14px; font-size: .9rem; outline: none; }
@@ -70,6 +82,34 @@
     document.getElementById('naliChatToggle').addEventListener('click',function(){box.classList.contains('nali-hidden')?open():box.classList.add('nali-hidden');});
     document.getElementById('naliChatClose').addEventListener('click',function(){box.classList.add('nali-hidden');});
     form.addEventListener('submit',function(e){e.preventDefault();var m=input.value.trim();if(m)send(m);});
+    /* ---- AI xem ảnh răng ---- */
+    var VEP=root.getAttribute('data-vision'), fileIn=document.getElementById('naliChatImg');
+    function pick(){open();fileIn.click();}
+    document.getElementById('naliChatCam').addEventListener('click',pick);
+    var chipCam=document.getElementById('naliChipCam'); if(chipCam)chipCam.addEventListener('click',function(e){e.stopPropagation();pick();});
+    function esc(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function renderVision(d){
+        if(!d.success){return '⚠️ '+esc(d.message||'Không phân tích được ảnh.');}
+        if(!d.la_anh_rang_mieng){return 'Dạ NALI không nhận ra đây là ảnh răng miệng ạ. '+esc((d.quan_sat||[])[0]||'')+' Anh/chị chụp lại rõ hàm răng, đủ sáng giúp em nhé 📸';}
+        var lv={binh_thuong:['ok','Nhìn chung ổn'],nen_kham:['warn','Nên đến khám'],nen_kham_som:['hi','Nên khám sớm']}[d.muc_do]||['ok','Tham khảo'];
+        var h='<div class="nali-vision"><b>🔍 NALI quan sát thấy:</b><ul>';
+        (d.quan_sat||[]).forEach(function(q){h+='<li>'+esc(q)+'</li>';}); h+='</ul>';
+        h+='<span class="lvl '+lv[0]+'">'+lv[1]+'</span>';
+        if(d.loi_khuyen)h+='<div>'+esc(d.loi_khuyen)+'</div>';
+        if(d.dich_vu_goi_y&&d.dich_vu_goi_y.length){h+='<div style="margin-top:6px"><b>Dịch vụ phù hợp:</b><br>';d.dich_vu_goi_y.forEach(function(s){h+='<span class="svc">'+esc(s.ten)+' · '+esc(s.gia_text)+'</span>';});h+='</div>';}
+        h+='<span class="dis">'+esc(d.mien_tru||'')+'</span></div>';
+        return h;
+    }
+    fileIn.addEventListener('change',async function(){
+        var f=fileIn.files&&fileIn.files[0]; if(!f)return; fileIn.value='';
+        if(f.size>5*1024*1024){add('⚠️ Ảnh quá lớn (tối đa 5MB) ạ.','bot');return;}
+        var url=URL.createObjectURL(f); var w=document.createElement('div');w.className='nali-msg user';
+        w.innerHTML='<div class="bubble"><img class="nali-preview" src="'+url+'" alt="ảnh răng"><span>Nhờ NALI xem giúp ảnh này</span></div>';body.appendChild(w);body.scrollTop=body.scrollHeight;
+        var tp=add('🔍 NALI đang xem ảnh… (vài giây)','bot');tp.classList.add('nali-typing');
+        try{var fd=new FormData();fd.append('file',f);var r=await fetch(VEP,{method:'POST',body:fd});var d=await r.json();tp.remove();
+            var m=document.createElement('div');m.className='nali-msg bot';m.innerHTML='<div class="bubble">'+renderVision(d)+'</div>';body.appendChild(m);body.scrollTop=body.scrollHeight;}
+        catch(e){tp.remove();add('⚠️ Không gửi được ảnh tới trợ lý AI ạ.','bot');}
+    });
     document.getElementById('naliQuick').addEventListener('click',function(e){var c=e.target.closest('.nali-chip');if(c)send(c.getAttribute('data-msg'));});
 })();
 </script>
