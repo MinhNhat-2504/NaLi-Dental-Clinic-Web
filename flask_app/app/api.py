@@ -12,9 +12,11 @@ import urllib.error
 import urllib.request
 
 from flask import Blueprint, current_app, jsonify, request
+from flask_login import current_user
 
 from .extensions import csrf
-from .models import Product
+from .models import Appointment, ChatLog, Patient, Product
+from .extensions import db
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -66,6 +68,58 @@ def weather():
     return jsonify({"success": False, "city": "TP. Hồ Chí Minh"}), 200
 
 
+
+def _user_context() -> str:
+    """Dựng ngữ cảnh 'khách đã đăng nhập' để chatbot chào tên, nhắc lịch, gợi ý tái khám.
+    Chỉ áp dụng cho bệnh nhân (Patient); khách vãng lai/admin trả về chuỗi rỗng."""
+    from datetime import date, timedelta
+    if not getattr(current_user, "is_authenticated", False) or not isinstance(current_user._get_current_object(), Patient):
+        return ""
+    p = current_user._get_current_object()
+    lines = [f"Họ tên: {p.full_name}", f"SĐT: {p.phone}"]
+    q = Appointment.query.filter((Appointment.user_id == p.id) | (Appointment.customer_email == p.email))
+    upcoming = (q.filter(Appointment.appointment_date >= date.today(),
+                         Appointment.status.in_(("pending", "confirmed")))
+                 .order_by(Appointment.appointment_date, Appointment.appointment_time).first())
+    last_done = (q.filter(Appointment.status == "completed")
+                  .order_by(Appointment.appointment_date.desc()).first())
+    if upcoming:
+        svc = ""
+        if upcoming.product_ids:
+            prod = Product.query.get(int(upcoming.product_ids.split(",")[0])) if upcoming.product_ids.split(",")[0].isdigit() else None
+            svc = f" ({prod.name})" if prod else ""
+        lines.append(f"Lịch hẹn sắp tới: {upcoming.appointment_date.strftime('%d/%m/%Y')} lúc {upcoming.appointment_time.strftime('%H:%M')}{svc}, trạng thái {upcoming.status}")
+    else:
+        lines.append("Lịch hẹn sắp tới: chưa có")
+    if last_done:
+        days = (date.today() - last_done.appointment_date).days
+        lines.append(f"Lần khám gần nhất: {last_done.appointment_date.strftime('%d/%m/%Y')} ({days} ngày trước)")
+        if days >= 180:
+            lines.append("Gợi ý: đã quá 6 tháng kể từ lần khám gần nhất, nên nhắc khách tái khám/lấy cao răng định kỳ.")
+    lines.append("Hướng dẫn: hãy chào khách bằng tên, nếu có lịch sắp tới thì nhắc nhẹ; đừng hỏi lại tên/SĐT khi đặt lịch.")
+    return chr(10).join(lines)
+
+
+
+_UNANSWERED_HINTS = ("chưa có thông tin", "không phản hồi", "chưa trả lời được", "gọi hotline", "chưa rõ ý")
+
+
+def _log_chat(session_id: str, question: str, answer: str, mode: str, latency_ms: int) -> None:
+    """Ghi nhật ký chat để đo chất lượng AI. Lỗi ghi log KHÔNG được làm hỏng chat."""
+    try:
+        low = (answer or "").lower()
+        unanswered = (mode == "offline") or any(h in low for h in _UNANSWERED_HINTS) or not answer
+        uid = None
+        if getattr(current_user, "is_authenticated", False) and isinstance(current_user._get_current_object(), Patient):
+            uid = current_user._get_current_object().id
+        db.session.add(ChatLog(session_id=(session_id or "")[:80], user_id=uid, question=(question or "")[:4000],
+                               answer=(answer or "")[:8000], mode=mode, latency_ms=latency_ms, unanswered=unanswered))
+        db.session.commit()
+    except Exception as exc:  # noqa: BLE001
+        db.session.rollback()
+        current_app.logger.warning("Không ghi được chat log: %s", exc)
+
+
 @api_bp.route("/chat", methods=["POST"])
 @csrf.exempt
 def chat_proxy():
@@ -77,21 +131,26 @@ def chat_proxy():
     body = json.dumps({
         "session_id": payload.get("session_id", "web"),
         "message": payload.get("message", ""),
+        "user_context": _user_context(),
     }).encode("utf-8")
 
     url = current_app.config["AI_SERVICE_URL"].rstrip("/") + "/chat"
     req = urllib.request.Request(url, data=body,
                                  headers={"Content-Type": "application/json"}, method="POST")
+    import time as _t
+    t0 = _t.time()
     try:
         with urllib.request.urlopen(req, timeout=120) as resp:
             data = json.loads(resp.read().decode("utf-8"))
+        _log_chat(payload.get("session_id", "web"), payload.get("message", ""),
+                  data.get("reply", ""), data.get("mode", ""), int((_t.time() - t0) * 1000))
         return jsonify(data)
     except (urllib.error.URLError, OSError, ValueError) as exc:
         current_app.logger.warning("AI service lỗi: %s", exc)
-        return jsonify({
-            "reply": "Xin lỗi, Trợ lý AI tạm thời không phản hồi. Vui lòng gọi hotline 0945 457 512 ạ.",
-            "mode": "offline",
-        }), 200
+        fallback = "Xin lỗi, Trợ lý AI tạm thời không phản hồi. Vui lòng gọi hotline 0945 457 512 ạ."
+        _log_chat(payload.get("session_id", "web"), payload.get("message", ""), fallback, "offline",
+                  int((_t.time() - t0) * 1000))
+        return jsonify({"reply": fallback, "mode": "offline"}), 200
 
 
 

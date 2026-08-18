@@ -64,6 +64,19 @@ CLINIC_FACTS: list[Document] = [
         "Lễ tân sẽ gọi xác nhận trước buổi hẹn.",
         {"topic": "dat_lich"},
     ),
+    Document(
+        "Bãi đỗ xe và tiện ích",
+        "Cả 3 chi nhánh NALI đều có chỗ để xe máy miễn phí cho khách. Với ô tô, "
+        "khách vui lòng liên hệ hotline 0945 457 512 để được hướng dẫn chỗ đậu gần nhất theo từng chi nhánh.",
+        {"topic": "tien_ich"},
+    ),
+    Document(
+        "Phạm vi thông tin",
+        "NALI chỉ tư vấn về dịch vụ nha khoa và đặt lịch. Những điều chưa có trong dữ liệu "
+        "(khuyến mãi, thông tin cá nhân bác sĩ, dịch vụ ngoài nha khoa) NALI không tự khẳng định; "
+        "khách vui lòng gọi hotline để được xác nhận.",
+        {"topic": "pham_vi"},
+    ),
 ]
 
 # --- Bộ dịch vụ tĩnh dự phòng (khi MySQL chưa sẵn sàng lúc demo) ---

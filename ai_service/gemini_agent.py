@@ -56,11 +56,16 @@ class GeminiAgent:
             )
         return self._chats[session_id]
 
-    def reply(self, session_id: str, message: str) -> str:
-        """Nhận tin nhắn khách -> trả câu trả lời của trợ lý."""
+    def reply(self, session_id: str, message: str, user_context: str = "") -> str:
+        """Nhận tin nhắn khách -> trả câu trả lời của trợ lý.
+
+        user_context: ngữ cảnh khách đã đăng nhập (tên, lịch hẹn sắp tới...) do web
+        cung cấp — giúp bot chào đúng tên, nhắc lịch, gợi ý tái khám.
+        """
         context = self.retriever.context_for(message, k=4)
+        who = f"[THÔNG TIN KHÁCH ĐÃ ĐĂNG NHẬP]\n{user_context}\n[HẾT]\n\n" if user_context else ""
         augmented = (
-            f"[DỮ LIỆU NALI]\n{context}\n[HẾT DỮ LIỆU]\n\n"
+            f"{who}[DỮ LIỆU NALI]\n{context}\n[HẾT DỮ LIỆU]\n\n"
             f"Câu hỏi của khách: {message}"
         )
         chat = self._chat_for(session_id)

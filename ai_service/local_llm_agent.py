@@ -147,17 +147,18 @@ class LocalLLMAgent:
     def _history_for(self, session_id: str) -> list[dict]:
         return self._history.setdefault(session_id, [])
 
-    def reply(self, session_id: str, message: str) -> str:
+    def reply(self, session_id: str, message: str, user_context: str = "") -> str:
         # --- Định tuyến lai (hybrid): đặt lịch -> logic xác định; còn lại -> LLM ---
         booking_active = self._booking._state(session_id).active
         wants_booking = any(k in _strip_accents(message) for k in _BOOK_KEYWORDS)
         if booking_active or wants_booking:
-            return self._booking.reply(session_id, message)
+            return self._booking.reply(session_id, message, user_context=user_context)
 
         history = self._history_for(session_id)
         context = self.retriever.context_for(message, k=4)
+        who = f"[THÔNG TIN KHÁCH ĐÃ ĐĂNG NHẬP]\n{user_context}\n[HẾT]\n\n" if user_context else ""
         user_turn = (
-            f"[DỮ LIỆU NALI]\n{context}\n[HẾT DỮ LIỆU]\n\n"
+            f"{who}[DỮ LIỆU NALI]\n{context}\n[HẾT DỮ LIỆU]\n\n"
             f"Khách hỏi: {message}"
         )
 

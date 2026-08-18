@@ -18,6 +18,7 @@ class TestConfig(Config):
     WTF_CSRF_ENABLED = False       # tắt CSRF để test form dễ dàng
     MAIL_SUPPRESS_SEND = True      # không gửi email thật khi test
     SECRET_KEY = "test-secret"
+    AI_SERVICE_URL = "http://127.0.0.1:1"   # cổng chết: test không phụ thuộc AI service thật
 
 
 @pytest.fixture()

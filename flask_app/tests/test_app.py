@@ -120,3 +120,17 @@ def test_patient_can_cancel_future_appointment(client):
     assert response.status_code == 302
     with client.application.app_context():
         assert db.session.get(Appointment, appointment_id).status == "cancelled"
+
+
+def test_chat_log_written_and_admin_dashboard(client):
+    """Mỗi lượt chat được ghi vào chat_logs; admin xem được dashboard chất lượng AI."""
+    from app.models import ChatLog
+    # AI service không chạy trong test -> proxy trả fallback offline nhưng VẪN phải ghi log
+    r = client.post("/api/chat", json={"session_id": "t1", "message": "giá tẩy trắng?"})
+    assert r.status_code == 200
+    with client.application.app_context():
+        assert ChatLog.query.count() >= 1
+        assert bool(ChatLog.query.first().unanswered)  # offline fallback -> đánh dấu chưa trả lời được
+    client.post("/dang-nhap", data={"email": "admin", "password": "admin123"})
+    r = client.get("/admin/ai-chat?show=all")
+    assert r.status_code == 200 and "Chất lượng AI" in r.get_data(as_text=True)
