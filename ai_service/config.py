@@ -52,7 +52,7 @@ class Settings:
 
     # Gemini
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "").strip()
-    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash").strip()
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.6-flash").strip()
 
     # Database (mặc định trùng với config.php của web PHP)
     db_host: str = _dburl.get("host") or os.getenv("DB_HOST", "localhost")
