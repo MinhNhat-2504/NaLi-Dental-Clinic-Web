@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Quản trị — Ca điều trị{% endblock %}
+{% block content %}
+{% include 'partials/admin_nav.html' %}
+<div class="admin-wrap">
+  <div class="admin-card">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+      <h2 style="margin:0;"><i class="fas fa-images"></i> Thư viện ca điều trị (trước/sau)</h2>
+      <span style="margin-left:auto;display:flex;gap:8px;">
+        <a class="btn-sm btn-gray" href="{{ url_for('main.cases') }}" target="_blank"><i class="fas fa-eye"></i> Xem trang khách</a>
+        <a class="btn-sm btn-blue" href="{{ url_for('admin.case_add') }}"><i class="fas fa-plus"></i> Thêm ca</a>
+      </span>
+    </div>
+    <p style="color:#64748b;font-size:.9rem;margin:0 0 14px;">💡 Chỉ đăng ảnh <b>thật</b> của phòng khám khi khách đã đồng ý (nên chụp cận răng, không lộ mặt). Ảnh được nén tự động và lưu trong CSDL nên không mất khi deploy lại.</p>
+    <table class="admin-table">
+      <thead><tr><th>Ảnh</th><th>Tiêu đề</th><th>Dịch vụ</th><th>Thời gian</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        {% for c in items %}
+        <tr>
+          <td style="white-space:nowrap;">
+            <img src="{{ url_for('main.case_image', cid=c.id, kind='truoc', v=c.updated_at.timestamp()|int if c.updated_at else 0) }}" alt="" style="width:64px;height:48px;object-fit:cover;border-radius:8px;">
+            <img src="{{ url_for('main.case_image', cid=c.id, kind='sau', v=c.updated_at.timestamp()|int if c.updated_at else 0) }}" alt="" style="width:64px;height:48px;object-fit:cover;border-radius:8px;">
+          </td>
+          <td><b>{{ c.title }}</b>{% if c.is_demo %}<br><small style="color:#b45309;">ảnh minh hoạ</small>{% endif %}</td>
+          <td>{{ products.get(c.product_id, '—') }}</td>
+          <td>{{ c.duration_text or '—' }}</td>
+          <td>{{ 'Hiển thị' if c.is_active else 'Ẩn' }} · thứ tự {{ c.sort_order }}</td>
+          <td style="white-space:nowrap;">
+            <a href="{{ url_for('admin.case_edit', cid=c.id) }}" class="btn-sm btn-gray"><i class="fas fa-pen"></i></a>
+            <form method="post" action="{{ url_for('admin.case_delete', cid=c.id) }}" style="display:inline;" onsubmit="return confirm('Xoá ca này?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn-sm btn-red"><i class="fas fa-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px;">Chưa có ca nào. Bấm "Thêm ca" để đăng ảnh trước/sau đầu tiên.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

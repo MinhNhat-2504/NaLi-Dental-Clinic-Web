@@ -243,3 +243,58 @@ def test_deposit_hidden_when_bank_not_configured(app, client):
     app.config.update(BANK_ID="", BANK_ACCOUNT_NO="")
     client.post("/dang-nhap", data={"email": "khach@test.com", "password": "matkhau123"})
     assert "Đặt cọc giữ chỗ" not in client.get("/dat-lich").get_data(as_text=True)
+
+
+def _png_bytes(color):
+    """Ảnh PNG nhỏ tạo bằng Pillow để test upload."""
+    import io
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new("RGB", (1600, 1200), color).save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
+
+def test_case_study_admin_upload_and_public_gallery(app, client):
+    """Admin upload ca trước/sau (ảnh được nén, lưu DB) -> trang /ket-qua và ảnh phục vụ được; thiếu ảnh -> báo lỗi."""
+    from app.models import CaseStudy
+    client.post("/dang-nhap", data={"email": "admin", "password": "admin123"})
+    r = client.post("/admin/ca-dieu-tri/them", data={
+        "title": "Niềng răng trong suốt 12 tháng", "product_id": 1, "duration_text": "12 tháng",
+        "description": "Hô nhẹ, khấp khểnh nhóm răng cửa.", "is_active": "y", "sort_order": 0,
+        "before_image": (_png_bytes((200, 180, 160)), "truoc.png"),
+        "after_image": (_png_bytes((250, 250, 250)), "sau.png"),
+    }, content_type="multipart/form-data", follow_redirects=True)
+    assert r.status_code == 200
+    with app.app_context():
+        c = CaseStudy.query.filter_by(title="Niềng răng trong suốt 12 tháng").first()
+        assert c is not None and c.before_image and c.after_image
+        assert c.before_image[:3] == b"\xff\xd8\xff"          # đã chuyển sang JPEG
+        assert len(c.before_image) < 200_000                    # đã nén nhỏ
+        cid = c.id
+    # thiếu ảnh -> không tạo, báo lỗi
+    r2 = client.post("/admin/ca-dieu-tri/them", data={"title": "Thiếu ảnh", "product_id": 0, "is_active": "y", "sort_order": 0},
+                     content_type="multipart/form-data", follow_redirects=True)
+    assert "Cần đủ cả ảnh" in r2.get_data(as_text=True)
+    client.get("/dang-xuat")
+    # công khai
+    html = client.get("/ket-qua").get_data(as_text=True)
+    assert "Niềng răng trong suốt 12 tháng" in html and "TRƯỚC" in html
+    img = client.get(f"/ket-qua/anh/{cid}/truoc")
+    assert img.status_code == 200 and img.mimetype == "image/jpeg" and img.data[:3] == b"\xff\xd8\xff"
+    assert client.get(f"/ket-qua/anh/{cid}/xxx").status_code == 404
+    # trang chi tiết dịch vụ hiện ca liên quan; sitemap có /ket-qua
+    assert "Kết quả thực tế" in client.get("/dich-vu/1").get_data(as_text=True)
+    assert "/ket-qua" in client.get("/sitemap.xml").get_data(as_text=True)
+    # khách thường không vào được admin ca
+    assert client.get("/admin/ca-dieu-tri").status_code in (302, 403)
+
+
+def test_ga4_snippet_only_when_configured(app, client):
+    app.config["GA_MEASUREMENT_ID"] = ""
+    assert "googletagmanager" not in client.get("/").get_data(as_text=True)
+    app.config["GA_MEASUREMENT_ID"] = "G-TEST12345"
+    app.config["GOOGLE_SITE_VERIFICATION"] = "abc123"
+    html = client.get("/").get_data(as_text=True)
+    assert "gtag/js?id=G-TEST12345" in html and 'google-site-verification" content="abc123"' in html
+    assert "book_click" in html   # sự kiện chuyển đổi được gắn

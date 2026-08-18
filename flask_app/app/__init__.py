@@ -154,6 +154,24 @@ def create_app(config_class=Config):
         stats = send_due_reminders()
         print(f"Nhac lich: {stats['due']} den han, {stats['sent']} da gui, {stats['failed']} loi.")
 
+    @app.cli.command("seed-cases")
+    def seed_cases():
+        """Tạo 1 ca DEMO (ảnh minh hoạ có sẵn) cho thư viện kết quả — thay bằng ca thật qua Admin."""
+        from .imaging import compress_image
+        from .models import CaseStudy, Product
+        if CaseStudy.query.count():
+            print("Đã có ca điều trị, bỏ qua."); return
+        img_dir = os.path.join(app.static_folder, "images")
+        with open(os.path.join(img_dir, "before.webp"), "rb") as f: before = compress_image(f.read())
+        with open(os.path.join(img_dir, "after.webp"), "rb") as f: after = compress_image(f.read())
+        p = Product.query.filter(Product.name.like("%Tẩy trắng%")).first()
+        db.session.add(CaseStudy(title="Tẩy trắng răng Laser — răng ố vàng do cà phê", product_id=p.id if p else None,
+                                 duration_text="1 buổi 60 phút", is_demo=True, is_active=True, sort_order=1,
+                                 description="Răng nhiễm màu bề mặt sau nhiều năm dùng cà phê, trà. Tẩy trắng Laser 1 buổi kết hợp lấy cao răng; màu sáng lên rõ, không ê buốt kéo dài.",
+                                 before_image=before, after_image=after))
+        db.session.commit()
+        print("Đã tạo 1 ca demo (ảnh minh hoạ). Vào Admin -> Ca điều trị để thay bằng ca thật.")
+
     @app.cli.command("seed-content")
     def seed_content():
         """Chèn FAQ và bài viết thông tin, không tạo đánh giá khách hàng giả."""

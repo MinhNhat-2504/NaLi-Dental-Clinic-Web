@@ -64,6 +64,10 @@ class Config:
     BANK_ID = os.getenv("BANK_ID", "")                    # mã ngân hàng VietQR: MB, VCB, TCB, ACB, BIDV, VPB...
     BANK_ACCOUNT_NO = os.getenv("BANK_ACCOUNT_NO", "")
     BANK_ACCOUNT_NAME = os.getenv("BANK_ACCOUNT_NAME", "NALI DENTAL")
+    # Google Analytics 4 (G-XXXXXXXXXX) + Search Console (nội dung thẻ google-site-verification). Trống = tắt.
+    GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "").strip()
+    GOOGLE_SITE_VERIFICATION = os.getenv("GOOGLE_SITE_VERIFICATION", "").strip()
+    MAX_CONTENT_LENGTH = 12 * 1024 * 1024   # giới hạn upload 12MB (ảnh ca điều trị)
 
     # --- Phân trang ---
     PER_PAGE = int(os.getenv("PER_PAGE", "6"))

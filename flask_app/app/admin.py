@@ -12,7 +12,7 @@ from sqlalchemy import or_
 from .extensions import db
 from .forms import AdminAppointmentForm, ProductForm
 from .mailer import send_email
-from .models import Appointment, ChatLog, Feedback, MedicalRecord, Patient, Product, Staff
+from .models import Appointment, CaseStudy, ChatLog, Feedback, MedicalRecord, Patient, Product, Staff
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -295,6 +295,84 @@ def patient_records(pid):
     doctor_ids = {r.doctor_id for r in records if r.doctor_id}
     doctors = {s.id: s for s in Staff.query.filter(Staff.id.in_(doctor_ids)).all()} if doctor_ids else {}
     return render_template("admin/patient_records.html", patient=patient, records=records, doctors=doctors)
+
+
+# ---------- Thư viện ca điều trị trước/sau ----------
+@admin_bp.route("/ca-dieu-tri")
+@admin_required
+def cases():
+    items = CaseStudy.query.order_by(CaseStudy.sort_order, CaseStudy.id.desc()).all()
+    products = {p.id: p.name for p in Product.query.all()}
+    return render_template("admin/cases.html", items=items, products=products)
+
+
+def _save_case_form(form, case):
+    """Đổ dữ liệu form vào CaseStudy; nén ảnh nếu có upload. Trả về (ok, thông báo lỗi)."""
+    from .imaging import compress_image
+    case.title = form.title.data.strip()
+    case.product_id = form.product_id.data or None
+    case.duration_text = (form.duration_text.data or "").strip()
+    case.description = form.description.data
+    case.is_demo = bool(form.is_demo.data)
+    case.is_active = bool(form.is_active.data)
+    case.sort_order = form.sort_order.data or 0
+    for field, attr in ((form.before_image, "before_image"), (form.after_image, "after_image")):
+        f = field.data
+        if f and getattr(f, "filename", ""):
+            try:
+                setattr(case, attr, compress_image(f.read()))
+            except ValueError as exc:
+                return False, f"{field.label.text}: {exc}"
+    if not case.before_image or not case.after_image:
+        return False, "Cần đủ cả ảnh TRƯỚC và ảnh SAU."
+    return True, ""
+
+
+@admin_bp.route("/ca-dieu-tri/them", methods=["GET", "POST"])
+@admin_required
+def case_add():
+    from .forms import CaseStudyForm
+    form = CaseStudyForm()
+    form.product_id.choices = [(0, "-- Không gắn dịch vụ --")] + [(p.id, p.name) for p in Product.query.order_by(Product.name).all()]
+    if form.validate_on_submit():
+        case = CaseStudy()
+        ok, err = _save_case_form(form, case)
+        if ok:
+            db.session.add(case)
+            db.session.commit()
+            flash("Đã thêm ca điều trị.", "success")
+            return redirect(url_for("admin.cases"))
+        flash(err, "error")
+    return render_template("admin/case_form.html", form=form, case=None, title="Thêm ca điều trị")
+
+
+@admin_bp.route("/ca-dieu-tri/sua/<int:cid>", methods=["GET", "POST"])
+@admin_required
+def case_edit(cid):
+    from .forms import CaseStudyForm
+    case = CaseStudy.query.get_or_404(cid)
+    form = CaseStudyForm(obj=case)
+    form.product_id.choices = [(0, "-- Không gắn dịch vụ --")] + [(p.id, p.name) for p in Product.query.order_by(Product.name).all()]
+    if request.method == "GET":
+        form.product_id.data = case.product_id or 0
+    if form.validate_on_submit():
+        ok, err = _save_case_form(form, case)
+        if ok:
+            db.session.commit()
+            flash("Đã cập nhật ca điều trị.", "success")
+            return redirect(url_for("admin.cases"))
+        flash(err, "error")
+    return render_template("admin/case_form.html", form=form, case=case, title=f"Sửa ca #{cid}")
+
+
+@admin_bp.route("/ca-dieu-tri/xoa/<int:cid>", methods=["POST"])
+@admin_required
+def case_delete(cid):
+    case = CaseStudy.query.get_or_404(cid)
+    db.session.delete(case)
+    db.session.commit()
+    flash("Đã xoá ca điều trị.", "success")
+    return redirect(url_for("admin.cases"))
 
 
 # ---------- Chất lượng chatbot AI ----------

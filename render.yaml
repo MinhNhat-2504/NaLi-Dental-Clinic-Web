@@ -50,6 +50,10 @@ services:
         sync: false
       - key: BANK_ACCOUNT_NAME
         sync: false
+      - key: GA_MEASUREMENT_ID
+        sync: false                  # Google Analytics 4: G-XXXXXXXXXX (trống = tắt)
+      - key: GOOGLE_SITE_VERIFICATION
+        sync: false                  # Search Console: nội dung thẻ google-site-verification (trống = bỏ qua)
 
   # ---------------- AI service (chatbot + AI xem ảnh răng) ----------------
   - type: web

@@ -4,6 +4,7 @@ forms.py — Các form Flask-WTF (có validator + bảo vệ CSRF tự động).
 from datetime import date, time
 
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField
 from wtforms import (BooleanField, DateField, DecimalField, IntegerField,
                      PasswordField, RadioField, SelectField, StringField, SubmitField,
                      TextAreaField, TimeField, ValidationError)
@@ -114,4 +115,18 @@ class MedicalRecordForm(FlaskForm):
     next_visit_date = DateField("Hẹn tái khám", validators=[Optional()])
     mark_completed = BooleanField("Đánh dấu lịch hẹn Hoàn thành", default=True)
     submit = SubmitField("Lưu hồ sơ")
+
+
+class CaseStudyForm(FlaskForm):
+    """Admin thêm/sửa ca điều trị trước/sau."""
+    title = StringField("Tiêu đề ca", validators=[DataRequired(), Length(3, 150)])
+    product_id = SelectField("Dịch vụ", coerce=int, validators=[Optional()])
+    duration_text = StringField("Thời gian điều trị", validators=[Optional(), Length(0, 60)])
+    description = TextAreaField("Mô tả ngắn", validators=[Optional(), Length(0, 1000)])
+    before_image = FileField("Ảnh TRƯỚC", validators=[Optional(), FileAllowed(["jpg", "jpeg", "png", "webp"], "Chỉ nhận ảnh JPG/PNG/WEBP")])
+    after_image = FileField("Ảnh SAU", validators=[Optional(), FileAllowed(["jpg", "jpeg", "png", "webp"], "Chỉ nhận ảnh JPG/PNG/WEBP")])
+    is_demo = BooleanField("Ảnh minh hoạ (chưa phải ca thật — hiện nhãn cho khách biết)")
+    is_active = BooleanField("Hiển thị trên web", default=True)
+    sort_order = IntegerField("Thứ tự (nhỏ lên trước)", validators=[Optional()], default=0)
+    submit = SubmitField("Lưu ca điều trị")
 

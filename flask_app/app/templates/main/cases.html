@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Kết quả điều trị thực tế — NALI Dental{% endblock %}
+{% block meta %}
+<meta name="description" content="Hình ảnh trước/sau các ca điều trị tại NALI Dental: niềng răng, tẩy trắng, implant, bọc sứ... Kéo thanh trượt để so sánh.">
+<link rel="canonical" href="{{ request.base_url }}">
+{% endblock %}
+{% block content %}
+<div class="about-hero"><div><h1>Kết Quả Điều Trị</h1><p>Kéo thanh trượt trên từng ảnh để so sánh trước – sau</p></div></div>
+<section class="section" style="max-width:1100px;">
+  {% if filters %}
+  <div class="case-filters">
+    <a class="cf {{ 'on' if not pid }}" href="{{ url_for('main.cases') }}">Tất cả</a>
+    {% for f in filters %}<a class="cf {{ 'on' if pid==f.id }}" href="{{ url_for('main.cases', dv=f.id) }}">{{ f.name }}</a>{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if items %}
+  <div class="case-grid">
+    {% for c in items %}
+    <article class="case-card">
+      <div class="ba-wrap ba-mini" data-ba>
+        <img src="{{ url_for('main.case_image', cid=c.id, kind='sau', v=c.updated_at.timestamp()|int if c.updated_at else 0) }}" alt="Sau — {{ c.title }}" loading="lazy">
+        <div class="ba-before"><img src="{{ url_for('main.case_image', cid=c.id, kind='truoc', v=c.updated_at.timestamp()|int if c.updated_at else 0) }}" alt="Trước — {{ c.title }}" loading="lazy"></div>
+        <div class="ba-handle"><span class="ba-grab"><i class="fas fa-arrows-left-right"></i></span></div>
+        <span class="ba-label l">TRƯỚC</span><span class="ba-label r">SAU</span>
+        {% if c.is_demo %}<span class="case-demo">Ảnh minh hoạ</span>{% endif %}
+      </div>
+      <div class="case-body">
+        <h3>{{ c.title }}</h3>
+        <p class="case-meta">
+          {% if c.product_id and products.get(c.product_id) %}<span><i class="fas fa-tooth"></i> {{ products[c.product_id].name }}</span>{% endif %}
+          {% if c.duration_text %}<span><i class="far fa-clock"></i> {{ c.duration_text }}</span>{% endif %}
+        </p>
+        {% if c.description %}<p class="case-desc">{{ c.description }}</p>{% endif %}
+        <a class="order-btn" href="{{ url_for('booking.book', product=c.product_id) if c.product_id else url_for('booking.book') }}"><i class="fas fa-calendar-check"></i> Đặt lịch dịch vụ này</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  <p class="case-note"><i class="fas fa-info-circle"></i> Kết quả điều trị phụ thuộc tình trạng răng miệng và sự hợp tác của từng người; hình ảnh chỉ mang tính tham khảo. Ảnh ca thật được đăng khi có sự đồng ý của khách hàng.</p>
+  {% else %}
+  <div class="empty-message"><i class="fas fa-images"></i><p>Thư viện đang được cập nhật. Bạn có thể xem dịch vụ hoặc đặt lịch tư vấn miễn phí.</p>
+    <a href="{{ url_for('booking.book') }}" class="order-btn" style="margin-top:14px;display:inline-flex;">Đặt lịch tư vấn</a></div>
+  {% endif %}
+</section>
+<div style="height:40px"></div>
+<style>
+.case-filters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:26px;}
+.cf{padding:8px 16px;border-radius:20px;border:1.5px solid #cfe3e1;color:#0b6f6a;background:#fff;text-decoration:none;font-weight:600;font-size:.9rem;}
+.cf.on{background:linear-gradient(135deg,#0f8f89,#0b6f6a);color:#fff;border-color:transparent;}
+.case-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;}
+.case-card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 26px rgba(15,143,137,.10);display:flex;flex-direction:column;}
+.ba-mini{border-radius:0;max-width:none;aspect-ratio:4/3;background:#eef3f3;}
+.ba-mini img{width:100%;height:100%;object-fit:cover;}
+.ba-mini .ba-before img{height:100%;}
+.case-demo{position:absolute;top:12px;left:12px;background:rgba(17,24,39,.75);color:#fff;font-size:.72rem;padding:4px 10px;border-radius:12px;letter-spacing:.3px;}
+.case-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1;}
+.case-body h3{font-size:1.05rem;color:#1a2b47;margin:0;}
+.case-meta{display:flex;flex-wrap:wrap;gap:12px;color:#64748b;font-size:.85rem;margin:0;} .case-meta i{color:#0f8f89;margin-right:4px;}
+.case-desc{color:#475569;font-size:.92rem;margin:0;flex:1;}
+.case-body .order-btn{align-self:flex-start;margin-top:4px;}
+.case-note{margin-top:26px;color:#64748b;font-size:.85rem;text-align:center;}
+[data-theme="dark"] .case-card{background:#1e293b;} [data-theme="dark"] .case-body h3{color:#f1f5f9;} [data-theme="dark"] .case-desc{color:#cbd5e1;} [data-theme="dark"] .cf{background:#1e293b;border-color:#334155;color:#5eead4;}
+</style>
+{% endblock %}
+{% block scripts %}
+<script>
+/* Thanh trượt so sánh trước/sau cho từng thẻ (dùng lại CSS .ba-* của trang chủ) */
+document.querySelectorAll('[data-ba]').forEach(function(w){
+  var b=w.querySelector('.ba-before'), h=w.querySelector('.ba-handle'), d=false;
+  function set(x){var r=w.getBoundingClientRect();var p=Math.min(Math.max((x-r.left)/r.width,0),1)*100;b.style.clipPath='inset(0 '+(100-p)+'% 0 0)';h.style.left=p+'%';}
+  w.addEventListener('pointerdown',function(e){d=true;w.setPointerCapture(e.pointerId);set(e.clientX);});
+  w.addEventListener('pointermove',function(e){if(d)set(e.clientX);});
+  w.addEventListener('pointerup',function(){d=false;}); w.addEventListener('pointercancel',function(){d=false;});
+});
+</script>
+{% endblock %}

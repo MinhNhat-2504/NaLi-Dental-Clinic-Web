@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — Quản trị{% endblock %}
+{% block content %}
+{% include 'partials/admin_nav.html' %}
+<div class="admin-wrap" style="max-width:680px;">
+  <div class="admin-card">
+    <h2><i class="fas fa-images"></i> {{ title }}</h2>
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="fg">{{ form.title.label }} {{ form.title(class="fc", placeholder="VD: Niềng răng trong suốt — hô nhẹ, 14 tháng") }}
+        {% for e in form.title.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+      <div class="grid2">
+        <div class="fg">{{ form.product_id.label }} {{ form.product_id(class="fc") }}</div>
+        <div class="fg">{{ form.duration_text.label }} {{ form.duration_text(class="fc", placeholder="VD: 14 tháng / 1 buổi 60 phút") }}</div>
+      </div>
+      <div class="fg">{{ form.description.label }} {{ form.description(class="fc", rows=3, placeholder="Tình trạng ban đầu, phương pháp, kết quả (1–3 câu)") }}</div>
+      <div class="grid2">
+        <div class="fg">{{ form.before_image.label }} {{ form.before_image(class="fc", accept="image/*") }}
+          {% for e in form.before_image.errors %}<small class="err">{{ e }}</small>{% endfor %}
+          {% if case and case.before_image %}<img src="{{ url_for('main.case_image', cid=case.id, kind='truoc', v=case.updated_at.timestamp()|int if case.updated_at else 0) }}" alt="" style="width:100%;border-radius:10px;margin-top:6px;"><small style="color:#94a3b8;">Chọn file mới để thay ảnh</small>{% endif %}</div>
+        <div class="fg">{{ form.after_image.label }} {{ form.after_image(class="fc", accept="image/*") }}
+          {% for e in form.after_image.errors %}<small class="err">{{ e }}</small>{% endfor %}
+          {% if case and case.after_image %}<img src="{{ url_for('main.case_image', cid=case.id, kind='sau', v=case.updated_at.timestamp()|int if case.updated_at else 0) }}" alt="" style="width:100%;border-radius:10px;margin-top:6px;">{% endif %}</div>
+      </div>
+      <small style="color:#64748b;display:block;margin:-6px 0 12px;">Ảnh JPG/PNG/WEBP tối đa 12MB — hệ thống tự thu nhỏ về 1200px và bỏ thông tin EXIF (vị trí, thiết bị) để bảo vệ riêng tư.</small>
+      <div class="grid2">
+        <div class="fg">{{ form.sort_order.label }} {{ form.sort_order(class="fc") }}</div>
+        <div class="fg" style="justify-content:flex-end;">
+          <label class="fg-check" style="margin:0 0 6px;">{{ form.is_active() }} {{ form.is_active.label.text }}</label>
+          <label class="fg-check" style="margin:0;">{{ form.is_demo() }} {{ form.is_demo.label.text }}</label>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        {{ form.submit(class="auth-btn", style="flex:1;") }}
+        <a href="{{ url_for('admin.cases') }}" class="btn-sm btn-gray" style="display:flex;align-items:center;padding:0 20px;">Hủy</a>
+      </div>
+    </form>
+  </div>
+</div>
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;} @media(max-width:600px){.grid2{grid-template-columns:1fr;}}</style>
+{% endblock %}
