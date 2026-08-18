@@ -18,7 +18,7 @@ import re
 from config import settings
 from knowledge import _format_price, services_catalog
 
-VISION_MODEL = "gemini-1.5-flash"   # nhanh, miễn phí, hỗ trợ ảnh
+VISION_MODEL = "gemini-3.6-flash"   # nhanh, miễn phí, hỗ trợ ảnh
 
 _PROMPT = """Bạn là trợ lý hình ảnh của phòng khám Nha khoa NALI. Hãy xem ảnh khách gửi.
 
@@ -82,7 +82,8 @@ def analyze_dental_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> d
     try:
         resp = model.generate_content(
             [prompt, {"mime_type": mime_type, "data": base64.b64encode(image_bytes).decode()}],
-            generation_config={"temperature": 0.2, "max_output_tokens": 600},
+            # Model đời mới có "thinking" tốn token -> nới rộng để JSON không bị cắt giữa chừng
+            generation_config={"temperature": 0.2, "max_output_tokens": 4096},
         )
         text = (resp.text or "").strip()
     except Exception as exc:  # noqa: BLE001
