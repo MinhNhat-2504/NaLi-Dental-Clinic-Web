@@ -155,5 +155,20 @@ def chat_proxy():
 
 
 # Route phân tích ảnh răng (tách file cho gọn)
+# ---------- Cron: email nhắc lịch trước 24h ----------
+@api_bp.route("/cron/reminders", methods=["POST"])
+@csrf.exempt
+def cron_reminders():
+    """GitHub Actions (hoặc cron bất kỳ) gọi mỗi sáng kèm header X-Cron-Token.
+    Không có token cấu hình -> đóng endpoint (tránh ai cũng gọi được)."""
+    token = current_app.config.get("CRON_TOKEN") or ""
+    given = request.headers.get("X-Cron-Token") or request.args.get("token") or ""
+    if not token or given != token:
+        return jsonify({"ok": False, "error": "unauthorized"}), 401
+    from .reminders import send_due_reminders
+    stats = send_due_reminders()
+    return jsonify({"ok": True, **stats})
+
+
 from ._vision_proxy import register as _register_vision  # noqa: E402
 _register_vision(api_bp)

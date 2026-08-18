@@ -21,7 +21,7 @@
         {% for a in items %}
         <tr>
           <td>#{{ a.id }}</td><td><b>{{ a.customer_name }}</b></td><td>{{ a.customer_phone }}</td>
-          <td>{{ a.appointment_date.strftime('%d/%m/%Y') if a.appointment_date }} {{ a.appointment_time.strftime('%H:%M') if a.appointment_time }}</td>
+          <td>{{ a.appointment_date.strftime('%d/%m/%Y') if a.appointment_date }} {{ a.appointment_time.strftime('%H:%M') if a.appointment_time }}{% if a.reminder_sent_at %} <i class="fas fa-bell" title="Đã gửi email nhắc lịch lúc {{ a.reminder_sent_at.strftime('%d/%m %H:%M') }}" style="color:#0f8f89;font-size:.8rem;"></i>{% endif %}</td>
           <td>{{ {'pending':'Chờ','confirmed':'Đã xác nhận','completed':'Hoàn thành','cancelled':'Đã huỷ'}[a.status] }}</td>
           <td>
             <form method="post" action="{{ url_for('admin.appointment_status', aid=a.id) }}" style="display:inline;">

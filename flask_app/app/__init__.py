@@ -147,6 +147,13 @@ def create_app(config_class=Config):
         db.session.commit()
         print("Seed data created; the admin password comes from INITIAL_ADMIN_PASSWORD.")
 
+    @app.cli.command("send-reminders")
+    def send_reminders():
+        """Gửi email nhắc các lịch hẹn ngày mai (chạy tay hoặc qua cron)."""
+        from .reminders import send_due_reminders
+        stats = send_due_reminders()
+        print(f"Nhac lich: {stats['due']} den han, {stats['sent']} da gui, {stats['failed']} loi.")
+
     @app.cli.command("seed-content")
     def seed_content():
         """Chèn FAQ và bài viết thông tin, không tạo đánh giá khách hàng giả."""

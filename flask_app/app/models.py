@@ -122,6 +122,8 @@ class Appointment(db.Model):
     payment_method = db.Column(db.Enum("cash", "transfer", "card"), default="cash")
     total_price = db.Column(db.Numeric(12, 2), default=0)
     created_at = db.Column(db.TIMESTAMP, default=datetime.utcnow)
+    # Thời điểm đã gửi email nhắc lịch (NULL = chưa nhắc). Cột thêm sau, nullable -> PHP không ảnh hưởng.
+    reminder_sent_at = db.Column(db.DateTime, nullable=True)
 
 
 class Feedback(db.Model):

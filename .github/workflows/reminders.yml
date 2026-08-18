@@ -1,0 +1,29 @@
+# ============================================================
+#  Cron 0đ: mỗi sáng gọi web NALI để gửi email nhắc lịch hẹn ngày mai.
+#  Render free không có cron -> dùng lịch của GitHub Actions (miễn phí).
+#
+#  Cần 2 secret trong repo (Settings -> Secrets and variables -> Actions):
+#    SITE_URL   = https://nali-dental-web.onrender.com
+#    CRON_TOKEN = trùng với biến CRON_TOKEN trên Render (service nali-dental-web)
+# ============================================================
+name: Nhắc lịch hẹn (email trước 24h)
+
+on:
+  schedule:
+    - cron: "0 1 * * *"      # 01:00 UTC = 08:00 giờ Việt Nam, mỗi ngày
+  workflow_dispatch:         # cho phép bấm "Run workflow" để thử ngay
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Đánh thức web (Render free ngủ sau 15 phút)
+        run: curl -s -o /dev/null -m 90 "${{ secrets.SITE_URL }}/" || true
+
+      - name: Gọi endpoint gửi nhắc lịch
+        run: |
+          code=$(curl -s -o out.json -w "%{http_code}" -m 120 -X POST \
+            -H "X-Cron-Token: ${{ secrets.CRON_TOKEN }}" \
+            "${{ secrets.SITE_URL }}/api/cron/reminders")
+          echo "HTTP $code"; cat out.json; echo
+          test "$code" = "200"

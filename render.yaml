@@ -42,6 +42,8 @@ services:
         sync: false
       - key: MAIL_DEFAULT_SENDER
         sync: false
+      - key: CRON_TOKEN
+        generateValue: true          # copy giá trị này vào GitHub secret CRON_TOKEN (cron nhắc lịch)
 
   # ---------------- AI service (chatbot + AI xem ảnh răng) ----------------
   - type: web
