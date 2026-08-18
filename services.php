@@ -137,6 +137,7 @@ function renderServiceCard($service, $groups) {
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="favicon.png">
     <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="dental-theme.css">
     <link rel="stylesheet" href="content-pages.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">

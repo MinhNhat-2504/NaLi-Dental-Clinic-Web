@@ -20,6 +20,7 @@ $publicDoctors = $doctorResult ? $doctorResult->fetch_all(MYSQLI_ASSOC) : [];
     <link rel="apple-touch-icon" href="favicon.png">
     <link rel="stylesheet" href="common.css">
     <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="dental-theme.css">
     <link rel="stylesheet" href="animations.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
