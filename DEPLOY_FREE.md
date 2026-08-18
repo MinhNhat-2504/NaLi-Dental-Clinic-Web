@@ -71,6 +71,21 @@ flask --app run.py seed-content
 
 ---
 
+## Bước 5 — Bật email nhắc lịch trước 24h (0đ, GitHub Actions) — 3 phút
+
+Web có sẵn endpoint `POST /api/cron/reminders` (gửi email cho các lịch hẹn ngày mai, mỗi lịch chỉ nhắc 1 lần).
+GitHub Actions gọi nó mỗi sáng **08:00 giờ VN** theo file `.github/workflows/reminders.yml`.
+
+1. Render → service **nali-dental-web** → Environment: đảm bảo có `MAIL_USERNAME`, `MAIL_PASSWORD` (Gmail App Password),
+   `MAIL_DEFAULT_SENDER`; copy giá trị `CRON_TOKEN` (Render tự sinh khi sync Blueprint — nếu chưa có thì tự thêm 1 chuỗi ngẫu nhiên dài).
+2. GitHub → repo → **Settings → Secrets and variables → Actions → New repository secret**:
+   - `SITE_URL` = `https://nali-dental-web.onrender.com`
+   - `CRON_TOKEN` = giá trị vừa copy ở Render.
+3. Thử ngay: tab **Actions → "Nhắc lịch hẹn (email trước 24h)" → Run workflow**. Log phải in `HTTP 200 {"ok": true, "due": ..., "sent": ...}`.
+
+Chạy tay trên máy: `cd flask_app && flask --app run.py send-reminders`.
+Trong Admin → Lịch hẹn, lịch đã nhắc có biểu tượng chuông 🔔.
+
 ## Nếu gặp lỗi
 | Triệu chứng | Nguyên nhân / cách sửa |
 |---|---|

@@ -134,3 +134,44 @@ def test_chat_log_written_and_admin_dashboard(client):
     client.post("/dang-nhap", data={"email": "admin", "password": "admin123"})
     r = client.get("/admin/ai-chat?show=all")
     assert r.status_code == 200 and "Chất lượng AI" in r.get_data(as_text=True)
+
+
+def test_reminders_send_for_tomorrow_only_once(app):
+    """Email nhắc lịch: chọn đúng lịch ngày mai có email, gửi 1 lần, đánh dấu reminder_sent_at."""
+    from datetime import date, datetime, time, timedelta
+    from app.extensions import mail
+    from app.models import Appointment
+    from app.reminders import send_due_reminders
+
+    now = datetime(2026, 8, 20, 8, 0)
+    tomorrow = now.date() + timedelta(days=1)
+    with app.app_context():
+        db.session.add_all([
+            Appointment(customer_name="A Mai", customer_phone="0900000001", customer_email="a@test.com",
+                        appointment_date=tomorrow, appointment_time=time(9, 0), status="confirmed"),
+            Appointment(customer_name="B Kia", customer_phone="0900000002", customer_email="b@test.com",
+                        appointment_date=tomorrow + timedelta(days=1), appointment_time=time(9, 0), status="pending"),
+            Appointment(customer_name="C Huy", customer_phone="0900000003", customer_email="c@test.com",
+                        appointment_date=tomorrow, appointment_time=time(9, 0), status="cancelled"),
+            Appointment(customer_name="D KhongMail", customer_phone="0900000004", customer_email="",
+                        appointment_date=tomorrow, appointment_time=time(9, 0), status="confirmed"),
+        ])
+        db.session.commit()
+        with mail.record_messages() as outbox:
+            stats = send_due_reminders(now)
+            assert stats["sent"] == 1 and stats["due"] == 1
+            assert len(outbox) == 1
+            assert outbox[0].recipients == ["a@test.com"]
+            assert "ngày mai" in outbox[0].subject and "#" in outbox[0].body
+        a = Appointment.query.filter_by(customer_email="a@test.com").first()
+        assert a.reminder_sent_at is not None
+        # Chạy lại -> không gửi trùng
+        assert send_due_reminders(now)["sent"] == 0
+
+
+def test_cron_reminders_endpoint_requires_token(app, client):
+    app.config["CRON_TOKEN"] = "secret-token"
+    assert client.post("/api/cron/reminders").status_code == 401
+    assert client.post("/api/cron/reminders", headers={"X-Cron-Token": "sai"}).status_code == 401
+    r = client.post("/api/cron/reminders", headers={"X-Cron-Token": "secret-token"})
+    assert r.status_code == 200 and r.get_json()["ok"] is True
