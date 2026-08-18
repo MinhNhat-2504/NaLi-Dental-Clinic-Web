@@ -5,6 +5,7 @@
   <a href="{{ url_for('admin.products') }}" class="{{ 'active' if request.endpoint in ['admin.products','admin.product_add','admin.product_edit'] }}"><i class="fas fa-tooth"></i> Dịch vụ</a>
   <a href="{{ url_for('admin.patients') }}" class="{{ 'active' if request.endpoint=='admin.patients' }}"><i class="fas fa-users"></i> Bệnh nhân</a>
   <a href="{{ url_for('admin.feedback') }}" class="{{ 'active' if request.endpoint=='admin.feedback' }}"><i class="fas fa-comment-dots"></i> Phản hồi</a>
+  <a href="{{ url_for('admin.ai_chat_quality') }}" class="{{ 'active' if request.endpoint=='admin.ai_chat_quality' }}"><i class="fas fa-robot"></i> Chất lượng AI</a>
 </div>
 <style>
 .admin-search { margin-bottom:14px; display:flex; gap:8px; max-width:420px; }

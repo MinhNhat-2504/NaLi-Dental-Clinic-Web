@@ -99,9 +99,30 @@ class FallbackAgent:
         return prompts.get(slot, "Anh/chị bổ sung thêm thông tin giúp NALI nhé ạ.")
 
     # ---------- Xử lý chính ----------
-    def reply(self, session_id: str, message: str) -> str:
+    @staticmethod
+    def _parse_user_context(user_context: str) -> dict:
+        """Rút 'Họ tên: ...' và 'SĐT: ...' từ chuỗi ngữ cảnh do web gửi (nếu có)."""
+        info = {}
+        for line in (user_context or "").splitlines():
+            low = line.lower()
+            if low.startswith("họ tên:") or low.startswith("ho ten:"):
+                info["ho_ten"] = line.split(":", 1)[1].strip()
+            elif "sđt" in low or "sdt" in low or "điện thoại" in low:
+                m = _PHONE_RE.search(line.replace(" ", ""))
+                if m:
+                    info["so_dien_thoai"] = m.group(0)
+        return info
+
+    def reply(self, session_id: str, message: str, user_context: str = "") -> str:
         state = self._state(session_id)
         norm = _strip_accents(message)
+
+        # 0) Khách đã đăng nhập: điền sẵn tên/SĐT để không phải hỏi lại
+        known = self._parse_user_context(user_context)
+        if known.get("ho_ten") and not state.ho_ten:
+            state.ho_ten = known["ho_ten"]
+        if known.get("so_dien_thoai") and not state.so_dien_thoai:
+            state.so_dien_thoai = known["so_dien_thoai"]
 
         # 1) Nếu đang/không trong luồng đặt lịch: quyết định ý định
         wants_booking = any(k in norm for k in _BOOK_KEYWORDS)
@@ -120,7 +141,8 @@ class FallbackAgent:
                     "0945 457 512 để được hỗ trợ ạ.")
         lines = [f"• {d.title}: {d.content}" for d in docs]
         tip = "\n\n👉 Anh/chị muốn *đặt lịch* thì nhắn \"đặt lịch\" giúp NALI nhé ạ."
-        return "Dạ NALI xin thông tin ạ:\n" + "\n".join(lines) + tip
+        greet = f"Dạ chào {known['ho_ten']} ạ! " if known.get("ho_ten") else "Dạ "
+        return greet + "NALI xin thông tin ạ:\n" + "\n".join(lines) + tip
 
     def _handle_booking(self, session_id: str, state: BookingState, message: str) -> str:
         self._extract(state, message)

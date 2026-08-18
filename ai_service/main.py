@@ -135,6 +135,7 @@ def _startup() -> None:
 class ChatRequest(BaseModel):
     session_id: str = Field("guest", description="Định danh phiên chat (giữ ngữ cảnh).")
     message: str = Field(..., min_length=1, description="Tin nhắn của khách hàng.")
+    user_context: str = Field("", description="Ngữ cảnh khách đã đăng nhập (tên, lịch hẹn...) do web cung cấp.")
 
 
 class ChatResponse(BaseModel):
@@ -152,12 +153,12 @@ def chat(req: ChatRequest, request: Request) -> ChatResponse:
 
     if state.primary is not None:
         try:
-            reply = state.primary.reply(req.session_id, message)
+            reply = state.primary.reply(req.session_id, message, user_context=req.user_context)
             return ChatResponse(reply=reply, mode=state.primary_mode)
         except Exception as exc:  # noqa: BLE001
             logger.warning("%s lỗi (%s) -> fallback offline.", state.primary_mode, exc)
 
-    reply = state.fallback.reply(req.session_id, message)
+    reply = state.fallback.reply(req.session_id, message, user_context=req.user_context)
     return ChatResponse(reply=reply, mode="offline")
 
 

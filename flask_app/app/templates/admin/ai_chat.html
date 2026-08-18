@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Quản trị — Chất lượng AI{% endblock %}
+{% block content %}
+{% include 'partials/admin_nav.html' %}
+<div class="admin-wrap">
+
+  <div class="admin-stats">
+    <div class="stat-card"><div class="ic" style="background:linear-gradient(135deg,#0f8f89,#0b6f6a)"><i class="fas fa-comments"></i></div><div><h3>{{ stats.total }}</h3><p>Lượt hỏi chatbot</p></div></div>
+    <div class="stat-card"><div class="ic" style="background:linear-gradient(135deg,#26de81,#20bf6b)"><i class="fas fa-check-double"></i></div><div><h3>{{ stats.answer_rate }}%</h3><p>Tỉ lệ trả lời được</p></div></div>
+    <div class="stat-card"><div class="ic" style="background:linear-gradient(135deg,#ffa726,#fb8c00)"><i class="fas fa-circle-question"></i></div><div><h3>{{ stats.unanswered }}</h3><p>Câu chưa trả lời được</p></div></div>
+    <div class="stat-card"><div class="ic" style="background:linear-gradient(135deg,#a55eea,#8854d0)"><i class="fas fa-stopwatch"></i></div><div><h3>{{ (stats.avg_ms/1000)|round(1) }}s</h3><p>Độ trễ trung bình</p></div></div>
+  </div>
+
+  <div class="admin-card" style="margin-bottom:18px;">
+    <h2><i class="fas fa-microchip"></i> Bộ não đang dùng</h2>
+    <p style="color:#64748b;margin:0;">
+      {% for m, n in stats.by_mode.items() %}
+        <span class="btn-sm btn-gray" style="margin-right:6px;">{{ {'local':'LLM tự host (finetune)','gemini':'Gemini','offline':'Offline (luật)'}.get(m, m) }}: <b>{{ n }}</b></span>
+      {% else %}Chưa có dữ liệu.{% endfor %}
+    </p>
+  </div>
+
+  <div class="admin-card">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+      <h2 style="margin:0;"><i class="fas fa-list"></i> Nhật ký hội thoại</h2>
+      <span style="margin-left:auto;display:flex;gap:6px;">
+        <a class="btn-sm {{ 'btn-blue' if show=='unanswered' else 'btn-gray' }}" href="{{ url_for('admin.ai_chat_quality', show='unanswered') }}">Chưa trả lời được</a>
+        <a class="btn-sm {{ 'btn-blue' if show=='all' else 'btn-gray' }}" href="{{ url_for('admin.ai_chat_quality', show='all') }}">Tất cả</a>
+      </span>
+    </div>
+    <p style="color:#64748b;font-size:.9rem;margin:0 0 12px;">
+      💡 Câu hỏi khách hay hỏi mà AI chưa trả lời được → thêm vào <b>FAQ</b> hoặc bổ sung dữ liệu dịch vụ, chatbot sẽ trả lời được ngay lần sau.
+    </p>
+    <table class="admin-table">
+      <thead><tr><th>Thời gian</th><th>Câu hỏi</th><th>AI trả lời</th><th>Bộ não</th><th>Độ trễ</th></tr></thead>
+      <tbody>
+        {% for c in items %}
+        <tr>
+          <td style="white-space:nowrap;">{{ c.created_at.strftime('%d/%m %H:%M') if c.created_at else '—' }}{% if c.user_id %}<br><small style="color:#0f8f89;">đã đăng nhập</small>{% endif %}</td>
+          <td style="max-width:280px;"><b>{{ c.question }}</b></td>
+          <td style="max-width:360px;color:#475569;">{{ (c.answer or '')[:180] }}{% if c.answer and c.answer|length > 180 %}…{% endif %}
+            {% if c.unanswered %}<br><span class="btn-sm" style="background:#fdf0e3;color:#b54708;padding:2px 8px;">chưa trả lời được</span>{% endif %}</td>
+          <td>{{ c.mode }}</td>
+          <td>{{ ((c.latency_ms or 0)/1000)|round(1) }}s</td>
+        </tr>
+        {% else %}<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">Chưa có lượt hội thoại nào{% if show=='unanswered' %} chưa trả lời được — tốt!{% endif %}.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    {% if pagination.pages > 1 %}
+    <div style="text-align:center;margin-top:18px;">
+      {% for n in pagination.iter_pages() %}
+        {% if n %}<a class="btn-sm {{ 'btn-blue' if n==pagination.page else 'btn-gray' }}" href="{{ url_for('admin.ai_chat_quality', show=show, page=n) }}">{{ n }}</a>{% else %}…{% endif %}
+      {% endfor %}
+    </div>{% endif %}
+  </div>
+</div>
+{% endblock %}

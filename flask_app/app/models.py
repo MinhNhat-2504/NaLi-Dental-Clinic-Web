@@ -177,3 +177,18 @@ def load_user(user_id):
     except (ValueError, AttributeError):
         return None
     return None
+
+
+class ChatLog(db.Model):
+    """Nhật ký hội thoại chatbot — để đo chất lượng AI (câu nào trả lời không được)."""
+    __tablename__ = "chat_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.String(80), index=True)
+    user_id = db.Column(db.Integer)                 # patients.id nếu đã đăng nhập
+    question = db.Column(db.Text, nullable=False)
+    answer = db.Column(db.Text)
+    mode = db.Column(db.String(20))                 # local | gemini | offline
+    latency_ms = db.Column(db.Integer)
+    unanswered = db.Column(db.Boolean, default=False, index=True)  # AI không trả lời được / fallback
+    created_at = db.Column(db.TIMESTAMP, default=datetime.utcnow, index=True)

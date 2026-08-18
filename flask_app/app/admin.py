@@ -12,7 +12,7 @@ from sqlalchemy import or_
 from .extensions import db
 from .forms import AdminAppointmentForm, ProductForm
 from .mailer import send_email
-from .models import Appointment, Feedback, Patient, Product, Staff
+from .models import Appointment, ChatLog, Feedback, Patient, Product, Staff
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -212,3 +212,26 @@ def feedback_status(fid):
         db.session.commit()
         flash("Đã cập nhật trạng thái phản hồi.", "success")
     return redirect(url_for("admin.feedback"))
+
+
+# ---------- Chất lượng chatbot AI ----------
+@admin_bp.route("/ai-chat")
+@admin_required
+def ai_chat_quality():
+    """Dashboard đo chất lượng chatbot: tổng lượt, tỉ lệ trả lời được, độ trễ, câu chưa trả lời."""
+    from sqlalchemy import func
+    total = ChatLog.query.count()
+    unanswered = ChatLog.query.filter_by(unanswered=True).count()
+    avg_ms = db.session.query(func.avg(ChatLog.latency_ms)).scalar() or 0
+    by_mode = dict(db.session.query(ChatLog.mode, func.count(ChatLog.id)).group_by(ChatLog.mode).all())
+    show = request.args.get("show", "unanswered")
+    page = request.args.get("page", 1, type=int)
+    q = ChatLog.query
+    if show == "unanswered":
+        q = q.filter_by(unanswered=True)
+    pagination = q.order_by(ChatLog.created_at.desc()).paginate(page=page, per_page=20, error_out=False)
+    stats = {"total": total, "unanswered": unanswered,
+             "answer_rate": round(100 * (total - unanswered) / total, 1) if total else 0,
+             "avg_ms": int(avg_ms), "by_mode": by_mode}
+    return render_template("admin/ai_chat.html", stats=stats, pagination=pagination,
+                           items=pagination.items, show=show)
