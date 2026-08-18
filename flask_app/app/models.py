@@ -221,3 +221,22 @@ class MedicalRecord(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
+class CaseStudy(db.Model):
+    """Ca điều trị trước/sau (thư viện kết quả). Ảnh lưu TRONG DB (Render free xoá file upload
+    mỗi lần deploy; MySQL Aiven 5GB free giữ được lâu dài). Ảnh đã nén ~<200KB bằng Pillow."""
+    __tablename__ = "case_studies"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    product_id = db.Column(db.Integer, index=True)          # dịch vụ liên quan (products.id)
+    duration_text = db.Column(db.String(60))                # "18 tháng", "1 buổi 60 phút"
+    description = db.Column(db.Text)
+    before_image = db.Column(db.LargeBinary().with_variant(db.LargeBinary(length=16_000_000), "mysql"))
+    after_image = db.Column(db.LargeBinary().with_variant(db.LargeBinary(length=16_000_000), "mysql"))
+    is_demo = db.Column(db.Boolean, default=False)          # ảnh minh hoạ (chưa phải ca thật) -> hiện nhãn
+    is_active = db.Column(db.Boolean, default=True, index=True)
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+

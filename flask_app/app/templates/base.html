@@ -15,6 +15,12 @@
     {% endblock %}
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Dentist","name":"NALI Dental Clinic","url":"{{ request.url_root }}","telephone":"+84945457512","openingHours":"Mo-Su 08:00-20:00","address":{"@type":"PostalAddress","streetAddress":"69/68 Đặng Thùy Trâm","addressLocality":"Bình Thạnh","addressRegion":"Hồ Chí Minh","addressCountry":"VN"},"department":[{"@type":"Dentist","name":"NALI Dental - Bình Thạnh","address":"69/68 Đặng Thùy Trâm, Bình Thạnh, Hồ Chí Minh"},{"@type":"Dentist","name":"NALI Dental - Quận 1","address":"123 Nguyễn Huệ, Quận 1, Hồ Chí Minh"},{"@type":"Dentist","name":"NALI Dental - Gò Vấp","address":"456 Quang Trung, Gò Vấp, Hồ Chí Minh"}]}</script>
     <title>{% block title %}NALI Dental Clinic{% endblock %}</title>
+    {% if config.GOOGLE_SITE_VERIFICATION %}<meta name="google-site-verification" content="{{ config.GOOGLE_SITE_VERIFICATION }}">{% endif %}
+    {% if config.GA_MEASUREMENT_ID %}
+    <!-- Google Analytics 4: đo lượt truy cập + sự kiện đặt lịch/chat (xem cuối trang) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ config.GA_MEASUREMENT_ID }}"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ config.GA_MEASUREMENT_ID }}',{anonymize_ip:true});</script>
+    {% endif %}
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
@@ -47,6 +53,7 @@
                 {% set ep = request.endpoint or '' %}
                 <a href="{{ url_for('main.about') }}" class="nav-link {{ 'active' if ep=='main.about' }}"><i class="fas fa-info-circle"></i> Về NALI</a>
                 <a href="{{ url_for('main.services') }}" class="nav-link {{ 'active' if ep in ['main.services','main.service_detail'] }}"><i class="fas fa-tooth"></i> Dịch vụ</a>
+                <a href="{{ url_for('main.cases') }}" class="nav-link {{ 'active' if ep=='main.cases' }}"><i class="fas fa-images"></i> Kết quả</a>
                 <a href="{{ url_for('main.knowledge') }}" class="nav-link {{ 'active' if ep in ['main.knowledge','main.knowledge_detail'] }}"><i class="fas fa-newspaper"></i> Kiến thức</a>
                 <a href="{{ url_for('booking.book') }}" class="nav-link {{ 'active' if ep=='booking.book' }}"><i class="fas fa-calendar-check"></i> Đặt lịch</a>
                 <a href="{{ url_for('main.doctors') }}" class="nav-link {{ 'active' if ep=='main.doctors' }}"><i class="fas fa-user-md"></i> Bác sĩ</a>
@@ -163,6 +170,25 @@
     })();
     </script>
     {% block scripts %}{% endblock %}
+    <script>
+    /* Đo hành vi quan trọng cho GA4 (chỉ gửi khi đã gắn GA_MEASUREMENT_ID; ngược lại là no-op) */
+    (function(){
+      var send=function(name,params){ if(typeof gtag==='function'){ try{ gtag('event',name,params||{}); }catch(e){} } };
+      window.naliTrack=send;
+      document.addEventListener('click',function(e){
+        var a=e.target.closest('a,button'); if(!a) return;
+        var href=a.getAttribute('href')||'';
+        if(href.indexOf('tel:')===0) send('phone_click',{value:href.replace('tel:','')});
+        else if(href.indexOf('/dat-lich')===0 && href.indexOf('/coc/')<0) send('book_click',{from:location.pathname});
+        else if(a.id==='naliChatToggle') send('chat_open',{});
+      });
+      var bf=document.querySelector('form[action*="dat-lich"], .auth-card form'); 
+      if(bf && location.pathname.indexOf('/dat-lich')===0) bf.addEventListener('submit',function(){ send('booking_submit',{}); });
+      var cf=document.getElementById('naliChatForm'); if(cf) cf.addEventListener('submit',function(){ send('chat_message',{}); });
+      var ff=document.querySelector('form[action*="lien-he"]'); if(ff) ff.addEventListener('submit',function(){ send('feedback_submit',{}); });
+      {% with messages = get_flashed_messages() %}{% for m in messages %}{% if 'Đặt lịch thành công' in m %}send('generate_lead',{method:'web_booking'});{% endif %}{% endfor %}{% endwith %}
+    })();
+    </script>
     <script>
     /* Ngăn kéo menu mobile: trượt từ trái, đóng khi chạm nền / ✕ / Esc / chọn link */
     (function () {

@@ -9,7 +9,7 @@ from sqlalchemy import or_
 
 from .extensions import db
 from .forms import FeedbackForm
-from .models import BlogPost, FAQ, Feedback, Product, Staff
+from .models import BlogPost, CaseStudy, FAQ, Feedback, Product, Staff
 
 main_bp = Blueprint("main", __name__)
 
@@ -27,6 +27,10 @@ def sitemap():
              url_for("main.contact", _external=True)]
     paths.extend(url_for("main.service_detail", pid=p.id, _external=True)
                  for p in Product.query.filter_by(is_active=1).all())
+    paths.append(url_for("main.knowledge", _external=True))
+    paths.extend(url_for("main.knowledge_detail", slug=b.slug, _external=True)
+                 for b in BlogPost.query.filter_by(status="published").all())
+    paths.append(url_for("main.cases", _external=True))
     rows = "".join(f"<url><loc>{escape(path)}</loc></url>" for path in paths)
     return Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + rows + '</urlset>', mimetype="application/xml")
 
@@ -73,7 +77,39 @@ def service_detail(pid):
     product = Product.query.get_or_404(pid)
     related = (Product.query.filter(Product.id != pid, Product.is_active == 1)
                .order_by(Product.id.desc()).limit(3).all())
-    return render_template("main/service_detail.html", p=product, related=related)
+    cases = (CaseStudy.query.filter_by(product_id=pid, is_active=True)
+             .order_by(CaseStudy.sort_order, CaseStudy.id.desc()).limit(3).all())
+    return render_template("main/service_detail.html", p=product, related=related, cases=cases)
+
+
+# ---------- Thư viện ca điều trị trước/sau ----------
+@main_bp.route("/ket-qua")
+def cases():
+    """Kết quả thực tế: ảnh trước/sau theo dịch vụ, có thanh trượt so sánh."""
+    pid = request.args.get("dv", type=int)
+    q = CaseStudy.query.filter_by(is_active=True)
+    if pid:
+        q = q.filter_by(product_id=pid)
+    items = q.order_by(CaseStudy.sort_order, CaseStudy.id.desc()).all()
+    # Chỉ liệt kê những dịch vụ có ca để lọc
+    used_ids = {c.product_id for c in CaseStudy.query.filter_by(is_active=True).all() if c.product_id}
+    filters = Product.query.filter(Product.id.in_(used_ids)).order_by(Product.name).all() if used_ids else []
+    products = {p.id: p for p in Product.query.all()}
+    return render_template("main/cases.html", items=items, filters=filters, products=products, pid=pid)
+
+
+@main_bp.route("/ket-qua/anh/<int:cid>/<kind>")
+def case_image(cid, kind):
+    """Trả ảnh trước/sau từ DB (JPEG đã nén). Cache 30 ngày vì ảnh đổi thì updated_at đổi -> URL có ?v=."""
+    if kind not in ("truoc", "sau"):
+        return "", 404
+    case = CaseStudy.query.get_or_404(cid)
+    data = case.before_image if kind == "truoc" else case.after_image
+    if not data:
+        return "", 404
+    resp = Response(data, mimetype="image/jpeg")
+    resp.headers["Cache-Control"] = "public, max-age=2592000"
+    return resp
 
 
 @main_bp.route("/bac-si")

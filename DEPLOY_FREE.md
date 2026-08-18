@@ -99,6 +99,28 @@ Render → `nali-dental-web` → Environment thêm:
 
 Để trống `BANK_ACCOUNT_NO` thì lựa chọn "Đặt cọc" tự ẩn khỏi form đặt lịch.
 
+## Bước 7 — Google Analytics 4 + Search Console (0đ) — 5 phút
+
+**GA4 (đo lượt truy cập, nguồn khách, số người bấm đặt lịch/chat):**
+1. https://analytics.google.com → Bắt đầu đo lường → tài khoản `NALI Dental` → thuộc tính `NALI Dental Web` (múi giờ VN, VND).
+2. Nền tảng **Web** → URL `nali-dental-web.onrender.com` → Tạo luồng → copy **Mã đo lường** `G-XXXXXXXXXX`.
+3. Render → `nali-dental-web` → Environment → thêm `GA_MEASUREMENT_ID` = `G-XXXXXXXXXX`.
+   Web tự gửi các sự kiện: `book_click`, `booking_submit`, `generate_lead` (đặt lịch xong), `chat_open`, `chat_message`, `phone_click`, `feedback_submit`.
+   Trong GA4 → Quản trị → Sự kiện → đánh dấu `generate_lead` là *chuyển đổi* để xem tỉ lệ khách đặt lịch.
+
+**Search Console (lên Google tìm kiếm, xem từ khoá):**
+1. https://search.google.com/search-console → Thêm tài sản → **Tiền tố URL** → `https://nali-dental-web.onrender.com`.
+2. Xác minh bằng **Thẻ HTML** → copy phần `content="..."` → Render thêm `GOOGLE_SITE_VERIFICATION` = giá trị đó → deploy xong quay lại bấm **Xác minh**.
+3. Menu **Sơ đồ trang web** → nhập `sitemap.xml` → Gửi (web đã có sẵn `/sitemap.xml` và `/robots.txt`).
+
+## Bước 8 — Thư viện ca điều trị trước/sau
+
+Admin → **Ca điều trị** → Thêm ca: tiêu đề, dịch vụ, thời gian, mô tả, ảnh TRƯỚC + ảnh SAU (JPG/PNG/WEBP, tối đa 12MB).
+Ảnh được nén ~150KB, bỏ EXIF và lưu **trong MySQL** (Render free xoá file upload khi deploy lại, DB thì không).
+Khách xem tại `/ket-qua` (thanh trượt so sánh, lọc theo dịch vụ); trang chi tiết dịch vụ hiện ca liên quan.
+Tạo 1 ca demo bằng ảnh minh hoạ: `flask --app run.py seed-cases` (nhãn "Ảnh minh hoạ" hiện cho khách biết).
+Chỉ đăng ảnh thật khi khách đồng ý; nên chụp cận răng, không lộ mặt.
+
 ## Nếu gặp lỗi
 | Triệu chứng | Nguyên nhân / cách sửa |
 |---|---|
