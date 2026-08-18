@@ -107,6 +107,25 @@ def test_fallback(r: Retriever):
         pass
 
 
+def test_record_context(r: Retriever):
+    """Khách đăng nhập hỏi về hồ sơ/dặn dò/tái khám -> trả lời xác định từ ngữ cảnh web gửi."""
+    print("\n[Hồ sơ khám của khách đăng nhập]")
+    from fallback_agent import FallbackAgent
+    ctx = ("Họ tên: Trần Thị Lan Anh\nSĐT: 0901234567\nLịch hẹn sắp tới: chưa có\n"
+           "Lần khám gần nhất: 05/08/2026 (14 ngày trước)\nChẩn đoán lần đó: Sâu răng số 36\n"
+           "Đã điều trị: Trám composite răng 36\nDặn dò của bác sĩ: Tránh nhai đồ cứng 24 giờ\n"
+           "Bác sĩ hẹn tái khám: 19/08/2026 (còn 0 ngày)")
+    a = FallbackAgent(r)
+    out = a.reply("rec1", "Lần trước bác sĩ dặn tôi gì vậy?", user_context=ctx)
+    check("trả đúng dặn dò từ hồ sơ", "Tránh nhai đồ cứng 24 giờ" in out and "Lan Anh" in out, out[:80])
+    out = a.reply("rec1", "Tôi cần tái khám khi nào?", user_context=ctx)
+    check("trả đúng ngày tái khám", "19/08/2026" in out, out[:80])
+    out = a.reply("rec2", "Tôi cần tái khám khi nào?", user_context="Họ tên: Khách Mới\nSĐT: 0900000000")
+    check("chưa có hồ sơ -> nói rõ, không bịa", "chưa thấy hồ sơ" in out, out[:80])
+    check("câu thường không bị bắt nhầm", FallbackAgent.record_answer("Giá tẩy trắng bao nhiêu?", ctx) is None)
+    check("khách vãng lai không có ngữ cảnh -> None", FallbackAgent.record_answer("hồ sơ của tôi", "") is None)
+
+
 def test_tool_parsing():
     print("\n[5] Phân tích tool-call của LLM tự host")
     c1 = extract_tool_call('{"tool": "tim_dich_vu", "args": {"tu_khoa": "implant"}}')
@@ -124,6 +143,7 @@ if __name__ == "__main__":
     test_services()
     r = test_rag()
     test_fallback(r)
+    test_record_context(r)
     test_tool_parsing()
     print(f"\n===== KẾT QUẢ: {_passed} PASS / {_failed} FAIL =====")
     raise SystemExit(1 if _failed else 0)

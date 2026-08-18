@@ -26,12 +26,22 @@
           {% for e in form.appointment_time.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
       </div>
       <div class="fg" data-booking-step="3">{{ form.notes.label }}{{ form.notes(class="fc", rows=3) }}</div>
+      {% if deposit_enabled and not rescheduling %}
+      <div class="fg" data-booking-step="3">
+        {{ form.deposit.label }}
+        <div class="dep-choice">
+          {% for sub in form.deposit %}<label class="{{ 'on' if sub.checked }}">{{ sub() }} <span>{{ sub.label.text }}</span></label>{% endfor %}
+        </div>
+        <small style="color:#64748b;">Cọc {{ '{:,.0f}'.format(deposit_amount)|replace(',', '.') }}đ qua chuyển khoản (QR), được trừ vào hoá đơn; đổi/huỷ lịch trước 4 giờ vẫn giữ nguyên cọc cho lần sau.</small>
+      </div>
+      {% endif %}
       <div class="booking-actions"><button type="button" class="booking-back" data-booking-back>Quay lại</button><button type="button" class="auth-btn" data-booking-next>Tiếp tục</button>{{ form.submit(class="auth-btn", data_booking_submit="1") }}</div>
     </form>
     <p class="auth-alt"><a href="{{ url_for('booking.my_appointments') }}"><i class="fas fa-list"></i> Xem lịch hẹn của tôi</a></p>
   </div>
 </div>
 {% include 'partials/auth_style.html' %}
+<style>.dep-choice{display:grid;gap:8px;margin:6px 0 4px;} .dep-choice label{display:flex;gap:10px;align-items:flex-start;border:2px solid #e3ecf7;border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:500;color:#334155;} .dep-choice label:has(input:checked){border-color:var(--nali);background:#f0faf9;} .dep-choice input{margin-top:3px;} [data-theme="dark"] .dep-choice label{color:#e2e8f0;border-color:#334155;}</style>
 <style>
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}.booking-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:22px;font-size:.76rem;font-weight:700;text-align:center;color:#64748b;}.booking-progress span{padding:8px 4px;border-bottom:3px solid #dbe7f4;}.booking-progress .active{color:#2c7ad1;border-color:#4da6ff;}.booking-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-top:22px;}.booking-actions .auth-btn{margin:0;}.booking-back{border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:10px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;}.slot-picker{display:flex;flex-wrap:wrap;gap:8px;min-height:38px;padding-top:8px;color:#64748b;font-size:.85rem;}.slot-btn{border:1px solid #bfdbfe;background:#f8fbff;color:#1d4f82;border-radius:9px;padding:8px 11px;font:inherit;font-weight:700;cursor:pointer;}.slot-btn:hover,.slot-btn.selected{background:#2c7ad1;color:#fff;border-color:#2c7ad1;}.booking-edit-note{margin:-8px 0 18px;padding:9px 12px;background:#eef7ff;color:#245a8d;border-radius:10px;font-size:.88rem;}[hidden]{display:none!important;}@media(max-width:520px){.grid2{grid-template-columns:1fr;}.booking-actions{justify-content:stretch;}.booking-actions>*{flex:1;}}
 </style>

@@ -124,6 +124,15 @@ class Appointment(db.Model):
     created_at = db.Column(db.TIMESTAMP, default=datetime.utcnow)
     # Thời điểm đã gửi email nhắc lịch (NULL = chưa nhắc). Cột thêm sau, nullable -> PHP không ảnh hưởng.
     reminder_sent_at = db.Column(db.DateTime, nullable=True)
+    # Đặt cọc giữ chỗ (bản 0đ: chuyển khoản VietQR). NULL = không cọc.
+    # deposit_status: pending (chờ chuyển) | reported (khách báo đã chuyển) | paid (lễ tân đã nhận)
+    deposit_amount = db.Column(db.Numeric(12, 2), nullable=True)
+    deposit_status = db.Column(db.String(20), nullable=True)
+    deposit_paid_at = db.Column(db.DateTime, nullable=True)
+
+    @property
+    def deposit_label(self):
+        return {"pending": "Chờ chuyển cọc", "reported": "Khách báo đã chuyển", "paid": "Đã nhận cọc"}.get(self.deposit_status or "", "")
 
 
 class Feedback(db.Model):
@@ -194,3 +203,21 @@ class ChatLog(db.Model):
     latency_ms = db.Column(db.Integer)
     unanswered = db.Column(db.Boolean, default=False, index=True)  # AI không trả lời được / fallback
     created_at = db.Column(db.TIMESTAMP, default=datetime.utcnow, index=True)
+
+
+class MedicalRecord(db.Model):
+    """Hồ sơ khám/điều trị — bác sĩ ghi sau mỗi buổi khám; khách xem lại; chatbot dùng để nhắc tái khám."""
+    __tablename__ = "medical_records"
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, index=True)            # patients.id (nếu khách có tài khoản)
+    appointment_id = db.Column(db.Integer, index=True)        # appointments.id (nếu gắn với lịch hẹn)
+    doctor_id = db.Column(db.Integer)                         # staff.id người ghi
+    visit_date = db.Column(db.Date, nullable=False)
+    diagnosis = db.Column(db.Text)                            # chẩn đoán / tình trạng răng miệng
+    treatment = db.Column(db.Text)                            # đã điều trị gì
+    prescription = db.Column(db.Text)                         # đơn thuốc / dặn dò chăm sóc
+    next_visit_date = db.Column(db.Date, nullable=True)       # hẹn tái khám
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+

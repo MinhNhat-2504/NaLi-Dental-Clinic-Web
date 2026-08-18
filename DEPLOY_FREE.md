@@ -86,6 +86,19 @@ GitHub Actions gọi nó mỗi sáng **08:00 giờ VN** theo file `.github/workf
 Chạy tay trên máy: `cd flask_app && flask --app run.py send-reminders`.
 Trong Admin → Lịch hẹn, lịch đã nhắc có biểu tượng chuông 🔔.
 
+## Bước 6 — Bật đặt cọc giữ chỗ qua VietQR (0đ) — 1 phút
+
+Không cần cổng thanh toán. Web tự tạo ảnh QR động (img.vietqr.io) đã điền số tiền + nội dung `NALI <mã lịch> <SĐT>`;
+khách quét bằng app ngân hàng bất kỳ, bấm "Tôi đã chuyển", lễ tân vào Admin → Lịch hẹn bấm **✔ Đã nhận** → lịch tự xác nhận + email.
+
+Render → `nali-dental-web` → Environment thêm:
+- `BANK_ID` = mã ngân hàng theo VietQR (MB, VCB, TCB, ACB, BIDV, VPB, TPB, STB...)
+- `BANK_ACCOUNT_NO` = số tài khoản phòng khám
+- `BANK_ACCOUNT_NAME` = tên chủ tài khoản (không dấu)
+- (tuỳ chọn) `DEPOSIT_AMOUNT` = số tiền cọc, mặc định 100000
+
+Để trống `BANK_ACCOUNT_NO` thì lựa chọn "Đặt cọc" tự ẩn khỏi form đặt lịch.
+
 ## Nếu gặp lỗi
 | Triệu chứng | Nguyên nhân / cách sửa |
 |---|---|

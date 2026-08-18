@@ -22,7 +22,11 @@
         <tr>
           <td>#{{ a.id }}</td><td><b>{{ a.customer_name }}</b></td><td>{{ a.customer_phone }}</td>
           <td>{{ a.appointment_date.strftime('%d/%m/%Y') if a.appointment_date }} {{ a.appointment_time.strftime('%H:%M') if a.appointment_time }}{% if a.reminder_sent_at %} <i class="fas fa-bell" title="Đã gửi email nhắc lịch lúc {{ a.reminder_sent_at.strftime('%d/%m %H:%M') }}" style="color:#0f8f89;font-size:.8rem;"></i>{% endif %}</td>
-          <td>{{ {'pending':'Chờ','confirmed':'Đã xác nhận','completed':'Hoàn thành','cancelled':'Đã huỷ'}[a.status] }}</td>
+          <td>{{ {'pending':'Chờ','confirmed':'Đã xác nhận','completed':'Hoàn thành','cancelled':'Đã huỷ'}[a.status] }}
+            {% if a.deposit_status %}<br><span class="btn-sm" style="padding:2px 8px;font-size:.75rem;background:{{ '#e6f7ed;color:#1e7a44' if a.deposit_status=='paid' else ('#fff3e0;color:#e67e22' if a.deposit_status=='reported' else '#eef3fa;color:#475569') }};">
+              <i class="fas fa-coins"></i> {{ a.deposit_label }}</span>
+              {% if a.deposit_status != 'paid' %}<form method="post" action="{{ url_for('admin.appointment_deposit', aid=a.id) }}" style="display:inline;"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="paid"><button class="btn-sm btn-green" style="padding:2px 8px;font-size:.75rem;" title="Đã nhận tiền cọc -> xác nhận lịch">✔ Đã nhận</button></form>{% endif %}
+            {% endif %}</td>
           <td>
             <form method="post" action="{{ url_for('admin.appointment_status', aid=a.id) }}" style="display:inline;">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -34,7 +38,8 @@
             </form>
           </td>
           <td>
-            <a href="{{ url_for('admin.appointment_edit', aid=a.id) }}" class="btn-sm btn-gray"><i class="fas fa-pen"></i></a>
+            <a href="{{ url_for('admin.appointment_edit', aid=a.id) }}" class="btn-sm btn-gray" title="Sửa lịch"><i class="fas fa-pen"></i></a>
+            <a href="{{ url_for('admin.record_for_appointment', aid=a.id) }}" class="btn-sm btn-blue" title="Ghi hồ sơ khám"><i class="fas fa-notes-medical"></i></a>
             <form method="post" action="{{ url_for('admin.appointment_delete', aid=a.id) }}" style="display:inline;" onsubmit="return confirm('Xóa lịch hẹn #{{ a.id }}?');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn-sm btn-red"><i class="fas fa-trash"></i></button>

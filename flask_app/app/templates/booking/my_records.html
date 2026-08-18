@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Hồ sơ khám của tôi — NALI Dental{% endblock %}
+{% block content %}
+<div class="about-hero"><div><h1>Hồ Sơ Khám Của Tôi</h1><p>Lịch sử điều trị, dặn dò của bác sĩ và lịch tái khám</p></div></div>
+<section class="section" style="max-width:900px;">
+  {% if upcoming_revisit %}
+  <div class="revisit-banner"><i class="fas fa-bell"></i> Bác sĩ hẹn bạn <b>tái khám ngày {{ upcoming_revisit.next_visit_date.strftime('%d/%m/%Y') }}</b>.
+    <a href="{{ url_for('booking.book') }}" class="order-btn" style="margin-left:auto;">Đặt lịch tái khám</a></div>
+  {% endif %}
+  {% for r in records %}
+  <div class="rec-card">
+    <div class="rec-head"><b><i class="fas fa-calendar-day"></i> {{ r.visit_date.strftime('%d/%m/%Y') }}</b>
+      <span>Bác sĩ: {{ doctors[r.doctor_id].full_name if r.doctor_id in doctors else 'NALI' }}</span></div>
+    <div class="rec-grid">
+      <div><small>Chẩn đoán</small><p>{{ r.diagnosis or '—' }}</p></div>
+      <div><small>Đã điều trị</small><p>{{ r.treatment or '—' }}</p></div>
+      <div><small>Đơn thuốc / dặn dò</small><p>{{ r.prescription or '—' }}</p></div>
+      <div><small>Hẹn tái khám</small><p>{{ r.next_visit_date.strftime('%d/%m/%Y') if r.next_visit_date else 'Không cần' }}</p></div>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-message"><i class="fas fa-notes-medical"></i><p>Bạn chưa có hồ sơ khám nào. Sau mỗi buổi khám, bác sĩ sẽ ghi lại kết quả tại đây.</p>
+    <a href="{{ url_for('booking.book') }}" class="order-btn" style="margin-top:14px;display:inline-flex;">Đặt lịch khám</a></div>
+  {% endfor %}
+  <p style="text-align:center;margin-top:20px;"><a href="{{ url_for('booking.my_appointments') }}"><i class="fas fa-list"></i> Xem lịch hẹn của tôi</a></p>
+</section>
+<div style="height:50px"></div>
+<style>
+.rec-card{background:#fff;border-radius:16px;box-shadow:0 6px 22px rgba(45,100,180,.08);padding:20px 22px;margin-bottom:16px;}
+.rec-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;color:#1a2b47;} .rec-head span{color:#64748b;font-size:.9rem;}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;} .rec-grid small{color:#94a3b8;text-transform:uppercase;font-size:.72rem;letter-spacing:.5px;} .rec-grid p{margin:2px 0 0;white-space:pre-line;color:#334155;}
+.revisit-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#e6f7f5;border:1px solid #b6e6df;color:#0b6f6a;border-radius:14px;padding:14px 18px;margin-bottom:18px;}
+[data-theme="dark"] .rec-card{background:#1e293b;} [data-theme="dark"] .rec-grid p{color:#e2e8f0;} [data-theme="dark"] .rec-head{color:#f1f5f9;}
+</style>
+{% endblock %}

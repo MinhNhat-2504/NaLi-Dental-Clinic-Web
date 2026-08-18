@@ -175,3 +175,71 @@ def test_cron_reminders_endpoint_requires_token(app, client):
     assert client.post("/api/cron/reminders", headers={"X-Cron-Token": "sai"}).status_code == 401
     r = client.post("/api/cron/reminders", headers={"X-Cron-Token": "secret-token"})
     assert r.status_code == 200 and r.get_json()["ok"] is True
+
+
+def test_medical_record_admin_writes_patient_reads(app, client):
+    """Admin ghi hồ sơ khám cho lịch hẹn -> lịch tự Hoàn thành, khách đăng nhập xem được, người khác không."""
+    from datetime import date, time, timedelta
+    from app.models import Appointment, MedicalRecord, Patient
+    with app.app_context():
+        p = Patient.query.filter_by(email="khach@test.com").first()
+        appt = Appointment(user_id=p.id, customer_name=p.full_name, customer_phone=p.phone,
+                           customer_email=p.email, appointment_date=date.today(), appointment_time=time(9, 0),
+                           status="confirmed", product_ids="1")
+        db.session.add(appt); db.session.commit(); aid = appt.id
+    client.post("/dang-nhap", data={"email": "admin", "password": "admin123"})
+    r = client.post(f"/admin/lich-hen/{aid}/ho-so", data={
+        "visit_date": date.today().isoformat(), "diagnosis": "Sâu răng 36", "treatment": "Trám composite",
+        "prescription": "Tránh đồ cứng 24h", "next_visit_date": (date.today() + timedelta(days=90)).isoformat(),
+        "mark_completed": "y"}, follow_redirects=True)
+    assert r.status_code == 200
+    with app.app_context():
+        rec = MedicalRecord.query.filter_by(appointment_id=aid).first()
+        assert rec is not None and rec.patient_id is not None and rec.diagnosis == "Sâu răng 36"
+        assert db.session.get(Appointment, aid).status == "completed"
+    # admin xem hồ sơ theo bệnh nhân
+    with app.app_context():
+        pid = Patient.query.filter_by(email="khach@test.com").first().id
+    assert "Sâu răng 36" in client.get(f"/admin/benh-nhan/{pid}/ho-so").get_data(as_text=True)
+    client.get("/dang-xuat")
+    # khách xem hồ sơ của mình + banner tái khám
+    client.post("/dang-nhap", data={"email": "khach@test.com", "password": "matkhau123"})
+    html = client.get("/ho-so-kham").get_data(as_text=True)
+    assert "Sâu răng 36" in html and "tái khám" in html.lower()
+    # khách thường không vào được trang admin
+    assert client.get(f"/admin/benh-nhan/{pid}/ho-so").status_code == 403
+
+
+def test_deposit_flow_vietqr(app, client):
+    """Đặt lịch chọn cọc -> trang QR VietQR -> khách báo đã chuyển -> admin xác nhận -> lịch confirmed."""
+    from datetime import date, timedelta
+    from app.models import Appointment
+    app.config.update(BANK_ID="MB", BANK_ACCOUNT_NO="0123456789", BANK_ACCOUNT_NAME="NALI TEST", DEPOSIT_AMOUNT=100000)
+    client.post("/dang-nhap", data={"email": "khach@test.com", "password": "matkhau123"})
+    d = (date.today() + timedelta(days=3)).isoformat()
+    r = client.post("/dat-lich", data={"customer_name": "Khách Test", "customer_phone": "0900000000",
+                                       "customer_email": "khach@test.com", "product_id": 1,
+                                       "appointment_date": d, "appointment_time": "09:00",
+                                       "notes": "", "deposit": "deposit"})
+    assert r.status_code == 302 and "/dat-lich/coc/" in r.headers["Location"]
+    with app.app_context():
+        appt = Appointment.query.order_by(Appointment.id.desc()).first()
+        assert appt.deposit_status == "pending" and int(appt.deposit_amount) == 100000
+        aid = appt.id
+    html = client.get(f"/dat-lich/coc/{aid}").get_data(as_text=True)
+    assert "img.vietqr.io/image/MB-0123456789" in html and f"NALI {aid} 0900000000" in html
+    client.post(f"/dat-lich/coc/{aid}/da-chuyen")
+    with app.app_context():
+        assert db.session.get(Appointment, aid).deposit_status == "reported"
+    client.get("/dang-xuat")
+    client.post("/dang-nhap", data={"email": "admin", "password": "admin123"})
+    client.post(f"/admin/lich-hen/{aid}/coc", data={"action": "paid"})
+    with app.app_context():
+        a = db.session.get(Appointment, aid)
+        assert a.deposit_status == "paid" and a.status == "confirmed" and a.deposit_paid_at is not None
+
+
+def test_deposit_hidden_when_bank_not_configured(app, client):
+    app.config.update(BANK_ID="", BANK_ACCOUNT_NO="")
+    client.post("/dang-nhap", data={"email": "khach@test.com", "password": "matkhau123"})
+    assert "Đặt cọc giữ chỗ" not in client.get("/dat-lich").get_data(as_text=True)

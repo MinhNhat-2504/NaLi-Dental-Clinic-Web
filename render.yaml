@@ -44,6 +44,12 @@ services:
         sync: false
       - key: CRON_TOKEN
         generateValue: true          # copy giá trị này vào GitHub secret CRON_TOKEN (cron nhắc lịch)
+      - key: BANK_ID
+        sync: false                  # đặt cọc VietQR: mã ngân hàng (MB, VCB, TCB, ACB...) — để trống thì ẩn tính năng
+      - key: BANK_ACCOUNT_NO
+        sync: false
+      - key: BANK_ACCOUNT_NAME
+        sync: false
 
   # ---------------- AI service (chatbot + AI xem ảnh răng) ----------------
   - type: web
