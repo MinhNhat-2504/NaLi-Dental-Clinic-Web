@@ -47,7 +47,7 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# Cho phép web PHP (localhost) gọi sang service này
+# Cho phép web Flask (localhost) gọi sang service này
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Demo cục bộ; production nên giới hạn origin cụ thể

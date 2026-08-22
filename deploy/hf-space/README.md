@@ -21,8 +21,7 @@ Chatbot RAG + đặt lịch dùng **Qwen2.5-3B finetune** (chạy bằng llama.c
    - `MODEL_FILE` = `nali-qwen-q4.gguf`
    - (tuỳ chọn) `GEMINI_API_KEY` để có fallback.
 4. Space tự build & chạy → URL công khai dạng `https://<user>-nali-dental-ai.hf.space`.
-5. Trỏ web tới URL này: đặt biến môi trường `AI_SERVICE_URL` cho web PHP,
-   hoặc sửa hằng số trong `ai_chat_widget.php`.
+5. Trỏ web tới URL này: đặt biến môi trường `AI_SERVICE_URL` cho web Flask (Render hoặc `flask_app/.env`).
 
 > Lưu ý: Space free chạy CPU nên trả lời chậm hơn GPU. Tính năng **tư vấn (RAG)** hoạt
 > động đầy đủ; **đặt lịch ghi DB** cần kết nối MySQL (chạy đủ ở bản Docker/VPS).

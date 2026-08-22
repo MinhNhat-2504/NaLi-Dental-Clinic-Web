@@ -277,7 +277,7 @@ def add_content(doc: Document):
     doc.add_heading("Phụ lục A. Mã nguồn và hướng dẫn chạy", level=2)
     paragraph(doc, "Mã nguồn: https://github.com/MinhNhat-2504/NaLi-Dental-Clinic-Web. Để chạy bản Flask: vào thư mục flask_app, tạo môi trường ảo, cài requirements.txt và chạy python run.py. Tài khoản demo: admin/admin123 (quản trị), lananh@gmail.com/password123 (khách).")
     doc.add_heading("Phụ lục B. Dữ liệu mẫu và kiểm thử", level=2)
-    paragraph(doc, "CSDL được tạo từ setup_database.php hoặc các lệnh init-db/seed-db của Flask. Bộ kiểm thử Flask chạy bằng pytest -q. Bộ kiểm thử AI chạy trong thư mục ai_service bằng python test_agent.py. Docker Compose được khởi động bằng docker compose up -d --build.")
+    paragraph(doc, "CSDL được tạo bằng các lệnh init-db/seed-db của Flask (hoặc import nali_dental_schema_REAL.sql). Bộ kiểm thử Flask chạy bằng pytest -q. Bộ kiểm thử AI chạy trong thư mục ai_service bằng python test_agent.py. Docker Compose production khởi động bằng docker compose -f docker-compose.prod.yml up -d --build.")
     doc.add_heading("Phụ lục C. Hướng dẫn AI finetune", level=2)
     paragraph(doc, "Pipeline QLoRA và xuất GGUF được mô tả tại ai_service/finetune/README.md. Khi có file GGUF, nạp model vào Ollama bằng lệnh ollama create nali-dental -f finetune/Modelfile; AI service sẽ ưu tiên model này theo cấu hình LLM_BACKEND=local.")
 

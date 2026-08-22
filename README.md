@@ -39,12 +39,12 @@ Web chính viết bằng **Flask** (đúng yêu cầu môn học), phần AI tá
 ## Công nghệ sử dụng
 
 - **Backend web:** Python 3.11, Flask (Blueprint + app factory), Flask-WTF, Flask-SQLAlchemy, Flask-Login, Flask-Mail, Flask-Migrate (Alembic)
-- **Cơ sở dữ liệu:** MySQL (local: XAMPP; production: Aiven MySQL free)
+- **Cơ sở dữ liệu:** MySQL (local: XAMPP/MySQL 8; production: Aiven MySQL free)
 - **Frontend:** Jinja2, HTML/CSS/JS thuần (không framework nặng)
 - **Lập trình mạng:** urllib gọi API ngoài (thời tiết Open-Meteo, VietQR), proxy tới AI service, tự viết REST API JSON, endpoint cron bảo vệ bằng token
 - **AI service:** FastAPI + RAG (TF-IDF/embeddings) + LLM: Qwen2.5-3B **tự finetune bằng QLoRA** chạy qua Ollama (local) hoặc Gemini (cloud), có **fallback offline** bằng luật; Gemini Vision cho ảnh răng
 - **Xử lý ảnh:** Pillow (nén, xoay theo EXIF rồi bỏ EXIF)
-- **Kiểm thử & CI:** pytest (24 test, SQLite in-memory) + bộ test AI offline (29 kiểm tra), chạy tự động trên GitHub Actions mỗi lần push
+- **Kiểm thử & CI:** pytest (24 test, SQLite in-memory) + bộ test AI offline (28 kiểm tra), chạy tự động trên GitHub Actions mỗi lần push
 - **Triển khai:** Render (Blueprint `render.yaml`, 2 web service free) + Aiven MySQL; Docker Compose cho VPS; Google Analytics 4 + Search Console
 
 ---
@@ -98,12 +98,12 @@ python main.py                 # http://127.0.0.1:8000
 **Test**
 ```bash
 cd flask_app && pytest -q                       # 24 test
-cd ai_service && LLM_BACKEND=offline python test_agent.py   # 29 kiểm tra offline
+cd ai_service && LLM_BACKEND=offline python test_agent.py   # 28 kiểm tra offline
 ```
 
 **Lệnh tiện ích:** `flask --app run.py send-reminders` (gửi email nhắc lịch ngày mai ngay lập tức).
 
-> ⚠️ Về migration: DB dùng chung với bản PHP nên **không dùng** `flask db migrate` (autogenerate) — nó từng
+> ⚠️ Về migration: DB demo có vài cột ngoài model (di sản bản PHP cũ) nên **không dùng** `flask db migrate` (autogenerate) — nó từng
 > sinh lệnh xoá cột. Mọi migration trong `flask_app/migrations/versions/` đều **viết tay, idempotent**
 > (chạy lại không lỗi). Thêm bảng/cột mới thì viết theo mẫu các file có sẵn rồi `flask db upgrade`.
 
@@ -113,7 +113,7 @@ cd ai_service && LLM_BACKEND=offline python test_agent.py   # 29 kiểm tra offl
 
 - **Miễn phí (đang chạy demo):** Render + Aiven + GitHub Actions — từng bước trong [`DEPLOY_FREE.md`](DEPLOY_FREE.md)
   (tạo DB, lấy key Gemini, deploy Blueprint, bật email nhắc lịch, đặt cọc VietQR, GA4/Search Console).
-- **VPS + tên miền:** Docker Compose (`docker-compose.flask.prod.yml`: MySQL, gunicorn, nginx, certbot) — xem [`DEPLOY.md`](DEPLOY.md).
+- **VPS + tên miền:** Docker Compose (`docker-compose.prod.yml`: MySQL, gunicorn, nginx, certbot) — xem [`DEPLOY.md`](DEPLOY.md).
 
 Biến môi trường chính (web): `DATABASE_URL`, `SECRET_KEY`, `AI_SERVICE_URL`, `MAIL_USERNAME/MAIL_PASSWORD/MAIL_DEFAULT_SENDER`,
 `CRON_TOKEN` (nhắc lịch), `BANK_ID/BANK_ACCOUNT_NO/BANK_ACCOUNT_NAME` (đặt cọc; trống = ẩn), `GA_MEASUREMENT_ID`, `GOOGLE_SITE_VERIFICATION`.
@@ -142,8 +142,6 @@ ai_service/                # FastAPI: RAG + LLM (local/Gemini/offline) + tool đ
 render.yaml                # deploy free trên Render
 docker-compose*.yml        # đóng gói cho VPS
 ```
-
-*(Trong repo còn bản web PHP ban đầu — phiên bản giao diện gốc trước khi mình xây lại bằng Flask; hai bản dùng chung DB.)*
 
 ---
 

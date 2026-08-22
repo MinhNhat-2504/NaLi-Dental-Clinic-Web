@@ -54,7 +54,7 @@ class Settings:
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "").strip()
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.6-flash").strip()
 
-    # Database (mặc định trùng với config.php của web PHP)
+    # Database (cùng MySQL với web Flask)
     db_host: str = _dburl.get("host") or os.getenv("DB_HOST", "localhost")
     db_port: int = _dburl.get("port") or _int("DB_PORT", 3306)
     db_user: str = _dburl.get("user") or os.getenv("DB_USER", "root")

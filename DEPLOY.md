@@ -1,119 +1,78 @@
-# 🚀 NALI Dental — Hướng dẫn Docker & Deploy
+# 🚀 NALI Dental — Hướng dẫn deploy
 
-Ba cấp độ, chọn theo nhu cầu:
+Hai cách, chọn theo nhu cầu:
 
-| Cấp | Mục tiêu | Lệnh chính |
-|-----|----------|-----------|
-| A | **Chạy full-stack bằng Docker** (máy bạn) | `docker compose up -d --build` |
-| B | **Deploy AI công khai** (HF Spaces, free) | đẩy Space Docker |
-| C | **Deploy web công khai** | Render/Railway/host PHP |
+| Cách | Khi nào | Tài liệu |
+|------|---------|----------|
+| **Miễn phí** — Render + Aiven MySQL + GitHub Actions (bản demo đang chạy) | Đồ án, demo, phòng khám nhỏ | [`DEPLOY_FREE.md`](DEPLOY_FREE.md) (từng bước, có ảnh) |
+| **VPS + tên miền riêng** — Docker Compose: MySQL + Flask/Gunicorn + Nginx + Let's Encrypt | Khi cần tên miền, HTTPS riêng, server không ngủ | Phần A bên dưới |
 
----
-
-## A. Docker toàn hệ thống (local)
-Cần **Docker Desktop** đang chạy.
-
-Trước lần chạy đầu, tạo file `.env` ở thư mục gốc từ `.env.example` và đặt `MYSQL_ROOT_PASSWORD` thành mật khẩu riêng. Docker sẽ không khởi động khi biến này thiếu. Nếu đồng thời chạy Flask ngoài Docker, đặt `flask_app/.env` với `DB_PASS` đúng bằng mật khẩu MySQL mà Flask kết nối.
-
-```bash
-docker compose up -d --build
-```
-- Web:  http://localhost:8080
-- AI (Swagger): http://localhost:8000/docs
-- MySQL: cổng 3307 (tránh đụng MySQL sẵn có ở 3306)
-
-DB tự tạo & seed khi container `web` khởi động (qua `setup_database.php`).
-
-### Nạp LLM đã finetune vào Ollama (trong Docker)
-Sau khi finetune (xem `ai_service/finetune/README.md`) và có `nali-qwen-q4.gguf`
-trong `ai_service/finetune/out/`:
-```bash
-docker compose exec ollama ollama create nali-dental -f /models/Modelfile
-```
-→ `ai_service` (LLM_BACKEND=auto) sẽ tự chuyển sang dùng model NALI.
-Kiểm tra: http://localhost:8000/health → `"ai_mode":"local"`.
-
-> Chưa có model? Hệ thống vẫn chạy: tự fallback Gemini (nếu có key) hoặc offline.
+AI service có thể chạy chung VPS (Docker) hoặc deploy riêng miễn phí (Render theo `render.yaml`, hoặc HuggingFace Spaces — phần B).
 
 ---
 
-## B. Deploy AI lên HuggingFace Spaces (MIỄN PHÍ, có URL công khai)
-Chi tiết trong `deploy/hf-space/README.md`. Tóm tắt:
+## A. VPS: Docker Compose (Flask + MySQL + Nginx + HTTPS)
 
-1. **Đưa GGUF lên HF**: tạo model repo (vd `yourname/nali-dental-gguf`), upload `nali-qwen-q4.gguf`.
-   ```bash
-   huggingface-cli upload yourname/nali-dental-gguf ai_service/finetune/out/nali-qwen-q4.gguf
-   ```
-2. **Tạo Space** kiểu *Docker*. Copy vào Space:
-   - toàn bộ file trong `ai_service/` (main.py, retriever.py, tools.py, requirements.txt, ...)
-   - 3 file trong `deploy/hf-space/` (`Dockerfile`, `start.sh`, `README.md`)
-3. **Space → Settings → Secrets**: `MODEL_REPO`, `MODEL_FILE` (và `GEMINI_API_KEY` nếu muốn fallback).
-4. Space build xong → URL: `https://<user>-<space>.hf.space`. Thử: `.../health`, `.../docs`.
+File liên quan: `flask_app/Dockerfile`, `docker-compose.prod.yml`, `docker-compose.https.yml`, `deploy/flask-entrypoint.sh`, `deploy/flask-nginx-*.conf.template`.
+Entrypoint tự chạy `flask db upgrade` trước khi lên Gunicorn; container từ chối chạy nếu thiếu `SECRET_KEY` / `MYSQL_ROOT_PASSWORD`.
 
-> Free tier chạy CPU → chậm hơn GPU. Tư vấn (RAG) chạy tốt; đặt lịch ghi DB cần MySQL (bản A/C).
-
----
-
-## C. Deploy web PHP công khai + nối tới AI
-1. Deploy web (chọn 1):
-   - **Render/Railway** (Docker): dùng `Dockerfile.web` + một MySQL managed (đặt biến `DB_HOST/DB_PORT/DB_USER/DB_PASS/DB_NAME`).
-   - **Host PHP free** (InfinityFree, 000webhost): upload mã nguồn, tạo MySQL, sửa DB\_\* trong biến môi trường/`config.php`.
-2. **Nối web ↔ AI**: đặt biến môi trường cho web
-   ```
-   AI_SERVICE_URL=https://<user>-<space>.hf.space
-   ```
-   (widget `ai_chat_widget.php` tự đọc biến này). Vậy là chatbot trên web thật gọi tới AI đã deploy.
-
----
-
-## D. Deploy Flask bằng Gunicorn + Nginx + HTTPS
-
-Các file `flask_app/Dockerfile`, `docker-compose.flask.prod.yml` và `deploy/flask-nginx-*.conf.template` là cấu hình production cho bản Flask. Cần một VPS có Docker, một tên miền và quyền quản lý DNS; không đưa mật khẩu hoặc khóa API vào Git.
-
-1. Trỏ bản ghi `A` của tên miền tới IP công khai của VPS, mở cổng `80` và `443` trên firewall.
-2. Trên VPS, sao chép `.env.example` thành `.env`, rồi điền ít nhất:
-
+1. Trỏ bản ghi `A` của tên miền tới IP VPS, mở cổng `80` và `443`.
+2. Trên VPS: `cp .env.example .env` rồi điền
    ```env
    DOMAIN=your-domain.example
-   MYSQL_ROOT_PASSWORD=<mat-khau-mysql-dai-va-rieng>
-   SECRET_KEY=<chuoi-bi-mat-dai-va-ngau-nhien>
-   AI_SERVICE_URL=https://<ai-service-cong-khai>
+   MYSQL_ROOT_PASSWORD=<mật khẩu MySQL dài và riêng>
+   SECRET_KEY=<chuỗi bí mật dài, ngẫu nhiên>
+   AI_SERVICE_URL=https://<địa chỉ AI service>
+   MAIL_USERNAME=... MAIL_PASSWORD=... MAIL_DEFAULT_SENDER=...   # nếu muốn gửi email
    ```
-
-3. Khởi động HTTP để Let's Encrypt xác thực tên miền. Entrypoint Flask tự chạy `flask db upgrade` trước Gunicorn:
-
+3. Chạy HTTP trước để Let's Encrypt xác thực tên miền:
    ```bash
-   docker compose -f docker-compose.flask.prod.yml up -d --build
+   docker compose -f docker-compose.prod.yml up -d --build
    ```
-
-4. Cấp chứng chỉ, thay `your-domain.example` và email bằng giá trị thật:
-
+   MySQL được khởi tạo từ `nali_dental_schema_REAL.sql` (schema + dữ liệu mẫu) ở lần chạy đầu.
+4. Cấp chứng chỉ (thay tên miền, email thật):
    ```bash
-   docker compose -f docker-compose.flask.prod.yml run --rm certbot certonly --webroot -w /var/www/certbot -d your-domain.example --email you@example.com --agree-tos --no-eff-email
+   docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot -w /var/www/certbot -d your-domain.example --email you@example.com --agree-tos --no-eff-email
    ```
-
-5. Bật cấu hình HTTPS và kiểm tra `https://your-domain.example`:
-
+5. Bật HTTPS:
    ```bash
-   docker compose -f docker-compose.flask.prod.yml -f docker-compose.flask.https.yml up -d
+   docker compose -f docker-compose.prod.yml -f docker-compose.https.yml up -d
    ```
+6. Tạo admin (một lần): `docker compose -f docker-compose.prod.yml exec -e INITIAL_ADMIN_PASSWORD=<mật khẩu> web flask --app run.py seed-db`
 
-Gia hạn chứng chỉ định kỳ (cron mỗi tuần là đủ) rồi nạp lại Nginx:
-
+Gia hạn chứng chỉ (cron mỗi tuần):
 ```bash
-docker compose -f docker-compose.flask.prod.yml run --rm certbot renew
-docker compose -f docker-compose.flask.prod.yml -f docker-compose.flask.https.yml exec nginx nginx -s reload
+docker compose -f docker-compose.prod.yml run --rm certbot renew
+docker compose -f docker-compose.prod.yml -f docker-compose.https.yml exec nginx nginx -s reload
 ```
+
+Sao lưu DB: `scripts/backup_db.ps1` (Docker) hoặc `scripts/backup_db.bat` (XAMPP local).
 
 ---
 
-## Biến môi trường quan trọng
-| Biến | Dùng cho | Ví dụ |
-|------|----------|-------|
+## B. Deploy AI service riêng lên HuggingFace Spaces (miễn phí, có model finetune)
+
+Chi tiết trong `deploy/hf-space/README.md`. Tóm tắt:
+1. Upload GGUF đã finetune lên một model repo HF (`ai_service/finetune/out/nali-qwen-q4.gguf`).
+2. Tạo Space kiểu *Docker*, copy `ai_service/` + 3 file trong `deploy/hf-space/`.
+3. Secrets: `MODEL_REPO`, `MODEL_FILE` (+ `GEMINI_API_KEY` nếu muốn fallback, `DATABASE_URL` nếu muốn đặt lịch ghi DB).
+4. Lấy URL `https://<user>-<space>.hf.space` → đặt vào `AI_SERVICE_URL` của web.
+
+> Free tier chạy CPU nên model local chậm; bản demo hiện tại dùng Render + Gemini (xem `DEPLOY_FREE.md`).
+
+---
+
+## Biến môi trường
+
+| Biến | Dùng cho | Ghi chú |
+|------|----------|---------|
+| `DATABASE_URL` hoặc `DB_HOST/DB_PORT/DB_USER/DB_PASS/DB_NAME` | web + ai_service | `mysql://user:pass@host:port/db?ssl-mode=REQUIRED` (Aiven) |
+| `SECRET_KEY`, `APP_ENV=production` | web | bắt buộc khi production |
+| `AI_SERVICE_URL` | web | địa chỉ AI service |
+| `MAIL_USERNAME / MAIL_PASSWORD / MAIL_DEFAULT_SENDER` | web | Gmail App Password |
+| `CRON_TOKEN` | web | bảo vệ `/api/cron/reminders` (GitHub Actions gọi) |
+| `BANK_ID / BANK_ACCOUNT_NO / BANK_ACCOUNT_NAME / DEPOSIT_AMOUNT` | web | đặt cọc VietQR (trống = ẩn) |
+| `GA_MEASUREMENT_ID / GOOGLE_SITE_VERIFICATION` | web | GA4 + Search Console |
 | `LLM_BACKEND` | ai_service | `auto` / `local` / `gemini` / `offline` |
-| `LOCAL_LLM_URL` | ai_service | `http://ollama:11434/v1` |
-| `LOCAL_LLM_MODEL` | ai_service | `nali-dental` |
-| `GEMINI_API_KEY` | ai_service | (khoá Gemini, fallback) |
-| `DB_HOST/DB_PORT/DB_USER/DB_PASS/DB_NAME` | web PHP | `db` / `3306` / `root` / mật khẩu từ `.env` / `nali_dental` |
-| `DB_PASSWORD` | ai_service (đọc DB) | cùng mật khẩu từ `.env` |
-| `AI_SERVICE_URL` | web PHP (widget) | `https://...hf.space` |
+| `LOCAL_LLM_URL / LOCAL_LLM_MODEL` | ai_service | `http://ollama:11434/v1` / `nali-dental` |
+| `GEMINI_API_KEY` | ai_service | chat (khi gemini) + AI xem ảnh răng |

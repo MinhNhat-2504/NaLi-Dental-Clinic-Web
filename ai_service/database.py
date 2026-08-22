@@ -125,7 +125,7 @@ def insert_appointment(
 ) -> int:
     """Ghi một lịch hẹn mới vào bảng `appointments`, trả về ID vừa tạo.
 
-    Dùng đúng bộ cột mà admin_panel.php đọc, nên lịch AI đặt sẽ hiện ngay
+    Dùng đúng bộ cột của bảng appointments mà web Flask đọc, nên lịch AI đặt sẽ hiện ngay
     trong trang quản trị. Tham số keyword-only để tránh nhầm thứ tự.
     """
     with get_connection() as conn:
