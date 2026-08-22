@@ -37,7 +37,10 @@ class Config:
             f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
         )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 280}  # DB cloud hay ngắt kết nối nhàn rỗi
+    # DB cloud hay ngắt kết nối nhàn rỗi -> pre_ping; connect_timeout để DB sập thì request lỗi nhanh (503)
+    # thay vì treo hàng phút làm kẹt mọi worker gunicorn. (Chỉ áp cho MySQL; SQLite test không có tham số này.)
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 280,
+                                 "connect_args": {"connect_timeout": 8, "read_timeout": 30, "write_timeout": 30}}
     # Local/demo: tự tạo bảng model còn thiếu (blog_posts, faqs...) để app không chết.
     # Production phải chạy migration rõ ràng trước khi deploy.
     AUTO_CREATE_SCHEMA = os.getenv("AUTO_CREATE_SCHEMA", "1" if os.getenv("APP_ENV") != "production" else "0") == "1"

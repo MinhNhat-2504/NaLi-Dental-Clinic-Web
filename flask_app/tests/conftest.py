@@ -15,6 +15,7 @@ from config import Config  # noqa: E402
 class TestConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_ENGINE_OPTIONS = {}     # SQLite không nhận connect_timeout của MySQL
     WTF_CSRF_ENABLED = False       # tắt CSRF để test form dễ dàng
     MAIL_SUPPRESS_SEND = True      # không gửi email thật khi test
     SECRET_KEY = "test-secret"

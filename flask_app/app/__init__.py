@@ -113,6 +113,18 @@ def create_app(config_class=Config):
         return render_template("error.html", code=500,
                                msg="Có lỗi hệ thống. Vui lòng thử lại hoặc gọi hotline 0945 457 512."), 500
 
+    from sqlalchemy.exc import OperationalError, InterfaceError
+
+    @app.errorhandler(OperationalError)
+    @app.errorhandler(InterfaceError)
+    def db_unavailable(e):
+        """DB cloud sập/không kết nối được: báo 503 rõ ràng thay vì 500 mơ hồ hay treo."""
+        db.session.rollback()
+        app.logger.error("Không kết nối được CSDL: %s", str(e)[:300])
+        return render_template("error.html", code=503,
+                               msg="Hệ thống đang tạm thời không kết nối được cơ sở dữ liệu. "
+                                   "Vui lòng thử lại sau ít phút hoặc gọi hotline 0945 457 512."), 503
+
     @app.errorhandler(403)
     def forbidden(e):
         return render_template("error.html", code=403,
