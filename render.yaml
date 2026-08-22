@@ -18,7 +18,7 @@ services:
     # Chạy migration rồi mới lên gunicorn (giống entrypoint Docker)
     # Migration lỗi (vd DB cloud đang tắt) thì vẫn lên web để hiện trang 503 rõ ràng thay vì deploy fail/treo
     startCommand: (flask --app run.py db upgrade || echo "[start] db upgrade thất bại - vẫn khởi động web") && gunicorn -w 2 -k gthread --threads 4 -b 0.0.0.0:$PORT run:app
-    healthCheckPath: /
+    healthCheckPath: /healthz
     envVars:
       - key: APP_ENV
         value: production

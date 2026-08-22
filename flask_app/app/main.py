@@ -14,6 +14,12 @@ from .models import BlogPost, CaseStudy, FAQ, Feedback, Product, Staff
 main_bp = Blueprint("main", __name__)
 
 
+@main_bp.route("/healthz")
+def healthz():
+    """Health check cho Render: app sống là 200 (không đụng DB để DB sập không kéo deploy fail)."""
+    return Response('{"ok": true}', mimetype="application/json")
+
+
 @main_bp.route("/robots.txt")
 def robots():
     body = "User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\nSitemap: " + url_for("main.sitemap", _external=True) + "\n"
