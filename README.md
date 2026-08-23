@@ -1,164 +1,162 @@
-# 🦷 NALI Dental Clinic — Website phòng khám nha khoa tích hợp AI
+# NALI Dental Clinic
 
 [![CI](https://github.com/MinhNhat-2504/NaLi-Dental-Clinic-Web/actions/workflows/ci.yml/badge.svg)](https://github.com/MinhNhat-2504/NaLi-Dental-Clinic-Web/actions/workflows/ci.yml)
-[![Nhắc lịch](https://github.com/MinhNhat-2504/NaLi-Dental-Clinic-Web/actions/workflows/reminders.yml/badge.svg)](https://github.com/MinhNhat-2504/NaLi-Dental-Clinic-Web/actions/workflows/reminders.yml)
 
-Đây là đồ án môn **Lập trình Python nâng cao** của mình. Ý tưởng là làm một website cho phòng khám
-nha khoa mà **dùng được thật**: khách đặt lịch, chatbot AI tư vấn và tự đặt lịch, AI xem ảnh răng,
-nhắc lịch qua email, hồ sơ bệnh nhân, đặt cọc giữ chỗ… và toàn bộ được **deploy miễn phí** để ai cũng vào xem được.
+Website phòng khám nha khoa, làm cho môn Lập trình Python nâng cao. Lúc đầu chỉ định làm
+mấy chức năng cơ bản cho đủ bài, nhưng làm tới đâu lại muốn thêm tới đó, nên bây giờ nó
+thành một trang khá đầy đủ: khách đặt lịch, đặt cọc, nhận email nhắc lịch, xem hồ sơ khám,
+có chatbot tư vấn và một phần AI xem ảnh răng. Tất cả đang chạy thật trên mạng, không tốn
+đồng nào.
 
-🌐 **Demo trực tuyến:** https://nali-dental-web.onrender.com
-(AI service: https://nali-dental-ai.onrender.com/health — gói free nên lần đầu mở có thể chờ ~30–60 giây để server "thức dậy").
+Demo: https://nali-dental-web.onrender.com
+(server gói free nên lần đầu mở có thể phải chờ nửa phút cho nó thức dậy)
 
-Web chính viết bằng **Flask** (đúng yêu cầu môn học), phần AI tách ra một service Python (FastAPI) riêng.
+Web viết bằng Flask. Phần AI tách ra một service riêng bằng FastAPI, vì mình không muốn
+chatbot có lỗi là kéo cả web theo.
 
----
+## Có gì trong đó
 
-## Tính năng chính
+Phía khách:
 
-**Phía khách hàng**
-- Đăng ký / đăng nhập, xem dịch vụ (tìm kiếm + phân trang), bài viết kiến thức, đội ngũ bác sĩ
-- **Đặt lịch hẹn** online: chọn khung giờ còn trống theo ngày, nhận **email xác nhận**, tự đổi/huỷ lịch (trước 4 giờ)
-- **Đặt cọc giữ chỗ** qua chuyển khoản **VietQR** (QR động điền sẵn tiền + nội dung), lễ tân bấm "Đã nhận" là lịch tự xác nhận
-- **Email nhắc lịch trước 24h** — tự chạy mỗi sáng 08:00 (GitHub Actions cron, không tốn tiền server)
-- **Hồ sơ khám của tôi**: xem chẩn đoán, điều trị, dặn dò của bác sĩ và lịch tái khám
-- **Thư viện kết quả** trước/sau với thanh trượt so sánh, lọc theo dịch vụ
-- **Chatbot AI** tư vấn dịch vụ, báo giá, **tự đặt lịch** bằng hội thoại; **nhớ khách đã đăng nhập** (chào tên, nhắc lịch sắp tới, nhắc tái khám đúng theo hồ sơ, không hỏi lại tên/SĐT)
-- **AI xem ảnh răng** (Gemini Vision): gửi ảnh → nhận xét sơ bộ + gợi ý dịch vụ phù hợp (kèm khuyến cáo không thay thế khám trực tiếp)
-- Giao diện phong cách nha khoa lâm sàng, **dark mode**, responsive (menu ngăn kéo trên mobile), widget thời tiết
+- Đăng ký, đăng nhập, xem dịch vụ (có tìm kiếm, phân trang), bài viết kiến thức, bác sĩ.
+- Đặt lịch online theo khung giờ còn trống, nhận email xác nhận, tự đổi hoặc huỷ lịch trước 4 tiếng.
+- Đặt cọc giữ chỗ bằng chuyển khoản: web tạo mã QR VietQR điền sẵn số tiền và nội dung,
+  lễ tân bấm "đã nhận" là lịch tự chuyển sang đã xác nhận.
+- Email nhắc lịch trước một ngày, chạy tự động mỗi sáng 8 giờ.
+- Hồ sơ khám: xem lại bác sĩ chẩn đoán gì, điều trị gì, dặn gì, khi nào tái khám.
+- Thư viện ảnh trước/sau có thanh trượt so sánh, lọc theo dịch vụ.
+- Chatbot tư vấn dịch vụ, báo giá, đặt lịch luôn bằng chat. Đăng nhập rồi thì nó nhớ mình,
+  chào đúng tên, nhắc lịch sắp tới, không hỏi lại tên số điện thoại nữa.
+- Gửi ảnh răng cho AI xem, nó nhận xét sơ bộ và gợi ý dịch vụ (có ghi rõ không thay khám thật).
+- Giao diện có dark mode, chạy ổn trên điện thoại.
 
-**Phía quản trị**
-- Dashboard thống kê + biểu đồ; quản lý dịch vụ, lịch hẹn, bệnh nhân, phản hồi (đủ CRUD + tìm kiếm)
-- **Hồ sơ bệnh nhân**: ghi kết quả khám ngay từ lịch hẹn, xem toàn bộ lịch sử của từng người
-- **Ca điều trị**: upload ảnh trước/sau (tự nén, bỏ EXIF, lưu trong DB), gắn dịch vụ, nhãn "ảnh minh hoạ"
-- **Chất lượng AI**: nhật ký mọi lượt chat, tỉ lệ trả lời được, độ trễ, danh sách câu bot chưa trả lời để bổ sung tri thức
-- Xác nhận cọc, đánh dấu đã nhắc lịch, đổi trạng thái nhanh
+Phía quản trị:
 
----
+- Dashboard thống kê, quản lý dịch vụ, lịch hẹn, bệnh nhân, phản hồi.
+- Ghi hồ sơ khám ngay từ lịch hẹn, xem lịch sử từng bệnh nhân.
+- Đăng ca điều trị trước/sau (ảnh được nén và lưu trong database).
+- Trang "Chất lượng AI": log mọi câu chat, câu nào bot không trả lời được thì hiện lên để
+  mình bổ sung dữ liệu.
 
-## Công nghệ sử dụng
+## Công nghệ
 
-- **Backend web:** Python 3.11, Flask (Blueprint + app factory), Flask-WTF, Flask-SQLAlchemy, Flask-Login, Flask-Mail, Flask-Migrate (Alembic)
-- **Cơ sở dữ liệu:** MySQL (local: XAMPP/MySQL 8; production: Aiven MySQL free)
-- **Frontend:** Jinja2, HTML/CSS/JS thuần (không framework nặng)
-- **Lập trình mạng:** urllib gọi API ngoài (thời tiết Open-Meteo, VietQR), proxy tới AI service, tự viết REST API JSON, endpoint cron bảo vệ bằng token
-- **AI service:** FastAPI + RAG (TF-IDF/embeddings) + LLM: Qwen2.5-3B **tự finetune bằng QLoRA** chạy qua Ollama (local) hoặc Gemini (cloud), có **fallback offline** bằng luật; Gemini Vision cho ảnh răng
-- **Xử lý ảnh:** Pillow (nén, xoay theo EXIF rồi bỏ EXIF)
-- **Kiểm thử & CI:** pytest (24 test, SQLite in-memory) + bộ test AI offline (28 kiểm tra), chạy tự động trên GitHub Actions mỗi lần push
-- **Triển khai:** Render (Blueprint `render.yaml`, 2 web service free) + Aiven MySQL; Docker Compose cho VPS; Google Analytics 4 + Search Console
+- Python 3.11, Flask (app factory, blueprint), Flask-SQLAlchemy, Flask-WTF, Flask-Login,
+  Flask-Mail, Flask-Migrate.
+- MySQL. Local thì XAMPP, trên mạng thì Aiven (gói free).
+- Giao diện Jinja2 với HTML, CSS, JS thuần.
+- AI service: FastAPI, RAG (TF-IDF), LLM chạy được 3 kiểu: Qwen2.5-3B tự finetune bằng QLoRA
+  qua Ollama, Gemini, hoặc chế độ offline bằng luật. Xem ảnh răng dùng Gemini Vision.
+- Pillow để nén ảnh.
+- pytest (24 test, dùng SQLite trong bộ nhớ) và một bộ test riêng cho AI (28 kiểm tra).
+  GitHub Actions chạy tự động mỗi lần push.
+- Deploy: Render (2 web service free) + Aiven MySQL. Có thêm Docker Compose nếu muốn chạy
+  trên VPS riêng. Email nhắc lịch và việc giữ server thức cũng chạy bằng GitHub Actions.
 
----
+## Về con chatbot
 
-## Điểm mình tâm đắc nhất: con chatbot 🤖
+Đây là phần mình dành nhiều thời gian nhất. Ý chính là bot không được bịa: trước khi trả lời
+nó đọc dữ liệu dịch vụ, giá, thông tin phòng khám trong database rồi mới nói (RAG). Những việc
+cần đúng tuyệt đối như ghi lịch hẹn hay đọc hồ sơ bệnh nhân thì không để model tự quyết mà đi
+qua một đoạn code cố định, hỏi từng bước rồi mới lưu. Model thì mình finetune Qwen2.5-3B cho
+đúng giọng phòng khám; trên cloud free không đủ RAM nên bản demo dùng Gemini, còn khi không có
+mạng hay thiếu key thì tự chuyển sang chế độ offline để demo không bị đứng.
 
-Chatbot làm theo hướng **RAG**: lấy đúng dữ liệu dịch vụ/giá/thông tin phòng khám rồi mới trả lời, hạn chế bịa.
-Nó **tự đặt lịch** vào database — đặt xong là thấy ngay trong trang admin.
+Cái trang "Chất lượng AI" ở admin thực ra là do một lần mình phát hiện bot bịa ra chuyện
+"bãi giữ xe 24/24", nên làm luôn chỗ để soi lại các câu nó trả lời.
 
-Kiến trúc là **hybrid**: LLM lo phần tư vấn/hội thoại, còn những việc cần chính xác tuyệt đối
-(đặt lịch, đọc hồ sơ bệnh nhân, ngày tái khám) đi qua **máy trạng thái xác định**, không phó mặc cho model.
-Nhờ dashboard "Chất lượng AI" mình bắt được lúc bot bịa "bãi giữ xe 24/24" và bổ sung tri thức ngay.
+## Chạy trên máy
 
-Phần LLM mình **finetune model mở Qwen2.5-3B** bằng QLoRA trên dữ liệu nha khoa để đúng giọng NALI.
-Trên cloud free không đủ RAM cho model local nên dùng Gemini; mất mạng/thiếu key thì tự chuyển offline — demo không bao giờ "chết".
+Cần Python 3.11 và MySQL.
 
----
+Database:
 
-## Cách chạy local
-
-Cần: Python 3.11, MySQL (XAMPP hoặc MySQL 8).
-
-**1. Database**
 ```bash
 cd flask_app
-cp .env.example .env          # rồi điền DB_PASS (trùng mật khẩu MySQL), MAIL_* nếu muốn gửi email thật
-# DB mới tinh:
-flask --app run.py init-db       # tạo toàn bộ bảng theo model
-flask --app run.py db stamp head # đánh dấu schema đã ở bản mới nhất
-# DB NALI đã có sẵn từ trước: chỉ cần  flask --app run.py db upgrade
-INITIAL_ADMIN_PASSWORD=matkhaucuaban flask --app run.py seed-db   # dữ liệu mẫu + admin
-flask --app run.py seed-content   # FAQ + bài kiến thức
-flask --app run.py seed-cases     # 1 ca trước/sau demo (ảnh minh hoạ)
+cp .env.example .env          # điền DB_PASS, thêm MAIL_* nếu muốn gửi email thật
+flask --app run.py init-db       # database mới: tạo bảng
+flask --app run.py db stamp head # rồi đánh dấu đã ở migration mới nhất
+# database cũ đã có từ trước thì chỉ cần: flask --app run.py db upgrade
+INITIAL_ADMIN_PASSWORD=matkhau flask --app run.py seed-db   # dữ liệu mẫu + tài khoản admin
+flask --app run.py seed-content   # FAQ, bài viết
+flask --app run.py seed-cases     # một ca trước/sau demo
 ```
 
-**2. Web Flask**
+Web:
+
 ```bash
 pip install -r requirements.txt
-python run.py                  # http://127.0.0.1:5000
+python run.py        # http://127.0.0.1:5000
 ```
 
-**3. AI service (chatbot + AI xem ảnh)**
+AI service:
+
 ```bash
 cd ai_service
 pip install -r requirements.txt
-python main.py                 # http://127.0.0.1:8000
+python main.py       # http://127.0.0.1:8000
 ```
-> Muốn dùng model finetune: cài Ollama và nạp model `nali-dental` (xem `ai_service/finetune/README.md`).
-> Muốn dùng Gemini: đặt `GEMINI_API_KEY` trong `ai_service/.env`. Không có gì cả thì vẫn chạy chế độ offline.
 
-**Test**
+Muốn dùng model finetune thì cài Ollama và nạp model `nali-dental` (xem `ai_service/finetune/README.md`).
+Muốn dùng Gemini thì đặt `GEMINI_API_KEY` trong `ai_service/.env`. Không có gì thì vẫn chạy offline.
+
+Test:
+
 ```bash
-cd flask_app && pytest -q                       # 24 test
-cd ai_service && LLM_BACKEND=offline python test_agent.py   # 28 kiểm tra offline
+cd flask_app && pytest -q
+cd ai_service && LLM_BACKEND=offline python test_agent.py
 ```
 
-**Lệnh tiện ích:** `flask --app run.py send-reminders` (gửi email nhắc lịch ngày mai ngay lập tức).
+Một lưu ý về migration: mình không dùng `flask db migrate` tự sinh nữa. Database demo có vài cột
+ngoài model (di sản từ bản cũ), autogenerate từng sinh ra lệnh xoá cột và mình suýt mất dữ liệu.
+Các file trong `flask_app/migrations/versions/` đều viết tay và chạy lại không lỗi; thêm bảng
+hay cột mới thì viết theo mẫu có sẵn rồi `flask db upgrade`.
 
-> ⚠️ Về migration: DB demo có vài cột ngoài model (di sản bản PHP cũ) nên **không dùng** `flask db migrate` (autogenerate) — nó từng
-> sinh lệnh xoá cột. Mọi migration trong `flask_app/migrations/versions/` đều **viết tay, idempotent**
-> (chạy lại không lỗi). Thêm bảng/cột mới thì viết theo mẫu các file có sẵn rồi `flask db upgrade`.
+## Deploy
 
----
+- Miễn phí, đúng như bản demo đang chạy: xem `DEPLOY_FREE.md`, có từng bước (tạo DB Aiven,
+  lấy key Gemini, deploy Render, bật email nhắc lịch, đặt cọc, Google Analytics).
+- VPS và tên miền riêng với Docker Compose: xem `DEPLOY.md`.
 
-## Triển khai
+Biến môi trường chính của web: `DATABASE_URL`, `SECRET_KEY`, `AI_SERVICE_URL`, `MAIL_USERNAME`,
+`MAIL_PASSWORD`, `MAIL_DEFAULT_SENDER`, `CRON_TOKEN`, `BANK_ID`, `BANK_ACCOUNT_NO`,
+`BANK_ACCOUNT_NAME`, `GA_MEASUREMENT_ID`, `GOOGLE_SITE_VERIFICATION`.
+Của AI service: `GEMINI_API_KEY`, `LLM_BACKEND`, `DATABASE_URL`.
 
-- **Miễn phí (đang chạy demo):** Render + Aiven + GitHub Actions — từng bước trong [`DEPLOY_FREE.md`](DEPLOY_FREE.md)
-  (tạo DB, lấy key Gemini, deploy Blueprint, bật email nhắc lịch, đặt cọc VietQR, GA4/Search Console).
-- **VPS + tên miền:** Docker Compose (`docker-compose.prod.yml`: MySQL, gunicorn, nginx, certbot) — xem [`DEPLOY.md`](DEPLOY.md).
-
-Biến môi trường chính (web): `DATABASE_URL`, `SECRET_KEY`, `AI_SERVICE_URL`, `MAIL_USERNAME/MAIL_PASSWORD/MAIL_DEFAULT_SENDER`,
-`CRON_TOKEN` (nhắc lịch), `BANK_ID/BANK_ACCOUNT_NO/BANK_ACCOUNT_NAME` (đặt cọc; trống = ẩn), `GA_MEASUREMENT_ID`, `GOOGLE_SITE_VERIFICATION`.
-AI service: `GEMINI_API_KEY`, `LLM_BACKEND` (auto|local|gemini|offline), `DATABASE_URL`.
-
----
-
-## Cấu trúc thư mục (rút gọn)
+## Cấu trúc thư mục
 
 ```
-flask_app/                 # Web chính bằng Flask (bản được chấm)
+flask_app/            web Flask
   app/
-    __init__.py            # app factory + lệnh CLI (init-db, seed-*, send-reminders)
-    models.py              # Patient, Staff, Product, Appointment, Feedback, FAQ, BlogPost,
-                           # ChatLog, MedicalRecord, CaseStudy
-    forms.py               # form Flask-WTF
-    main.py / auth.py / booking.py / admin.py / api.py   # các blueprint
-    reminders.py           # email nhắc lịch trước 24h
-    imaging.py             # nén ảnh ca điều trị
-    templates/, static/    # giao diện Jinja2 + CSS/JS
-  migrations/              # Alembic (viết tay)
-  tests/                   # pytest
-ai_service/                # FastAPI: RAG + LLM (local/Gemini/offline) + tool đặt lịch + vision
-  finetune/                # script finetune Qwen2.5-3B (QLoRA)
-.github/workflows/         # ci.yml (test), reminders.yml (cron nhắc lịch 08:00)
-render.yaml                # deploy free trên Render
-docker-compose*.yml        # đóng gói cho VPS
+    __init__.py       app factory, các lệnh CLI
+    models.py         Patient, Staff, Product, Appointment, Feedback, FAQ, BlogPost,
+                      ChatLog, MedicalRecord, CaseStudy
+    forms.py
+    main.py auth.py booking.py admin.py api.py     các blueprint
+    reminders.py      email nhắc lịch
+    imaging.py        nén ảnh
+    cache.py          cache nhỏ trong tiến trình
+    templates/ static/
+  migrations/         Alembic, viết tay
+  tests/
+ai_service/           FastAPI: RAG, LLM, tool đặt lịch, xem ảnh
+  finetune/           script finetune Qwen
+.github/workflows/    ci.yml, reminders.yml, keepalive.yml
+render.yaml           deploy Render
+docker-compose.prod.yml, docker-compose.https.yml   cho VPS
 ```
-
----
 
 ## Tài khoản demo
 
 | Vai trò | Tài khoản | Mật khẩu |
-|---------|-----------|----------|
-| Admin   | `admin`   | mật khẩu đặt qua `INITIAL_ADMIN_PASSWORD` khi seed |
-| Khách   | `lananh@gmail.com` | `password123` |
-
----
+|---|---|---|
+| Admin | admin | đặt qua `INITIAL_ADMIN_PASSWORD` lúc seed |
+| Khách | lananh@gmail.com | password123 |
 
 ## Ghi chú
 
-- Model finetune (~vài GB) không đẩy lên GitHub, train lại bằng script trong `ai_service/finetune/`.
-- File `.env` chứa thông tin nhạy cảm nên đã bỏ qua khỏi git, tự tạo lại theo `.env.example`.
-- Ảnh trong "Kết quả điều trị" hiện là **ảnh minh hoạ** (có nhãn); ảnh ca thật chỉ đăng khi khách đồng ý.
-- AI xem ảnh răng chỉ là **nhận xét sơ bộ**, không thay thế khám trực tiếp — web luôn hiển thị khuyến cáo này.
+- Model finetune nặng vài GB nên không đẩy lên đây, train lại bằng script trong `ai_service/finetune/`.
+- File `.env` không commit, tự tạo theo `.env.example`.
+- Ảnh trong mục kết quả điều trị hiện là ảnh minh hoạ có ghi nhãn. Ảnh ca thật chỉ đăng khi khách đồng ý.
+- AI xem ảnh răng chỉ là nhận xét sơ bộ, không thay cho việc đi khám.
 
-Cảm ơn thầy/cô đã xem đồ án của mình 💙
+Trịnh Ngọc Minh Nhật
