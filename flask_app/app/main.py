@@ -7,6 +7,7 @@ from flask import (Blueprint, Response, current_app, flash, redirect, render_tem
 from xml.sax.saxutils import escape
 from sqlalchemy import or_
 
+from .cache import cached
 from .extensions import db
 from .forms import FeedbackForm
 from .models import BlogPost, CaseStudy, FAQ, Feedback, Product, Staff
@@ -44,24 +45,22 @@ def sitemap():
 @main_bp.route("/")
 def index():
     """Trang chủ: hero + dịch vụ nổi bật + thống kê + cảm nhận + FAQ."""
-    services = Product.query.filter_by(is_active=1).limit(6).all()
-    approved_faqs = [(f.question, f.answer) for f in FAQ.query.filter_by(is_active=1).order_by(FAQ.sort_order, FAQ.id).all()]
-    approved_feedback = (Feedback.query.filter_by(status="approved")
-                         .order_by(Feedback.created_at.desc(), Feedback.id.desc()).limit(6).all())
-    latest_posts = (BlogPost.query.filter_by(status="published")
-                    .order_by(BlogPost.published_at.desc(), BlogPost.id.desc()).limit(3).all())
-    # Đếm toàn bộ dịch vụ đang bật, không chỉ 6 thẻ nổi bật trên trang chủ.
-    service_groups = (db.session.query(Product.target_group)
-                      .filter(Product.is_active == 1, Product.target_group.isnot(None))
-                      .distinct().count())
-    return render_template(
-        "main/index.html",
-        services=services,
-        approved_faqs=approved_faqs,
-        approved_feedback=approved_feedback,
-        latest_posts=latest_posts,
-        service_groups=service_groups,
-    )
+    def _load():
+        # 5 truy vấn tới DB cloud ở xa -> gom lại và cache 60s (admin sửa thì cache tự xoá)
+        return {
+            "services": Product.query.filter_by(is_active=1).limit(6).all(),
+            "approved_faqs": [(f.question, f.answer) for f in FAQ.query.filter_by(is_active=1).order_by(FAQ.sort_order, FAQ.id).all()],
+            "approved_feedback": (Feedback.query.filter_by(status="approved")
+                                  .order_by(Feedback.created_at.desc(), Feedback.id.desc()).limit(6).all()),
+            "latest_posts": (BlogPost.query.filter_by(status="published")
+                             .order_by(BlogPost.published_at.desc(), BlogPost.id.desc()).limit(3).all()),
+            # Đếm toàn bộ dịch vụ đang bật, không chỉ 6 thẻ nổi bật trên trang chủ.
+            "service_groups": (db.session.query(Product.target_group)
+                               .filter(Product.is_active == 1, Product.target_group.isnot(None))
+                               .distinct().count()),
+        }
+    data = cached("home:index", 60, _load)
+    return render_template("main/index.html", **data)
 
 
 @main_bp.route("/dich-vu")
@@ -81,10 +80,12 @@ def services():
 @main_bp.route("/dich-vu/<int:pid>")
 def service_detail(pid):
     product = Product.query.get_or_404(pid)
-    related = (Product.query.filter(Product.id != pid, Product.is_active == 1)
-               .order_by(Product.id.desc()).limit(3).all())
-    cases = (CaseStudy.query.filter_by(product_id=pid, is_active=True)
-             .order_by(CaseStudy.sort_order, CaseStudy.id.desc()).limit(3).all())
+    related = cached(f"home:related:{pid}", 60, lambda: (Product.query.filter(Product.id != pid, Product.is_active == 1)
+                                                           .order_by(Product.id.desc()).limit(3).all()))
+    cols = (CaseStudy.id, CaseStudy.title, CaseStudy.duration_text, CaseStudy.is_demo)
+    cases = cached(f"cases:svc:{pid}", 60, lambda: (db.session.query(*cols)
+                                                   .filter(CaseStudy.product_id == pid, CaseStudy.is_active.is_(True))
+                                                   .order_by(CaseStudy.sort_order, CaseStudy.id.desc()).limit(3).all()))
     return render_template("main/service_detail.html", p=product, related=related, cases=cases)
 
 
@@ -93,15 +94,22 @@ def service_detail(pid):
 def cases():
     """Kết quả thực tế: ảnh trước/sau theo dịch vụ, có thanh trượt so sánh."""
     pid = request.args.get("dv", type=int)
-    q = CaseStudy.query.filter_by(is_active=True)
-    if pid:
-        q = q.filter_by(product_id=pid)
-    items = q.order_by(CaseStudy.sort_order, CaseStudy.id.desc()).all()
-    # Chỉ liệt kê những dịch vụ có ca để lọc
-    used_ids = {c.product_id for c in CaseStudy.query.filter_by(is_active=True).all() if c.product_id}
-    filters = Product.query.filter(Product.id.in_(used_ids)).order_by(Product.name).all() if used_ids else []
-    products = {p.id: p for p in Product.query.all()}
-    return render_template("main/cases.html", items=items, filters=filters, products=products, pid=pid)
+
+    def _load():
+        # Không kéo cột ảnh (BLOB) khi liệt kê -> nhẹ hơn nhiều; ảnh tải riêng qua /ket-qua/anh
+        cols = (CaseStudy.id, CaseStudy.title, CaseStudy.product_id, CaseStudy.duration_text,
+                CaseStudy.description, CaseStudy.is_demo, CaseStudy.sort_order, CaseStudy.updated_at)
+        q = db.session.query(*cols).filter(CaseStudy.is_active.is_(True))
+        if pid:
+            q = q.filter(CaseStudy.product_id == pid)
+        items = q.order_by(CaseStudy.sort_order, CaseStudy.id.desc()).all()
+        used_ids = {r[0] for r in db.session.query(CaseStudy.product_id)
+                    .filter(CaseStudy.is_active.is_(True), CaseStudy.product_id.isnot(None)).distinct().all()}
+        filters = Product.query.filter(Product.id.in_(used_ids)).order_by(Product.name).all() if used_ids else []
+        products = {p.id: p for p in Product.query.all()}
+        return {"items": items, "filters": filters, "products": products}
+    data = cached(f"cases:list:{pid or 0}", 60, _load)
+    return render_template("main/cases.html", pid=pid, **data)
 
 
 @main_bp.route("/ket-qua/anh/<int:cid>/<kind>")
@@ -109,8 +117,10 @@ def case_image(cid, kind):
     """Trả ảnh trước/sau từ DB (JPEG đã nén). Cache 30 ngày vì ảnh đổi thì updated_at đổi -> URL có ?v=."""
     if kind not in ("truoc", "sau"):
         return "", 404
-    case = CaseStudy.query.get_or_404(cid)
-    data = case.before_image if kind == "truoc" else case.after_image
+    col = CaseStudy.before_image if kind == "truoc" else CaseStudy.after_image
+    ver = request.args.get("v", "")
+    data = cached(f"cases:img:{cid}:{kind}:{ver}", 600,
+                  lambda: db.session.query(col).filter(CaseStudy.id == cid).scalar())
     if not data:
         return "", 404
     resp = Response(data, mimetype="image/jpeg")

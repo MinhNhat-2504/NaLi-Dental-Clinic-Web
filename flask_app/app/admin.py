@@ -9,6 +9,7 @@ from flask import (Blueprint, abort, flash, redirect, render_template, request,
 from flask_login import current_user, login_required
 from sqlalchemy import or_
 
+from .cache import invalidate
 from .extensions import db
 from .forms import AdminAppointmentForm, ProductForm
 from .mailer import send_email
@@ -80,6 +81,7 @@ def product_add():
                     is_active=1 if form.is_active.data else 0)
         db.session.add(p)
         db.session.commit()
+        invalidate("home"); invalidate("cases")
         flash("Đã thêm dịch vụ mới.", "success")
         return redirect(url_for("admin.products"))
     return render_template("admin/product_form.html", form=form, title="Thêm dịch vụ")
@@ -99,6 +101,7 @@ def product_edit(pid):
         p.image = form.image.data
         p.is_active = 1 if form.is_active.data else 0
         db.session.commit()
+        invalidate("home"); invalidate("cases")
         flash("Đã cập nhật dịch vụ.", "success")
         return redirect(url_for("admin.products"))
     form.is_active.data = bool(p.is_active)
@@ -111,6 +114,7 @@ def product_delete(pid):
     p = Product.query.get_or_404(pid)
     db.session.delete(p)
     db.session.commit()
+    invalidate("home"); invalidate("cases")
     flash("Đã xóa dịch vụ.", "success")
     return redirect(url_for("admin.products"))
 
@@ -210,6 +214,7 @@ def feedback_status(fid):
     if status in ("pending", "approved", "rejected"):
         item.status = status
         db.session.commit()
+        invalidate("home")
         flash("Đã cập nhật trạng thái phản hồi.", "success")
     return redirect(url_for("admin.feedback"))
 
@@ -340,6 +345,7 @@ def case_add():
         if ok:
             db.session.add(case)
             db.session.commit()
+            invalidate("cases")
             flash("Đã thêm ca điều trị.", "success")
             return redirect(url_for("admin.cases"))
         flash(err, "error")
@@ -359,6 +365,7 @@ def case_edit(cid):
         ok, err = _save_case_form(form, case)
         if ok:
             db.session.commit()
+            invalidate("cases")
             flash("Đã cập nhật ca điều trị.", "success")
             return redirect(url_for("admin.cases"))
         flash(err, "error")
@@ -371,6 +378,7 @@ def case_delete(cid):
     case = CaseStudy.query.get_or_404(cid)
     db.session.delete(case)
     db.session.commit()
+    invalidate("cases")
     flash("Đã xoá ca điều trị.", "success")
     return redirect(url_for("admin.cases"))
 
