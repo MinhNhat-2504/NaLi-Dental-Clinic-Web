@@ -73,7 +73,8 @@ def services():
         like = f"%{q}%"
         query = query.filter(or_(Product.name.like(like), Product.description.like(like)))
     query = query.order_by(Product.id.desc())
-    pagination = query.paginate(page=page, per_page=current_app.config["PER_PAGE"], error_out=False)
+    pagination = cached(f"home:services:{q}:{page}", 60,
+                        lambda: query.paginate(page=page, per_page=current_app.config["PER_PAGE"], error_out=False))
     return render_template("main/services.html", pagination=pagination, services=pagination.items, q=q)
 
 
@@ -130,14 +131,14 @@ def case_image(cid, kind):
 
 @main_bp.route("/bac-si")
 def doctors():
-    docs = Staff.query.filter_by(role="doctor").all()
+    docs = cached("home:doctors", 300, lambda: Staff.query.filter_by(role="doctor").all())
     return render_template("main/doctors.html", doctors=docs)
 
 
 @main_bp.route("/kien-thuc")
 def knowledge():
-    posts = (BlogPost.query.filter_by(status="published")
-             .order_by(BlogPost.published_at.desc(), BlogPost.id.desc()).all())
+    posts = cached("home:posts", 120, lambda: (BlogPost.query.filter_by(status="published")
+                                              .order_by(BlogPost.published_at.desc(), BlogPost.id.desc()).all()))
     return render_template("main/knowledge.html", posts=posts)
 
 
