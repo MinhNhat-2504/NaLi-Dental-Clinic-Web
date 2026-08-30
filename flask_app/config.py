@@ -71,6 +71,7 @@ class Config:
     GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "").strip()
     GOOGLE_SITE_VERIFICATION = os.getenv("GOOGLE_SITE_VERIFICATION", "").strip()
     MAX_CONTENT_LENGTH = 12 * 1024 * 1024   # giới hạn upload 12MB (ảnh ca điều trị)
+    CHAT_RATE_LIMIT = int(os.getenv("CHAT_RATE_LIMIT", "30"))   # số tin nhắn chat / phút / IP
 
     # --- Phân trang ---
     PER_PAGE = int(os.getenv("PER_PAGE", "6"))

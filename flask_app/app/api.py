@@ -14,6 +14,7 @@ import urllib.request
 from flask import Blueprint, current_app, jsonify, request
 from flask_login import current_user
 
+from . import ratelimit
 from .extensions import csrf
 from .models import Appointment, ChatLog, MedicalRecord, Patient, Product
 from .extensions import db
@@ -146,6 +147,9 @@ def chat_proxy():
 
     Đây là ví dụ LẬP TRÌNH MẠNG: dùng urllib gửi POST + đọc JSON từ API bên ngoài.
     """
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "?").split(",")[0].strip()
+    if not ratelimit.allow(f"chat:{ip}", current_app.config.get("CHAT_RATE_LIMIT", 30), 60):
+        return jsonify({"reply": "Anh/chị gửi hơi nhanh, đợi NALI một chút rồi hỏi tiếp nhé ạ.", "mode": "ratelimit"}), 429
     payload = request.get_json(silent=True) or {}
     body = json.dumps({
         "session_id": payload.get("session_id", "web"),

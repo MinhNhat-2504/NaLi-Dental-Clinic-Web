@@ -26,6 +26,8 @@ class TestConfig(Config):
 def app():
     from app.cache import invalidate
     invalidate()  # cache trong tiến trình dùng chung giữa các test -> xoá trước mỗi test
+    from app import ratelimit
+    ratelimit.reset_all()
     app = create_app(TestConfig)
     with app.app_context():
         db.create_all()

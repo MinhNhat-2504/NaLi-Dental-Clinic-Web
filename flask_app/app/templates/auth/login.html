@@ -21,7 +21,7 @@
       <label class="fg-check">{{ form.remember() }} Ghi nhớ đăng nhập</label>
       {{ form.submit(class="auth-btn") }}
     </form>
-    <p class="auth-alt">Chưa có tài khoản? <a href="{{ url_for('auth.register') }}">Đăng ký ngay</a></p>
+    <p class="auth-alt">Chưa có tài khoản? <a href="{{ url_for('auth.register') }}">Đăng ký ngay</a> · <a href="{{ url_for('auth.forgot_password') }}">Quên mật khẩu?</a></p>
   </div>
 </div>
 {% include 'partials/auth_style.html' %}

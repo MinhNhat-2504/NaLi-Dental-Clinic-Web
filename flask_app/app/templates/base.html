@@ -63,7 +63,7 @@
                         <a href="{{ url_for('admin.dashboard') }}" class="nav-link" style="background:#28a745;color:#fff;"><i class="fas fa-cog"></i> Admin</a>
                     {% endif %}
                     {% if current_user.role == 'patient' %}<a href="{{ url_for('booking.my_records') }}" class="nav-link {{ 'active' if ep=='booking.my_records' }}"><i class="fas fa-notes-medical"></i> Hồ sơ</a>{% endif %}
-                    <span class="user-menu"><span class="user-name"><i class="fas fa-user-circle"></i> {{ current_user.full_name }}</span></span>
+                    <span class="user-menu"><a class="user-name" href="{{ url_for('auth.change_password') }}" title="Đổi mật khẩu" style="text-decoration:none;color:inherit;"><i class="fas fa-user-circle"></i> {{ current_user.full_name }}</a></span>
                     <a href="{{ url_for('auth.logout') }}" class="nav-link"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
                 {% else %}
                     <a href="{{ url_for('auth.login') }}" class="nav-link btn-login"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a>

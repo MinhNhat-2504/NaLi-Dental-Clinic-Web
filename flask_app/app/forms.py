@@ -130,3 +130,21 @@ class CaseStudyForm(FlaskForm):
     sort_order = IntegerField("Thứ tự (nhỏ lên trước)", validators=[Optional()], default=0)
     submit = SubmitField("Lưu ca điều trị")
 
+
+class ChangePasswordForm(FlaskForm):
+    current = PasswordField("Mật khẩu hiện tại", validators=[DataRequired()])
+    new = PasswordField("Mật khẩu mới", validators=[DataRequired(), Length(8, 100, message="Ít nhất 8 ký tự")])
+    confirm = PasswordField("Nhập lại mật khẩu mới", validators=[DataRequired(), EqualTo("new", message="Hai mật khẩu không khớp")])
+    submit = SubmitField("Đổi mật khẩu")
+
+
+class ForgotPasswordForm(FlaskForm):
+    email = StringField("Email đã đăng ký", validators=[DataRequired(), Email(message="Email không hợp lệ")])
+    submit = SubmitField("Gửi link đặt lại")
+
+
+class ResetPasswordForm(FlaskForm):
+    new = PasswordField("Mật khẩu mới", validators=[DataRequired(), Length(8, 100, message="Ít nhất 8 ký tự")])
+    confirm = PasswordField("Nhập lại mật khẩu mới", validators=[DataRequired(), EqualTo("new", message="Hai mật khẩu không khớp")])
+    submit = SubmitField("Đặt lại mật khẩu")
+

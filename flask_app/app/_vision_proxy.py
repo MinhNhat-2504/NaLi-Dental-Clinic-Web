@@ -21,6 +21,10 @@ def register(api_bp):
     @csrf.exempt
     def analyze_image_proxy():
         """AI đọc ảnh răng: chỉ nhận xét sơ bộ, không chẩn đoán. Giới hạn 5MB, JPG/PNG/WebP."""
+        from . import ratelimit
+        ip = request.headers.get("X-Forwarded-For", request.remote_addr or "?").split(",")[0].strip()
+        if not ratelimit.allow(f"vision:{ip}", 6, 60):
+            return jsonify({"success": False, "message": "Anh/chị gửi ảnh hơi nhanh, đợi một chút rồi thử lại nhé."}), 429
         f = request.files.get("file")
         if not f or f.mimetype not in ALLOWED:
             return jsonify({"success": False, "message": "Vui lòng chọn ảnh JPG/PNG/WebP."}), 400
