@@ -126,6 +126,38 @@ def test_record_context(r: Retriever):
     check("khách vãng lai không có ngữ cảnh -> None", FallbackAgent.record_answer("hồ sơ của tôi", "") is None)
 
 
+def test_streaming(r: Retriever):
+    """reply_stream ghép lại phải bằng reply; local agent phải giấu JSON tool khi stream."""
+    print("\n[Streaming]")
+    from fallback_agent import chunk_text
+    a = FallbackAgent(r)
+    full = a.reply("st-a", "phòng khám mở cửa mấy giờ?")
+    pieces = list(a.reply_stream("st-b", "phòng khám mở cửa mấy giờ?"))
+    check("stream ghép lại == trả lời thường", "".join(pieces) == full and len(pieces) > 1, f"{len(pieces)} mẩu")
+    check("chunk_text giữ nguyên nội dung", "".join(chunk_text("một hai ba bốn năm sáu bảy")) == "một hai ba bốn năm sáu bảy")
+
+    # Giả lập model local: lượt 1 trả JSON tool (phải bị giấu), lượt 2 trả văn bản (phải stream)
+    import local_llm_agent as L
+    calls = {"n": 0}
+
+    def fake_stream(messages, **kw):
+        calls["n"] += 1
+        text = '{"tool": "tim_dich_vu", "args": {"tu_khoa": "implant"}}' if calls["n"] == 1 else "Dạ dịch vụ Implant tại NALI có giá tham khảo ạ."
+        for i in range(0, len(text), 5):
+            yield text[i:i + 5]
+
+    orig = L._chat_completion_stream
+    L._chat_completion_stream = fake_stream
+    try:
+        agent = L.LocalLLMAgent(r)
+        out = "".join(agent.reply_stream("st-c", "implant giá sao?"))
+    finally:
+        L._chat_completion_stream = orig
+    check("JSON gọi tool không lọt ra khách", "tool" not in out and "{" not in out, out[:80])
+    check("câu trả lời sau tool được stream ra", "Implant" in out, out[:80])
+    check("đã chạy 2 lượt model (tool -> trả lời)", calls["n"] == 2, str(calls))
+
+
 def test_tool_parsing():
     print("\n[5] Phân tích tool-call của LLM tự host")
     c1 = extract_tool_call('{"tool": "tim_dich_vu", "args": {"tu_khoa": "implant"}}')
@@ -144,6 +176,7 @@ if __name__ == "__main__":
     r = test_rag()
     test_fallback(r)
     test_record_context(r)
+    test_streaming(r)
     test_tool_parsing()
     print(f"\n===== KẾT QUẢ: {_passed} PASS / {_failed} FAIL =====")
     raise SystemExit(1 if _failed else 0)

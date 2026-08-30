@@ -25,7 +25,17 @@ from tools import (
 )
 
 _BOOK_KEYWORDS = ("dat lich", "dat hen", "book", "dang ky kham", "hen kham", "muon kham")
+# Câu HỎI về quy trình ("đặt lịch cần gì?", "sau khi đặt lịch thì sao?") không phải yêu cầu đặt lịch
+_BOOK_QUESTION_HINTS = ("can gi", "can nhung gi", "thi sao", "nhu the nao", "lam sao", "the nao",
+                        "quy trinh", "cach dat", "co can", "phai lam gi", "ra sao")
 _PHONE_RE = re.compile(r"0\d{9,10}")
+
+
+def wants_booking(norm_text: str) -> bool:
+    """True nếu khách MUỐN đặt lịch (không phải chỉ hỏi về cách đặt lịch). norm_text đã bỏ dấu, thường."""
+    if not any(k in norm_text for k in _BOOK_KEYWORDS):
+        return False
+    return not any(h in norm_text for h in _BOOK_QUESTION_HINTS)
 
 
 @dataclass
@@ -44,6 +54,14 @@ class BookingState:
             if not getattr(self, slot):
                 return slot
         return None
+
+
+def chunk_text(text: str, words: int = 4):
+    """Cắt câu trả lời có sẵn thành các cụm ~4 từ để stream về giao diện."""
+    parts = text.split(" ")
+    for i in range(0, len(parts), words):
+        piece = " ".join(parts[i:i + words])
+        yield piece if i + words >= len(parts) else piece + " "
 
 
 class FallbackAgent:
@@ -145,6 +163,10 @@ class FallbackAgent:
                 "\n\n👉 Anh/chị cần đặt lịch tái khám thì nhắn \"đặt lịch\" nhé ạ. "
                 "Nếu có đau/sưng bất thường, vui lòng gọi hotline 0945 457 512.")
 
+    def reply_stream(self, session_id: str, message: str, user_context: str = ""):
+        """Phiên bản streaming: agent luật trả lời tức thì nên chỉ cắt theo cụm từ để giao diện hiện dần."""
+        yield from chunk_text(self.reply(session_id, message, user_context=user_context))
+
     def reply(self, session_id: str, message: str, user_context: str = "") -> str:
         state = self._state(session_id)
         norm = _strip_accents(message)
@@ -157,8 +179,7 @@ class FallbackAgent:
             state.so_dien_thoai = known["so_dien_thoai"]
 
         # 1) Nếu đang/không trong luồng đặt lịch: quyết định ý định
-        wants_booking = any(k in norm for k in _BOOK_KEYWORDS)
-        if wants_booking and not state.active:
+        if wants_booking(norm) and not state.active:
             state.active = True
 
         if state.active:

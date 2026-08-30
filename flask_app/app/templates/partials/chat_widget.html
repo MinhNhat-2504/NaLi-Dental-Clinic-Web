@@ -1,5 +1,5 @@
 <!-- Widget Trợ lý AI — gọi qua proxy Flask /api/chat (server gọi AI service) -->
-<div id="naliChatWidget" data-endpoint="{{ url_for('api.chat_proxy') }}" data-vision="{{ url_for('api.analyze_image_proxy') }}">
+<div id="naliChatWidget" data-endpoint="{{ url_for('api.chat_proxy') }}" data-stream="{{ url_for('api.chat_stream_proxy') }}" data-vision="{{ url_for('api.analyze_image_proxy') }}">
     <button id="naliChatToggle" aria-label="Mở trợ lý AI"><i class="fas fa-robot"></i><span class="nali-chat-badge">AI</span></button>
     <div id="naliChatBox" class="nali-hidden">
         <div class="nali-chat-header">
@@ -68,13 +68,27 @@
 </style>
 <script>
 (function () {
-    var root=document.getElementById('naliChatWidget'), EP=root.getAttribute('data-endpoint');
+    var root=document.getElementById('naliChatWidget'), EP=root.getAttribute('data-endpoint'), SEP=root.getAttribute('data-stream');
     var box=document.getElementById('naliChatBox'), body=document.getElementById('naliChatBody');
     var form=document.getElementById('naliChatForm'), input=document.getElementById('naliChatText'); var greeted=false;
     var sid=localStorage.getItem('nali_sid')||('web-'+Math.random().toString(36).slice(2,10)); localStorage.setItem('nali_sid',sid);
     function render(t){var e=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');return e.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');}
     function add(t,who){var w=document.createElement('div');w.className='nali-msg '+who;w.innerHTML='<div class="bubble">'+render(t)+'</div>';body.appendChild(w);body.scrollTop=body.scrollHeight;return w;}
+    /* Trả lời theo dòng (SSE): chữ hiện dần như đang gõ; lỗi thì rơi về endpoint JSON cũ */
+    async function sendStream(m,tp){
+        var r=await fetch(SEP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid,message:m})});
+        if(!r.ok||!r.body||!(r.headers.get('content-type')||'').includes('text/event-stream')) throw new Error('no-stream');
+        var reader=r.body.getReader(), dec=new TextDecoder(), buf='', text='', bubble=null;
+        while(true){var s=await reader.read(); if(s.done)break; buf+=dec.decode(s.value,{stream:true});
+            var parts=buf.split('\n\n'); buf=parts.pop();
+            for(var i=0;i<parts.length;i++){var ln=parts[i].trim(); if(ln.indexOf('data:')!==0)continue; var o; try{o=JSON.parse(ln.slice(5));}catch(e){continue;}
+                if(o.delta){ if(!bubble){tp.remove();bubble=add('','bot');} text+=o.delta; bubble.firstChild.innerHTML=render(text); body.scrollTop=body.scrollHeight; }
+            }
+        }
+        if(!bubble){tp.remove();add('Xin lỗi, NALI chưa trả lời được ạ.','bot');}
+    }
     async function send(m){add(m,'user');input.value='';var tp=add('NALI đang soạn trả lời…','bot');tp.classList.add('nali-typing');
+        try{ if(SEP && window.ReadableStream){ await sendStream(m,tp); return; } }catch(e){ if(!tp.parentNode)return; }
         try{var r=await fetch(EP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid,message:m})});
             var d=await r.json();tp.remove();add(d.reply||'Xin lỗi, NALI chưa trả lời được ạ.','bot');}
         catch(e){tp.remove();add('⚠️ Không kết nối được trợ lý AI ạ.','bot');}}

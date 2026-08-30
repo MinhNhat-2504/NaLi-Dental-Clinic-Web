@@ -11,7 +11,7 @@ import json
 import urllib.error
 import urllib.request
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request, stream_with_context
 from flask_login import current_user
 
 from . import ratelimit
@@ -178,6 +178,55 @@ def chat_proxy():
 
 
 # Route phân tích ảnh răng (tách file cho gọn)
+@api_bp.route("/chat/stream", methods=["POST"])
+@csrf.exempt
+def chat_stream_proxy():
+    """Proxy streaming (SSE): chuyển tiếp từng mẩu từ AI service về trình duyệt, chữ hiện dần.
+    AI service lỗi -> tự trả câu fallback dưới dạng SSE. Ghi chat log khi kết thúc."""
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "?").split(",")[0].strip()
+    if not ratelimit.allow(f"chat:{ip}", current_app.config.get("CHAT_RATE_LIMIT", 30), 60):
+        return jsonify({"reply": "Anh/chị gửi hơi nhanh, đợi NALI một chút rồi hỏi tiếp nhé ạ.", "mode": "ratelimit"}), 429
+    payload = request.get_json(silent=True) or {}
+    session_id, message = payload.get("session_id", "web"), payload.get("message", "")
+    body = json.dumps({"session_id": session_id, "message": message, "user_context": _user_context()}).encode("utf-8")
+    url = current_app.config["AI_SERVICE_URL"].rstrip("/") + "/chat/stream"
+    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
+    import time as _t
+    t0 = _t.time()
+
+    def sse(obj):
+        return "data: " + json.dumps(obj, ensure_ascii=False) + "\n\n"
+
+    def gen():
+        full, mode = [], "offline"
+        try:
+            with urllib.request.urlopen(req, timeout=180) as resp:
+                for raw in resp:
+                    line = raw.decode("utf-8", "ignore").strip()
+                    if not line.startswith("data:"):
+                        continue
+                    try:
+                        obj = json.loads(line[5:].strip())
+                    except ValueError:
+                        continue
+                    if "delta" in obj:
+                        full.append(obj["delta"])
+                    if obj.get("done"):
+                        mode = obj.get("mode", mode)
+                    yield sse(obj)
+        except (urllib.error.URLError, OSError, ValueError) as exc:
+            current_app.logger.warning("AI stream lỗi: %s", exc)
+            text = ("Dạ NALI đang bận, anh/chị vui lòng gọi hotline 0945 457 512 hoặc thử lại sau ít phút ạ."
+                    if not full else "\n\n(Kết nối bị gián đoạn.)")
+            full.append(text)
+            yield sse({"delta": text})
+            yield sse({"done": True, "mode": "offline"})
+        _log_chat(session_id, message, "".join(full), mode, int((_t.time() - t0) * 1000))
+
+    return Response(stream_with_context(gen()), mimetype="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
 # ---------- Cron: email nhắc lịch trước 24h ----------
 @api_bp.route("/cron/reminders", methods=["POST"])
 @csrf.exempt

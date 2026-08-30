@@ -68,3 +68,4 @@ ai_service/finetune/out/
 
 # ===== Docker volume =====
 db_data/
+ai_service/eval/last_result.json

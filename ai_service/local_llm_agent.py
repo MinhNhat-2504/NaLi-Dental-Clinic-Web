@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 
 from config import settings
-from fallback_agent import _BOOK_KEYWORDS, FallbackAgent
+from fallback_agent import FallbackAgent, wants_booking
 from retriever import Retriever
 from tools import _strip_accents, dat_lich_hen, kiem_tra_lich_trong, tim_dich_vu
 
@@ -95,6 +95,32 @@ def _chat_completion(messages: list[dict], *, temperature: float = 0.3,
     return data["choices"][0]["message"]["content"] or ""
 
 
+def _chat_completion_stream(messages: list[dict], *, temperature: float = 0.3,
+                            max_tokens: int = 512, timeout: int = 120):
+    """Như _chat_completion nhưng stream=True: đọc SSE 'data: {...}' và yield từng mẩu text."""
+    url = settings.local_llm_url.rstrip("/") + "/chat/completions"
+    payload = json.dumps({
+        "model": settings.local_llm_model, "messages": messages,
+        "temperature": temperature, "max_tokens": max_tokens, "stream": True,
+    }).encode("utf-8")
+    req = urllib.request.Request(url, data=payload, method="POST", headers={
+        "Content-Type": "application/json", "Authorization": f"Bearer {settings.local_llm_key}"})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        for raw in resp:
+            line = raw.decode("utf-8", "ignore").strip()
+            if not line.startswith("data:"):
+                continue
+            data = line[5:].strip()
+            if data == "[DONE]":
+                break
+            try:
+                delta = json.loads(data)["choices"][0].get("delta", {}).get("content") or ""
+            except (ValueError, KeyError, IndexError):
+                continue
+            if delta:
+                yield delta
+
+
 def local_llm_available(require_model: bool = True) -> bool:
     """True nếu endpoint LLM tự host phản hồi (và có model nếu require_model).
 
@@ -150,8 +176,7 @@ class LocalLLMAgent:
     def reply(self, session_id: str, message: str, user_context: str = "") -> str:
         # --- Định tuyến lai (hybrid): đặt lịch -> logic xác định; còn lại -> LLM ---
         booking_active = self._booking._state(session_id).active
-        wants_booking = any(k in _strip_accents(message) for k in _BOOK_KEYWORDS)
-        if booking_active or wants_booking:
+        if booking_active or wants_booking(_strip_accents(message)):
             return self._booking.reply(session_id, message, user_context=user_context)
         # Hỏi về hồ sơ khám/dặn dò/tái khám -> trả lời xác định từ dữ liệu (model 3B hay bịa chi tiết y khoa)
         rec = FallbackAgent.record_answer(message, user_context)
@@ -199,3 +224,60 @@ class LocalLLMAgent:
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": final_text})
         return final_text
+
+    def reply_stream(self, session_id: str, message: str, user_context: str = ""):
+        """Streaming thật: yield từng mẩu chữ khi model sinh ra. Nếu model bắt đầu bằng JSON
+        (gọi tool) thì gom lại, chạy tool rồi vòng tiếp — khách không thấy JSON."""
+        from fallback_agent import FallbackAgent, chunk_text
+        booking_active = self._booking._state(session_id).active
+        if booking_active or wants_booking(_strip_accents(message)):
+            yield from chunk_text(self._booking.reply(session_id, message, user_context=user_context))
+            return
+        rec = FallbackAgent.record_answer(message, user_context)
+        if rec:
+            yield from chunk_text(rec)
+            return
+
+        history = self._history_for(session_id)
+        context = self.retriever.context_for(message, k=4)
+        who = f"[THÔNG TIN KHÁCH ĐÃ ĐĂNG NHẬP]\n{user_context}\n[HẾT]\n\n" if user_context else ""
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        messages.extend(history[-8:])
+        messages.append({"role": "user", "content": f"{who}[DỮ LIỆU NALI]\n{context}\n[HẾT DỮ LIỆU]\n\nKhách hỏi: {message}"})
+
+        final_text = ""
+        for _ in range(self.MAX_TOOL_STEPS):
+            buf, full, streaming, tool_mode = "", "", False, False
+            for delta in _chat_completion_stream(messages):
+                full += delta
+                if streaming:
+                    yield delta
+                    continue
+                if tool_mode:
+                    continue
+                buf += delta
+                head = buf.lstrip()
+                if head.startswith(("{", "`")):
+                    tool_mode = True            # có vẻ là JSON gọi tool -> gom, không hiện
+                elif len(head) >= 12:
+                    streaming = True            # chắc chắn là văn bản -> bắt đầu hiện
+                    yield buf
+            call = extract_tool_call(full) if tool_mode else None
+            if call is None:
+                if not streaming:
+                    yield full                  # câu ngắn (<12 ký tự) hoặc JSON không phải tool
+                final_text = full.strip()
+                break
+            try:
+                result = _TOOLS[call["tool"]](**call["args"])
+            except TypeError as exc:
+                result = {"loi": f"Tham số không hợp lệ: {exc}"}
+            messages.append({"role": "assistant", "content": full})
+            messages.append({"role": "user", "content": f"[KẾT QUẢ CÔNG CỤ {call['tool']}]\n"
+                             f"{json.dumps(result, ensure_ascii=False)}\nHãy trả lời khách bằng tiếng Việt tự nhiên dựa trên kết quả này."})
+        else:
+            final_text = _chat_completion(messages).strip()
+            yield final_text
+        final_text = final_text or "Dạ NALI chưa rõ ý, anh/chị nói lại giúp em nhé ạ."
+        history.append({"role": "user", "content": message})
+        history.append({"role": "assistant", "content": final_text})

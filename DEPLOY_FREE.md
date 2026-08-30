@@ -113,6 +113,20 @@ Render → `nali-dental-web` → Environment thêm:
 2. Xác minh bằng **Thẻ HTML** → copy phần `content="..."` → Render thêm `GOOGLE_SITE_VERIFICATION` = giá trị đó → deploy xong quay lại bấm **Xác minh**.
 3. Menu **Sơ đồ trang web** → nhập `sitemap.xml` → Gửi (web đã có sẵn `/sitemap.xml` và `/robots.txt`).
 
+## Bước 9 — Báo lễ tân qua Telegram (0đ) — 3 phút
+
+Có lịch mới (web hoặc chatbot), khách báo đã chuyển cọc, phản hồi mới → điện thoại lễ tân nhận tin ngay.
+
+1. Mở Telegram, tìm **@BotFather** → gõ `/newbot` → đặt tên (vd `NALI Le tan`) và username (vd `nali_letan_bot`)
+   → BotFather trả về **token** dạng `123456789:AAH...` → copy.
+2. Lấy chat id: tìm bot vừa tạo, bấm **Start** và nhắn "hi". Sau đó mở trình duyệt:
+   `https://api.telegram.org/bot<TOKEN>/getUpdates` → tìm `"chat":{"id":123456789` → đó là **chat id**.
+   (Muốn báo vào nhóm: thêm bot vào nhóm, nhắn 1 câu trong nhóm rồi làm tương tự; id nhóm là số âm.)
+3. Render → **cả 2 service** (`nali-dental-web` và `nali-dental-ai`) → Environment → thêm
+   `TELEGRAM_BOT_TOKEN` và `TELEGRAM_CHAT_ID`. Xong.
+
+Thử: đặt một lịch trên web → điện thoại rung.
+
 ## Bước 8 — Thư viện ca điều trị trước/sau
 
 Admin → **Ca điều trị** → Thêm ca: tiêu đề, dịch vụ, thời gian, mô tả, ảnh TRƯỚC + ảnh SAU (JPG/PNG/WEBP, tối đa 12MB).

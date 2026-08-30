@@ -25,8 +25,10 @@ Phía khách:
 - Email nhắc lịch trước một ngày, chạy tự động mỗi sáng 8 giờ.
 - Hồ sơ khám: xem lại bác sĩ chẩn đoán gì, điều trị gì, dặn gì, khi nào tái khám.
 - Thư viện ảnh trước/sau có thanh trượt so sánh, lọc theo dịch vụ.
-- Chatbot tư vấn dịch vụ, báo giá, đặt lịch luôn bằng chat. Đăng nhập rồi thì nó nhớ mình,
-  chào đúng tên, nhắc lịch sắp tới, không hỏi lại tên số điện thoại nữa.
+- Chatbot tư vấn dịch vụ, báo giá, đặt lịch luôn bằng chat, chữ hiện dần theo kiểu đang gõ.
+  Đăng nhập rồi thì nó nhớ mình, chào đúng tên, nhắc lịch sắp tới, không hỏi lại tên số điện thoại nữa.
+- Đổi mật khẩu, quên mật khẩu thì nhận link đặt lại qua email (hết hạn sau 30 phút).
+- Email nhắc tái khám trước 3 ngày theo lịch bác sĩ ghi trong hồ sơ.
 - Gửi ảnh răng cho AI xem, nó nhận xét sơ bộ và gợi ý dịch vụ (có ghi rõ không thay khám thật).
 - Giao diện có dark mode, chạy ổn trên điện thoại.
 
@@ -37,6 +39,12 @@ Phía quản trị:
 - Đăng ca điều trị trước/sau (ảnh được nén và lưu trong database).
 - Trang "Chất lượng AI": log mọi câu chat, câu nào bot không trả lời được thì hiện lên để
   mình bổ sung dữ liệu.
+- Lễ tân nhận tin Telegram ngay khi có lịch mới, khách báo đã chuyển cọc, hay có phản hồi.
+- Đăng nhập sai 5 lần thì khoá 15 phút; API chat và AI xem ảnh có giới hạn số lần gọi.
+
+Kiểm tra chất lượng bot: `ai_service/eval_agent.py` hỏi 30 câu chuẩn (giờ mở cửa, chi nhánh,
+giá, đặt lịch nhiều lượt, hồ sơ...) rồi chấm tự động. Bản offline hiện đạt 100%, CI sẽ báo
+đỏ nếu tụt dưới 80%.
 
 ## Công nghệ
 

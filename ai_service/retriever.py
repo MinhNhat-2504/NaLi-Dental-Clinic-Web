@@ -69,10 +69,13 @@ class Retriever:
     def _build_tfidf(self) -> None:
         from sklearn.feature_extraction.text import TfidfVectorizer
 
+        from tools import _strip_accents
+
         self.backend = "tfidf"
         texts = [d.as_text() for d in self.documents]
-        # analyzer theo từ + char n-gram giúp khớp tốt tiếng Việt không dấu
-        self._tfidf = TfidfVectorizer(ngram_range=(1, 2), min_df=1)
+        # Bỏ dấu cả tài liệu lẫn câu hỏi: khách gõ "mo cua may gio" vẫn khớp "mở cửa mấy giờ"
+        self._tfidf = TfidfVectorizer(ngram_range=(1, 2), min_df=1,
+                                      preprocessor=lambda t: _strip_accents(t).lower())
         self._doc_matrix = self._tfidf.fit_transform(texts).toarray().astype(np.float32)
 
     # ---------- API công khai ----------

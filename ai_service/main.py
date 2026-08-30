@@ -15,6 +15,7 @@ Dù chọn gì, nếu agent chính lỗi giữa chừng sẽ tự chuyển offli
 """
 from __future__ import annotations
 
+import json
 import logging
 import sys
 import time
@@ -27,6 +28,7 @@ for _stream in (sys.stdout, sys.stderr):
         pass
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -161,6 +163,40 @@ def chat(req: ChatRequest, request: Request) -> ChatResponse:
     reply = state.fallback.reply(req.session_id, message, user_context=req.user_context)
     return ChatResponse(reply=reply, mode="offline")
 
+
+
+def _sse(obj: dict) -> str:
+    return "data: " + json.dumps(obj, ensure_ascii=False) + "\n\n"
+
+
+@app.post("/chat/stream")
+def chat_stream(req: ChatRequest, request: Request):
+    """Như /chat nhưng trả Server-Sent Events: từng mẩu {"delta": ...} rồi {"done": true, "mode": ...}.
+    Lỗi giữa chừng -> chuyển sang câu trả lời offline, khách không bao giờ thấy màn hình trống."""
+    if not _allow_chat(request, req.session_id):
+        raise HTTPException(status_code=429, detail="Bạn đã gửi quá nhiều tin nhắn. Vui lòng thử lại sau vài phút.")
+    message = req.message.strip()
+
+    def gen():
+        mode = state.primary_mode if state.primary is not None else "offline"
+        sent_any = False
+        if state.primary is not None:
+            try:
+                for piece in state.primary.reply_stream(req.session_id, message, user_context=req.user_context):
+                    sent_any = True
+                    yield _sse({"delta": piece})
+                yield _sse({"done": True, "mode": mode})
+                return
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("%s stream lỗi (%s) -> fallback offline.", mode, exc)
+                if sent_any:
+                    yield _sse({"delta": "\n\n(Kết nối AI bị gián đoạn, NALI trả lời tiếp bằng dữ liệu có sẵn.)\n"})
+        for piece in state.fallback.reply_stream(req.session_id, message, user_context=req.user_context):
+            yield _sse({"delta": piece})
+        yield _sse({"done": True, "mode": "offline"})
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.post("/analyze-image")

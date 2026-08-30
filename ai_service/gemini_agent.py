@@ -79,6 +79,12 @@ class GeminiAgent:
             "Dạ NALI chưa rõ ý anh/chị, anh/chị nói lại giúp em nhé ạ."
         )
 
+    def reply_stream(self, session_id: str, message: str, user_context: str = ""):
+        """Gemini đang bật automatic function calling (không stream được kèm tool) -> lấy câu trả lời
+        đầy đủ rồi cắt cụm từ để giao diện hiện dần. Vẫn nhanh hơn cảm giác chờ 'cục' vì widget hiện ngay."""
+        from fallback_agent import chunk_text
+        yield from chunk_text(self.reply(session_id, message, user_context=user_context))
+
     def reset(self, session_id: str) -> None:
         """Xoá lịch sử hội thoại của một phiên."""
         self._chats.pop(session_id, None)

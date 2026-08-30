@@ -48,3 +48,11 @@ jobs:
           PYTHONUTF8: "1"
           LLM_BACKEND: offline
         run: python test_agent.py
+      - name: Đo chất lượng chatbot (30 câu chuẩn, offline)
+        working-directory: ai_service
+        env:
+          PYTHONUTF8: "1"
+          LLM_BACKEND: offline
+          DB_HOST: 127.0.0.1
+          DB_PORT: "1"
+        run: python eval_agent.py --min 80
