@@ -188,8 +188,8 @@ def cron_reminders():
     given = request.headers.get("X-Cron-Token") or request.args.get("token") or ""
     if not token or given != token:
         return jsonify({"ok": False, "error": "unauthorized"}), 401
-    from .reminders import send_due_reminders
-    stats = send_due_reminders()
+    from .reminders import run_all_reminders
+    stats = run_all_reminders()
     return jsonify({"ok": True, **stats})
 
 

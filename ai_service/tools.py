@@ -289,7 +289,7 @@ def dat_lich_hen(
             "chi_tiet": str(exc),
         }
 
-    return {
+    result = {
         "thanh_cong": True,
         "ma_lich_hen": new_id,
         "ho_ten": ho_ten,
@@ -303,3 +303,9 @@ def dat_lich_hen(
             f"({ten_dich_vu}). Lễ tân sẽ gọi {sdt} để xác nhận."
         ),
     }
+    try:
+        from notify import notify_booking
+        notify_booking(result)
+    except Exception:  # noqa: BLE001
+        pass
+    return result

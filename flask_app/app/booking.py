@@ -14,6 +14,7 @@ from .extensions import db
 from .forms import AppointmentForm
 from .mailer import send_email
 from .models import Appointment, MedicalRecord, Patient, Product, Staff
+from .notify import notify_deposit_reported, notify_new_appointment
 
 booking_bp = Blueprint("booking", __name__)
 
@@ -142,6 +143,8 @@ def book():
         db.session.add(appt)
         db.session.commit()
         _send_confirmation_email(appt, product)
+        if not existing:
+            notify_new_appointment(appt, product.name if product else "", source="web")
         if wants_deposit:
             flash(f"Đặt lịch thành công! Mã lịch hẹn #{appt.id}. Quét mã bên dưới để chuyển cọc giữ chỗ.", "success")
             return redirect(url_for("booking.deposit", appointment_id=appt.id))
@@ -176,6 +179,7 @@ def deposit_reported(appointment_id):
     if appt.deposit_status == "pending":
         appt.deposit_status = "reported"
         db.session.commit()
+        notify_deposit_reported(appt)
         flash("Cảm ơn bạn! Lễ tân sẽ đối soát và xác nhận lịch trong giờ làm việc.", "success")
     return redirect(url_for("booking.my_appointments"))
 

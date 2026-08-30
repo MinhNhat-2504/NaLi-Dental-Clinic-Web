@@ -18,7 +18,7 @@ from sqlalchemy import or_
 
 from .extensions import db
 from .mailer import send_email
-from .models import Appointment, Product
+from .models import Appointment, MedicalRecord, Patient, Product
 
 _WEEKDAYS = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"]
 
@@ -97,3 +97,49 @@ def send_due_reminders(now: datetime | None = None) -> dict:
         db.session.commit()
     current_app.logger.info("Nhắc lịch: %d đến hạn, %d đã gửi, %d lỗi", len(due), sent, failed)
     return {"due": len(due), "sent": sent, "failed": failed, "at": now.isoformat(timespec="minutes")}
+
+
+# ---------- Nhắc TÁI KHÁM (theo hồ sơ bác sĩ ghi) ----------
+def find_due_revisits(now: datetime | None = None) -> list[tuple[MedicalRecord, Patient]]:
+    """Hồ sơ có next_visit_date đúng N ngày nữa (mặc định 3), bệnh nhân có email, chưa nhắc."""
+    now = now or _now_local()
+    target = now.date() + timedelta(days=int(current_app.config.get("REVISIT_REMIND_DAYS", 3)))
+    rows = (db.session.query(MedicalRecord, Patient)
+            .join(Patient, Patient.id == MedicalRecord.patient_id)
+            .filter(MedicalRecord.next_visit_date == target,
+                    MedicalRecord.revisit_reminder_sent_at.is_(None),
+                    Patient.email.isnot(None), Patient.email != "")
+            .order_by(MedicalRecord.id).all())
+    return rows
+
+
+def send_revisit_reminders(now: datetime | None = None) -> dict:
+    now = now or _now_local()
+    due = find_due_revisits(now)
+    site = current_app.config.get("SITE_URL", "")
+    sent = failed = 0
+    for rec, p in due:
+        d = rec.next_visit_date
+        subject = f"[NALI Dental] Sắp đến hẹn tái khám — {d.strftime('%d/%m/%Y')}"
+        body = (f"Xin chào {p.full_name},\n\n"
+                f"Bác sĩ NALI có hẹn anh/chị tái khám vào {_WEEKDAYS[d.weekday()]} {d.strftime('%d/%m/%Y')} "
+                f"(sau lần khám ngày {rec.visit_date.strftime('%d/%m/%Y')}).\n"
+                + (f"Dặn dò lần trước: {rec.prescription}\n" if rec.prescription else "")
+                + f"\nAnh/chị đặt lịch tái khám tại {site}/dat-lich hoặc gọi hotline 0945 457 512 để chọn giờ phù hợp.\n\n"
+                f"Hẹn gặp anh/chị tại NALI!\n— NALI Dental Clinic")
+        if send_email(subject, p.email, body):
+            rec.revisit_reminder_sent_at = now
+            sent += 1
+        else:
+            failed += 1
+    if sent:
+        db.session.commit()
+    current_app.logger.info("Nhắc tái khám: %d đến hạn, %d đã gửi, %d lỗi", len(due), sent, failed)
+    return {"due": len(due), "sent": sent, "failed": failed}
+
+
+def run_all_reminders(now: datetime | None = None) -> dict:
+    """Cron gọi một lần mỗi sáng: nhắc lịch ngày mai + nhắc tái khám."""
+    a = send_due_reminders(now)
+    r = send_revisit_reminders(now)
+    return {**a, "revisit": r}

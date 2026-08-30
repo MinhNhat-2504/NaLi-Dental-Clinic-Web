@@ -162,9 +162,11 @@ def create_app(config_class=Config):
     @app.cli.command("send-reminders")
     def send_reminders():
         """Gửi email nhắc các lịch hẹn ngày mai (chạy tay hoặc qua cron)."""
-        from .reminders import send_due_reminders
-        stats = send_due_reminders()
-        print(f"Nhac lich: {stats['due']} den han, {stats['sent']} da gui, {stats['failed']} loi.")
+        from .reminders import run_all_reminders
+        stats = run_all_reminders()
+        r = stats["revisit"]
+        print(f"Nhac lich: {stats['due']} den han, {stats['sent']} da gui, {stats['failed']} loi. "
+              f"Tai kham: {r['due']} den han, {r['sent']} da gui.")
 
     @app.cli.command("seed-cases")
     def seed_cases():

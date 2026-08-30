@@ -218,6 +218,7 @@ class MedicalRecord(db.Model):
     treatment = db.Column(db.Text)                            # đã điều trị gì
     prescription = db.Column(db.Text)                         # đơn thuốc / dặn dò chăm sóc
     next_visit_date = db.Column(db.Date, nullable=True)       # hẹn tái khám
+    revisit_reminder_sent_at = db.Column(db.DateTime, nullable=True)  # đã gửi email nhắc tái khám
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

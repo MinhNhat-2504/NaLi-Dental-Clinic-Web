@@ -10,6 +10,7 @@ from sqlalchemy import or_
 from .cache import cached
 from .extensions import db
 from .forms import FeedbackForm
+from .notify import notify_feedback
 from .models import BlogPost, CaseStudy, FAQ, Feedback, Product, Staff
 
 main_bp = Blueprint("main", __name__)
@@ -167,6 +168,7 @@ def contact():
         )
         db.session.add(fb)
         db.session.commit()
+        notify_feedback(fb)
         flash("Cảm ơn phản hồi của bạn! NALI sẽ xem xét và cải thiện. 💙", "success")
         return redirect(url_for("main.contact"))
     return render_template("main/contact.html", form=form)

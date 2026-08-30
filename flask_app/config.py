@@ -72,6 +72,10 @@ class Config:
     GOOGLE_SITE_VERIFICATION = os.getenv("GOOGLE_SITE_VERIFICATION", "").strip()
     MAX_CONTENT_LENGTH = 12 * 1024 * 1024   # giới hạn upload 12MB (ảnh ca điều trị)
     CHAT_RATE_LIMIT = int(os.getenv("CHAT_RATE_LIMIT", "30"))   # số tin nhắn chat / phút / IP
+    # Báo Telegram cho lễ tân (lịch mới, khách báo chuyển cọc, phản hồi). Trống = tắt.
+    TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    REVISIT_REMIND_DAYS = int(os.getenv("REVISIT_REMIND_DAYS", "3"))   # nhắc tái khám trước N ngày
 
     # --- Phân trang ---
     PER_PAGE = int(os.getenv("PER_PAGE", "6"))

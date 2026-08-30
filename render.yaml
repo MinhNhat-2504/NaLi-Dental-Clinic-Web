@@ -55,6 +55,10 @@ services:
         sync: false                  # Google Analytics 4: G-XXXXXXXXXX (trống = tắt)
       - key: GOOGLE_SITE_VERIFICATION
         sync: false                  # Search Console: nội dung thẻ google-site-verification (trống = bỏ qua)
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false                  # báo lễ tân qua Telegram (trống = tắt)
+      - key: TELEGRAM_CHAT_ID
+        sync: false
 
   # ---------------- AI service (chatbot + AI xem ảnh răng) ----------------
   - type: web
@@ -72,5 +76,9 @@ services:
         value: gemini                # free tier không đủ RAM cho LLM local -> dùng Gemini
       - key: GEMINI_API_KEY
         sync: false                  # dán key Gemini (miễn phí) vào dashboard
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
       - key: DATABASE_URL
         sync: false                  # cùng chuỗi với web Flask
