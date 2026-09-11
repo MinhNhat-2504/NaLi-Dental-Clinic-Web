@@ -259,3 +259,19 @@ body { background: var(--bg-light); color: var(--text-dark); }
   .nav-backdrop { z-index: 1200 !important; }
   body > .main-nav, .main-nav { z-index: 1300 !important; top: 0 !important; }
 }
+
+/* Thẻ dịch vụ: một ảnh bìa chung + lớp phủ thương hiệu + icon riêng từng dịch vụ.
+   Trước đây mỗi nhóm đối tượng một ảnh nên ba thẻ cùng hàng lặp đúng một tấm, nhìn như lỗi. */
+.service-thumb, .detail-media { position: relative !important; overflow: hidden !important; }
+.service-thumb .thumb-veil, .detail-media .thumb-veil {
+    position: absolute !important; inset: 0 !important; pointer-events: none;
+    background: linear-gradient(155deg, rgba(15,143,137,.58), rgba(11,111,106,.88)) !important;
+}
+.service-thumb .thumb-ico, .detail-media .thumb-ico {
+    position: absolute !important; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    color: rgba(255,255,255,.97) !important; font-size: 3.4rem !important; pointer-events: none;
+    filter: drop-shadow(0 10px 22px rgba(0,0,0,.22)); transition: transform .45s ease;
+}
+.service-card:hover .thumb-ico { transform: translate(-50%, -50%) scale(1.12) rotate(-5deg); }
+.detail-media .thumb-ico { font-size: 5rem !important; }
+.service-thumb img, .detail-media img { filter: saturate(.78) contrast(1.02) !important; }

@@ -6,7 +6,9 @@
 <section class="section">
   <div class="detail-wrap">
     <div class="detail-media">
-      <img src="{{ url_for('static', filename='images/' ~ service_card_image(p.target_group, p.name)) }}" alt="{{ p.name }}" onerror="this.src='{{ url_for('static', filename='images/logo.png') }}'">
+      <img src="{{ url_for('static', filename='images/' ~ service_card_image()) }}" alt="{{ p.name }}" onerror="this.src='{{ url_for('static', filename='images/logo.png') }}'">
+      <span class="thumb-veil"></span>
+      <i class="fas {{ svc_icon(p.name) }} thumb-ico" aria-hidden="true"></i>
     </div>
     <div class="detail-info">
       <div class="svc-meta"><span class="dur"><i class="far fa-clock"></i> {{ p.duration }} phút</span></div>

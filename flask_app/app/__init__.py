@@ -68,21 +68,14 @@ def create_app(config_class=Config):
     def svc_grad(group):
         return _GRAD.get(group, _GRAD["adults"])
 
-    def service_card_image(group, name=""):
-        featured = {
-            "Tẩy trắng răng Laser": "service-whitening-ai.webp",
-            "Bọc răng sứ Titan": "service-veneer-ai.webp",
-            "Niềng răng Invisalign": "service-aligner-ai.webp",
-            "Cấy ghép Implant": "service-implant-ai.webp",
-            "Nhổ răng khôn": "service-extraction-ai.webp",
-            "Điều trị tủy răng": "service-root-canal-ai.webp",
-        }
-        return featured.get(name) or {
-            "adults": "service-whitening-ai.webp",
-            "children": "service-children-ai.webp",
-            "elderly": "service-elderly-ai.webp",
-            "chronic": "service-implant-ai.webp",
-        }.get(group, "service-whitening-ai.webp")
+    def service_card_image(group="", name=""):
+        """Một ảnh bìa dùng chung cho mọi dịch vụ.
+
+        Trước đây mỗi nhóm đối tượng một ảnh khác nhau, nên ba thẻ cùng hàng hay lặp
+        đúng một tấm ảnh -> nhìn như lỗi. Giờ dùng chung một ảnh phòng khám, phủ lớp
+        màu thương hiệu và icon riêng của từng dịch vụ để các thẻ đồng bộ.
+        """
+        return "service-cover.webp"
 
     def svc_icon(name):
         n = (name or "").lower()

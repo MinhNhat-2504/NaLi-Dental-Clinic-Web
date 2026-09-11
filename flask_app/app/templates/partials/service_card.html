@@ -1,8 +1,10 @@
 {% macro service_card(p) %}
 <a class="service-card" href="{{ url_for('main.service_detail', pid=p.id) }}" style="text-decoration:none;color:inherit;">
     <div class="service-thumb">
-        <img src="{{ url_for('static', filename='images/' ~ service_card_image(p.target_group, p.name)) }}" alt="{{ p.name }}" loading="lazy"
+        <img src="{{ url_for('static', filename='images/' ~ service_card_image()) }}" alt="{{ p.name }}" loading="lazy"
              onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/logo.png') }}';">
+        <span class="thumb-veil"></span>
+        <i class="fas {{ svc_icon(p.name) }} thumb-ico" aria-hidden="true"></i>
     </div>
     <div class="service-card-content">
         <div class="svc-meta">
