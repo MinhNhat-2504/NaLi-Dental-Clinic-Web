@@ -9,6 +9,7 @@ from urllib.parse import quote
 from flask import (Blueprint, abort, current_app, flash, jsonify, redirect,
                    render_template, request, url_for)
 from flask_login import current_user, login_required
+from sqlalchemy.exc import IntegrityError
 
 from .extensions import db
 from .forms import AppointmentForm
@@ -141,7 +142,14 @@ def book():
             appt.deposit_amount = current_app.config["DEPOSIT_AMOUNT"]
             appt.deposit_status = "pending"
         db.session.add(appt)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            # Hai người bấm đặt cùng slot trong cùng một giây: UNIQUE(slot_key) chặn người đến sau
+            db.session.rollback()
+            form.appointment_time.errors.append("Khung giờ này vừa có người đặt. Vui lòng chọn giờ khác.")
+            return render_template("booking/book.html", form=form, products=products, rescheduling=existing,
+                                   deposit_enabled=deposit_enabled(), deposit_amount=current_app.config["DEPOSIT_AMOUNT"])
         _send_confirmation_email(appt, product)
         if not existing:
             notify_new_appointment(appt, product.name if product else "", source="web")

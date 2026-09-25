@@ -17,7 +17,7 @@ import unicodedata
 from datetime import date, datetime, timedelta
 
 from config import settings
-from database import DatabaseUnavailable, fetch_booked_times, insert_appointment
+from database import DatabaseUnavailable, SlotTaken, fetch_booked_times, insert_appointment
 from knowledge import _format_price, services_catalog
 
 
@@ -282,6 +282,9 @@ def dat_lich_hen(
             product_ids=product_ids,
             total_price=total_price,
         )
+    except SlotTaken as exc:
+        info = kiem_tra_lich_trong(iso_date)
+        return {"thanh_cong": False, "loi": str(exc), "gio_trong": info.get("gio_trong", [])}
     except DatabaseUnavailable as exc:
         return {
             "thanh_cong": False,

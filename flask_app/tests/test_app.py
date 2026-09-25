@@ -154,7 +154,7 @@ def test_reminders_send_for_tomorrow_only_once(app):
             Appointment(customer_name="C Huy", customer_phone="0900000003", customer_email="c@test.com",
                         appointment_date=tomorrow, appointment_time=time(9, 0), status="cancelled"),
             Appointment(customer_name="D KhongMail", customer_phone="0900000004", customer_email="",
-                        appointment_date=tomorrow, appointment_time=time(9, 0), status="confirmed"),
+                        appointment_date=tomorrow, appointment_time=time(10, 0), status="confirmed"),
         ])
         db.session.commit()
         with mail.record_messages() as outbox:

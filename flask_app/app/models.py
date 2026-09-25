@@ -10,6 +10,7 @@ Mật khẩu trong DB do PHP băm bằng bcrypt (tiền tố $2y$). Ta dùng th�
 from datetime import datetime
 
 import bcrypt
+from sqlalchemy import event
 from flask_login import UserMixin
 
 from .extensions import db, login_manager
@@ -129,10 +130,27 @@ class Appointment(db.Model):
     deposit_amount = db.Column(db.Numeric(12, 2), nullable=True)
     deposit_status = db.Column(db.String(20), nullable=True)
     deposit_paid_at = db.Column(db.DateTime, nullable=True)
+    # Khoá trùng khung giờ ở tầng DB: "YYYY-MM-DD HH:MM" khi lịch còn hiệu lực (pending/confirmed),
+    # NULL khi đã huỷ/hoàn thành. UNIQUE trên cột này chặn hai request đặt cùng slot dù chạy song song
+    # (kiểm tra bằng code trước rồi INSERT vẫn có kẽ hở giữa hai bước). Giá trị do listener bên dưới tính.
+    slot_key = db.Column(db.String(20), unique=True, nullable=True)
+
+    ACTIVE_STATUSES = ("pending", "confirmed")
+
+    def compute_slot_key(self):
+        if self.status in self.ACTIVE_STATUSES and self.appointment_date and self.appointment_time:
+            return f"{self.appointment_date.isoformat()} {self.appointment_time.strftime('%H:%M')}"
+        return None
 
     @property
     def deposit_label(self):
         return {"pending": "Chờ chuyển cọc", "reported": "Khách báo đã chuyển", "paid": "Đã nhận cọc"}.get(self.deposit_status or "", "")
+
+
+@event.listens_for(Appointment, "before_insert")
+@event.listens_for(Appointment, "before_update")
+def _appointment_slot_key(mapper, connection, target):
+    target.slot_key = target.compute_slot_key()
 
 
 class Feedback(db.Model):

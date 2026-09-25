@@ -21,6 +21,10 @@ from mysql.connector import Error as MySQLError
 from config import settings
 
 
+class SlotTaken(RuntimeError):
+    """Khung giờ vừa bị người khác đặt (UNIQUE slot_key ở DB chặn)."""
+
+
 class DatabaseUnavailable(RuntimeError):
     """Ném ra khi không thể kết nối/thao tác với MySQL."""
 
@@ -136,8 +140,8 @@ def insert_appointment(
                 INSERT INTO appointments
                     (customer_name, customer_phone, customer_email,
                      appointment_date, appointment_time, notes,
-                     product_ids, total_price, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                     product_ids, total_price, status, slot_key)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending', %s)
                 """,
                 (
                     customer_name,
@@ -148,12 +152,15 @@ def insert_appointment(
                     notes,
                     product_ids,
                     total_price,
+                    f"{appointment_date} {appointment_time[:5]}",  # cùng quy ước với web Flask
                 ),
             )
             conn.commit()
             return int(cur.lastrowid)
         except MySQLError as exc:
             conn.rollback()
+            if getattr(exc, "errno", None) == 1062:  # ER_DUP_ENTRY: trùng slot_key
+                raise SlotTaken(f"Khung {appointment_time} ngày {appointment_date} vừa có người đặt.") from exc
             raise DatabaseUnavailable(f"Lỗi ghi lịch hẹn: {exc}") from exc
         finally:
             cur.close()

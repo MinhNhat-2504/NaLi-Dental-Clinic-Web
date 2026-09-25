@@ -8,6 +8,7 @@ from flask import (Blueprint, abort, flash, redirect, render_template, request,
                    url_for)
 from flask_login import current_user, login_required
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 
 from .cache import invalidate
 from .extensions import db
@@ -146,7 +147,12 @@ def appointment_status(aid):
     new_status = request.form.get("status")
     if new_status in ("pending", "confirmed", "completed", "cancelled"):
         appt.status = new_status
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash(f"Không mở lại lịch #{aid}: khung giờ đó đã có lịch khác.", "danger")
+            return redirect(request.referrer or url_for("admin.appointments"))
         if new_status == "confirmed":
             send_email("Lịch hẹn NALI đã được xác nhận", appt.customer_email,
                        f"Xin chào {appt.customer_name},\n\nLịch hẹn #{appt.id} của bạn vào "
@@ -166,7 +172,12 @@ def appointment_edit(aid):
         appt.appointment_time = form.appointment_time.data
         appt.status = form.status.data
         appt.admin_notes = form.admin_notes.data
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            form.appointment_time.errors.append("Khung giờ này đã có lịch khác.")
+            return render_template("admin/appointment_form.html", form=form, appt=appt)
         flash(f"Đã cập nhật lịch hẹn #{aid}.", "success")
         return redirect(url_for("admin.appointments"))
     return render_template("admin/appointment_form.html", form=form, appt=appt)
