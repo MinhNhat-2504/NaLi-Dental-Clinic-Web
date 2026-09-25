@@ -158,6 +158,25 @@ def test_streaming(r: Retriever):
     check("đã chạy 2 lượt model (tool -> trả lời)", calls["n"] == 2, str(calls))
 
 
+def test_gemini_routes_booking(r: Retriever):
+    """Backend Gemini: ý định đặt lịch phải đi qua slot-filling, không gọi model."""
+    print("\n[Gemini: đặt lịch qua máy trạng thái]")
+    try:
+        from gemini_agent import GeminiAgent
+        import google.generativeai as genai
+        genai.configure(api_key="dummy-key-for-test")
+        g = GeminiAgent(r)
+    except Exception as exc:  # noqa: BLE001
+        check("khởi tạo GeminiAgent (không gọi mạng)", False, str(exc)[:80])
+        return
+    g._chat_for = lambda sid: (_ for _ in ()).throw(AssertionError("không được gọi Gemini khi đặt lịch"))
+    out = g.reply("g1", "tôi muốn đặt lịch")
+    check("'đặt lịch' -> hỏi họ tên, không gọi Gemini", "họ tên" in out.lower(), out[:80])
+    out = g.reply("g1", "Trần Thị B")
+    check("lượt tiếp theo vẫn trong luồng đặt lịch", "điện thoại" in out.lower(), out[:80])
+    check("Gemini không còn tool dat_lich_hen", "dat_lich_hen" not in open("gemini_agent.py", encoding="utf-8").read().split("tools=[")[1].split("]")[0])
+
+
 def test_tool_parsing():
     print("\n[5] Phân tích tool-call của LLM tự host")
     c1 = extract_tool_call('{"tool": "tim_dich_vu", "args": {"tu_khoa": "implant"}}')
@@ -176,6 +195,7 @@ if __name__ == "__main__":
     r = test_rag()
     test_fallback(r)
     test_record_context(r)
+    test_gemini_routes_booking(r)
     test_streaming(r)
     test_tool_parsing()
     print(f"\n===== KẾT QUẢ: {_passed} PASS / {_failed} FAIL =====")
