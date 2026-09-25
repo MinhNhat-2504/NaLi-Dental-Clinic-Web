@@ -1,7 +1,6 @@
 # NALI Dental Clinic
 
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue)](flask_app/Dockerfile)
-[![CI](https://github.com/MinhNhat-2504/NaLi-Dental-Clinic-Web/actions/workflows/ci.yml/badge.svg)](https://github.com/MinhNhat-2504/NaLi-Dental-Clinic-Web/actions/workflows/ci.yml)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue)](flask_app/Dockerfile) [![CI](https://github.com/MinhNhat-2504/NaLi-Dental-Clinic-Web/actions/workflows/ci.yml/badge.svg)](https://github.com/MinhNhat-2504/NaLi-Dental-Clinic-Web/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![Docker](https://img.shields.io/badge/docker-compose-2496ED)](docker-compose.prod.yml)
 
 Website đặt lịch cho phòng khám nha khoa, kèm chatbot RAG tư vấn và tự ghi lịch hẹn vào database.
 
@@ -67,7 +66,7 @@ flowchart LR
   theo, và để đổi backend LLM bằng một biến môi trường. Endpoint: `/chat`, `/chat/stream` (SSE),
   `/analyze-image`, `/reset`, `/health`.
 - **Retrieval**: `retriever.py` chọn Gemini `text-embedding-004` khi có key, không thì TF-IDF (scikit-learn).
-  Corpus gồm 10 tài liệu cố định trong `knowledge.py` (giờ làm việc, chi nhánh, thanh toán, phạm vi thông tin)
+  Corpus gồm 8 tài liệu cố định trong `knowledge.py` (giờ làm việc, chi nhánh, thanh toán, phạm vi thông tin)
   cộng bảng dịch vụ đọc từ MySQL. Câu hỏi và tài liệu đều được bỏ dấu trước khi so khớp.
 - **Generation**: `_select_primary()` trong `main.py` chọn theo `LLM_BACKEND=auto|local|gemini|offline`,
   thứ tự ưu tiên local, gemini, offline. Mỗi lượt gọi LLM thất bại thì rơi về `FallbackAgent`.
@@ -91,7 +90,7 @@ flowchart LR
 | Tầng | Công nghệ | Vì sao chọn |
 |---|---|---|
 | Data | 110 mẫu SFT tự sinh (`finetune/generate_dataset.py`) | Phòng khám không có log hội thoại; script ghép dữ liệu thật trong DB (dịch vụ, giá, giờ) vào mẫu hội thoại, gồm hỏi đáp theo ngữ cảnh, đặt lịch nhiều lượt và mẫu gọi tool JSON |
-| Data | `knowledge.py` 10 tài liệu cố định + bảng `products` | Dữ kiện đổi thường xuyên (giá) phải lấy từ DB lúc chạy, không đưa vào trọng số model |
+| Data | `knowledge.py` 8 tài liệu cố định + bảng `products` | Dữ kiện đổi thường xuyên (giá) phải lấy từ DB lúc chạy, không đưa vào trọng số model |
 | Model | Qwen2.5-3B-Instruct + QLoRA (r=16, alpha=32, 4-bit, 3 epoch) | Comment trong `train_qlora.py`: batch 1 và gradient accumulation 8 để vừa GPU 8GB (RTX 4060 Laptop); fine-tune chỉ để chỉnh giọng và hành vi gọi tool |
 | Model | Ollama, giao thức OpenAI-compatible | Docstring `local_llm_agent.py`: đổi được sang llama.cpp, vLLM, TGI mà không sửa code |
 | Model | Gemini (`gemini-3.5-flash-lite` cho chat, `gemini-3.6-flash` cho vision, `text-embedding-004`) | Render free không đủ RAM chạy model local; Gemini có free tier, function calling và vision. Chat dùng lite vì flagship chỉ 20 lượt/ngày ở gói free, eval cho thấy lite đạt cùng điểm |
@@ -166,7 +165,7 @@ Test:
 
 ```bash
 cd flask_app && pytest -q                                  # 44 test
-cd ai_service && LLM_BACKEND=offline python test_agent.py  # 44 kiểm tra
+cd ai_service && LLM_BACKEND=offline python test_agent.py  # 48 kiểm tra
 cd ai_service && python eval_agent.py --min 80             # eval 30 câu, chấm keyword
 cd ai_service && LLM_BACKEND=gemini python eval_agent.py --judge gemini --history --pause 1.5
                                                            # eval backend Gemini, chấm LLM-as-judge, lưu eval/history/
@@ -194,8 +193,8 @@ lỗi 429 `GenerateRequestsPerDayPerProjectPerModel-FreeTier`), không đủ cho
 lý do chatbot mặc định chuyển sang `gemini-3.5-flash-lite`. Job eval Gemini trong CI vì vậy chạy hàng tuần
 (hoặc bấm tay), không chạy mỗi push.
 
-Kiểm thử: 34 test pytest (đăng nhập, phân trang, đặt lịch, trùng slot, phân quyền, chat log, nhắc lịch, hồ sơ,
-đặt cọc, upload ca, GA4, khoá đăng nhập, rate limit, streaming, healthz) và 33 kiểm tra AI offline
+Kiểm thử: 44 test pytest (đăng nhập, phân trang, đặt lịch, trùng slot, phân quyền, chat log, nhắc lịch, hồ sơ,
+đặt cọc, upload ca, GA4, khoá đăng nhập, rate limit, streaming, healthz) và 48 kiểm tra AI offline
 (parse ngày giờ tiếng Việt, tìm dịch vụ, retriever, luồng đặt lịch, hồ sơ, parse tool JSON).
 
 ## Các quyết định thiết kế chính
@@ -273,14 +272,14 @@ ai_service/                 FastAPI
   main.py                   endpoint, chọn backend, fallback, /reload
   clinic.py                 đọc clinic_settings, mặc định khi không có DB
   retriever.py              TF-IDF hoặc Gemini embedding, bỏ dấu
-  knowledge.py              10 tài liệu cố định
+  knowledge.py              8 tài liệu cố định
   tools.py                  tim_dich_vu, kiem_tra_lich_trong, dat_lich_hen (validate + INSERT)
   fallback_agent.py         agent luật: slot-filling đặt lịch, trả lời hồ sơ
   local_llm_agent.py        Qwen qua Ollama, tool-calling JSON
   gemini_agent.py           Gemini function calling
   vision_agent.py           phân tích ảnh răng
   eval_agent.py, eval/      30 câu eval, chấm keyword hoặc LLM-as-judge, history/ theo commit
-  test_agent.py             44 kiểm tra offline
+  test_agent.py             48 kiểm tra offline
   finetune/                 generate_dataset.py, train_qlora.py, merge_and_export.py, data/nali_sft.jsonl
 .github/workflows/ci.yml    pytest, test AI + eval offline, eval Gemini (cần secret)
 render.yaml                 2 web service free trên Render
@@ -291,11 +290,11 @@ DEPLOY_FREE.md, DEPLOY.md   hướng dẫn triển khai
 
 ## Ghi nhận và giấy phép
 
+- Dataset huấn luyện 110 mẫu tự sinh từ dữ liệu của dự án, không dùng dataset ngoài.
 - Model gốc: Qwen2.5-3B-Instruct (Alibaba Cloud, Apache 2.0). Fine-tune bằng transformers, peft, bitsandbytes.
 - Gemini API (chat, embedding, vision), Open-Meteo (thời tiết), VietQR (`img.vietqr.io`, tạo QR chuyển khoản),
   Telegram Bot API.
-- Dataset huấn luyện 110 mẫu tự sinh từ dữ liệu của dự án, không dùng dataset ngoài.
 - Ảnh minh hoạ dịch vụ và ca điều trị là ảnh minh hoạ, có ghi nhãn trên web.
-- Repo chưa đặt license.
+- Giấy phép: MIT, xem file `LICENSE`.
 
 Trịnh Ngọc Minh Nhật
