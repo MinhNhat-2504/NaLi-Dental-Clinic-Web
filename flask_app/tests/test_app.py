@@ -298,3 +298,11 @@ def test_ga4_snippet_only_when_configured(app, client):
     html = client.get("/").get_data(as_text=True)
     assert "gtag/js?id=G-TEST12345" in html and 'google-site-verification" content="abc123"' in html
     assert "book_click" in html   # sự kiện chuyển đổi được gắn
+
+
+def test_healthz_endpoints(client):
+    """/healthz không đụng DB (cho Render); /healthz/db kiểm tra kết nối DB (cho cron-job.org)."""
+    r = client.get("/healthz")
+    assert r.status_code == 200 and r.get_json()["ok"] is True
+    r = client.get("/healthz/db")
+    assert r.status_code == 200 and r.get_json()["db"] is True

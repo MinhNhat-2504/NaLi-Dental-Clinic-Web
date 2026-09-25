@@ -71,20 +71,39 @@ flask --app run.py seed-content
 
 ---
 
-## Bước 5 — Bật email nhắc lịch trước 24h (0đ, GitHub Actions) — 3 phút
+## Bước 5 — Giữ server thức + email nhắc lịch bằng cron-job.org (0đ) — 5 phút
 
-Web có sẵn endpoint `POST /api/cron/reminders` (gửi email cho các lịch hẹn ngày mai, mỗi lịch chỉ nhắc 1 lần).
-GitHub Actions gọi nó mỗi sáng **08:00 giờ VN** theo file `.github/workflows/reminders.yml`.
+Hai việc cần chạy theo giờ: (1) ping server để Render free không ngủ và MySQL free của Aiven không tự tắt
+vì không hoạt động, (2) gọi endpoint gửi email nhắc lịch mỗi sáng. Lúc đầu mình dùng GitHub Actions nhưng
+lịch cron của GitHub bị trễ vài giờ và hay bỏ lượt, nên chuyển sang https://cron-job.org (miễn phí, đúng giờ).
 
-1. Render → service **nali-dental-web** → Environment: đảm bảo có `MAIL_USERNAME`, `MAIL_PASSWORD` (Gmail App Password),
-   `MAIL_DEFAULT_SENDER`; copy giá trị `CRON_TOKEN` (Render tự sinh khi sync Blueprint — nếu chưa có thì tự thêm 1 chuỗi ngẫu nhiên dài).
-2. GitHub → repo → **Settings → Secrets and variables → Actions → New repository secret**:
-   - `SITE_URL` = `https://nali-dental-web.onrender.com`
-   - `CRON_TOKEN` = giá trị vừa copy ở Render.
-3. Thử ngay: tab **Actions → "Nhắc lịch hẹn (email trước 24h)" → Run workflow**. Log phải in `HTTP 200 {"ok": true, "due": ..., "sent": ...}`.
+Web có sẵn 2 endpoint cho việc này:
+- `GET /healthz/db` — trả 200 nếu app và database đều sống (mỗi lần gọi chạy `SELECT 1` nên Aiven tính là có hoạt động).
+- `POST /api/cron/reminders` — gửi email cho các lịch hẹn ngày mai, mỗi lịch chỉ nhắc 1 lần; cần header `X-Cron-Token`.
+
+1. Đăng ký tài khoản cron-job.org → **Cronjobs → Create cronjob**. Tạo 3 job:
+
+| Title | URL | Schedule |
+|---|---|---|
+| NALI web | `https://nali-dental-web.onrender.com/healthz/db` | Every 10 minutes, giới hạn giờ **7:00–21:00** |
+| NALI AI | `https://nali-dental-ai.onrender.com/health` | Every 10 minutes, giới hạn giờ **8:00–18:00** |
+| NALI reminders | `https://nali-dental-web.onrender.com/api/cron/reminders` | Every day lúc **08:00** |
+
+   Ở phần Schedule chọn múi giờ **Asia/Ho_Chi_Minh**. Với 2 job ping, dùng chế độ *Custom*: minutes `0,10,20,30,40,50`,
+   hours `7-21` (web) hoặc `8-18` (AI). Giới hạn giờ như vậy để tổng thời gian chạy của 2 service dưới **750 giờ/tháng**
+   của gói free Render (chạy 24/7 cả hai sẽ vượt và bị tạm dừng).
+
+2. Job **NALI reminders**: tab **Advanced** → Request method `POST` → Headers thêm `X-Cron-Token` = giá trị `CRON_TOKEN`
+   lấy ở Render → nali-dental-web → Environment. Timeout đặt 30s.
+   (Nếu không thấy chỗ thêm header thì thêm `?token=<giá trị>` vào cuối URL cũng được.)
+
+3. Bấm **Test run** ở mỗi job: 2 job ping phải trả 200; job reminders trả `{"ok": true, "due": ..., "sent": ...}`.
+   Lần đầu server đang ngủ có thể mất 30–40 giây, bấm test lại lần nữa.
+
+4. Trong Settings của cron-job.org có thể tắt email thông báo lỗi nếu thấy phiền; lỗi vẫn xem được trong tab History.
 
 Chạy tay trên máy: `cd flask_app && flask --app run.py send-reminders`.
-Trong Admin → Lịch hẹn, lịch đã nhắc có biểu tượng chuông 🔔.
+Trong Admin → Lịch hẹn, lịch đã nhắc có biểu tượng chuông.
 
 ## Bước 6 — Bật đặt cọc giữ chỗ qua VietQR (0đ) — 1 phút
 

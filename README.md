@@ -22,7 +22,7 @@ Phía khách:
 - Đặt lịch online theo khung giờ còn trống, nhận email xác nhận, tự đổi hoặc huỷ lịch trước 4 tiếng.
 - Đặt cọc giữ chỗ bằng chuyển khoản: web tạo mã QR VietQR điền sẵn số tiền và nội dung,
   lễ tân bấm "đã nhận" là lịch tự chuyển sang đã xác nhận.
-- Email nhắc lịch trước một ngày, chạy tự động mỗi sáng 8 giờ.
+- Email nhắc lịch trước một ngày, tự chạy mỗi sáng 8 giờ (cron-job.org gọi vào).
 - Hồ sơ khám: xem lại bác sĩ chẩn đoán gì, điều trị gì, dặn gì, khi nào tái khám.
 - Thư viện ảnh trước/sau có thanh trượt so sánh, lọc theo dịch vụ.
 - Chatbot tư vấn dịch vụ, báo giá, đặt lịch luôn bằng chat, chữ hiện dần theo kiểu đang gõ.
@@ -58,7 +58,8 @@ giá, đặt lịch nhiều lượt, hồ sơ...) rồi chấm tự động. B�
 - pytest (24 test, dùng SQLite trong bộ nhớ) và một bộ test riêng cho AI (28 kiểm tra).
   GitHub Actions chạy tự động mỗi lần push.
 - Deploy: Render (2 web service free) + Aiven MySQL. Có thêm Docker Compose nếu muốn chạy
-  trên VPS riêng. Email nhắc lịch và việc giữ server thức cũng chạy bằng GitHub Actions.
+  trên VPS riêng. Giữ server thức và gọi email nhắc lịch theo giờ thì dùng cron-job.org
+  (GitHub Actions cron bị trễ và bỏ lượt nên mình bỏ).
 
 ## Về con chatbot
 
@@ -148,7 +149,7 @@ flask_app/            web Flask
   tests/
 ai_service/           FastAPI: RAG, LLM, tool đặt lịch, xem ảnh
   finetune/           script finetune Qwen
-.github/workflows/    ci.yml, reminders.yml, keepalive.yml
+.github/workflows/    ci.yml
 render.yaml           deploy Render
 docker-compose.prod.yml, docker-compose.https.yml   cho VPS
 ```

@@ -22,6 +22,20 @@ def healthz():
     return Response('{"ok": true}', mimetype="application/json")
 
 
+@main_bp.route("/healthz/db")
+def healthz_db():
+    """Cho dịch vụ ping bên ngoài (cron-job.org) gọi định kỳ: vừa giữ Render thức, vừa tạo hoạt động
+    trên MySQL để gói free của Aiven không tự tắt vì "inactivity". DB lỗi -> 503 để cron báo."""
+    from sqlalchemy import text
+    try:
+        db.session.execute(text("SELECT 1"))
+        return Response('{"ok": true, "db": true}', mimetype="application/json")
+    except Exception as exc:  # noqa: BLE001
+        db.session.rollback()
+        current_app.logger.warning("healthz/db: %s", str(exc)[:200])
+        return Response('{"ok": false, "db": false}', status=503, mimetype="application/json")
+
+
 @main_bp.route("/robots.txt")
 def robots():
     body = "User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\nSitemap: " + url_for("main.sitemap", _external=True) + "\n"
