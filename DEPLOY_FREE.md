@@ -105,6 +105,13 @@ Web có sẵn 2 endpoint cho việc này:
 Chạy tay trên máy: `cd flask_app && flask --app run.py send-reminders`.
 Trong Admin → Lịch hẹn, lịch đã nhắc có biểu tượng chuông.
 
+## Bước 5b — Redis dùng chung cho rate limit (tuỳ chọn, 0đ) — 2 phút
+
+Mặc định giới hạn đăng nhập sai / rate limit API đếm trong từng worker gunicorn (web chạy 2 worker nên
+giới hạn thực tế gấp đôi). Muốn đếm chung: Render → **New → Key Value** (gói Free 25MB) → tạo xong copy
+**Internal Key Value URL** (dạng `redis://red-xxxx:6379`) → dán vào biến `REDIS_URL` của `nali-dental-web`.
+Redis lỗi thì web tự quay về đếm trong tiến trình, không ảnh hưởng người dùng.
+
 ## Bước 6 — Bật đặt cọc giữ chỗ qua VietQR (0đ) — 1 phút
 
 Không cần cổng thanh toán. Web tự tạo ảnh QR động (img.vietqr.io) đã điền số tiền + nội dung `NALI <mã lịch> <SĐT>`;

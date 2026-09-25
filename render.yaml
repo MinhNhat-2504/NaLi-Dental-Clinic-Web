@@ -47,6 +47,8 @@ services:
         generateValue: true          # copy giá trị này vào GitHub secret CRON_TOKEN (cron nhắc lịch)
       - key: AI_ADMIN_TOKEN
         sync: false                  # cùng giá trị ở 2 service: web gọi AI /reload sau khi admin sửa cấu hình
+      - key: REDIS_URL
+        sync: false                  # tuỳ chọn: Render Key Value (free 25MB) -> rate limit dùng chung mọi worker
       - key: BANK_ID
         sync: false                  # đặt cọc VietQR: mã ngân hàng (MB, VCB, TCB, ACB...) — để trống thì ẩn tính năng
       - key: BANK_ACCOUNT_NO

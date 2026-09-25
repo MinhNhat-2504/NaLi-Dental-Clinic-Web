@@ -12,8 +12,10 @@ PyMySQL==1.1.1
 bcrypt==4.2.1
 python-dotenv==1.0.1
 gunicorn==23.0.0
+redis>=5.0          # tuỳ chọn: REDIS_URL cho rate limit/cache nhiều worker
 
 # Test
 pytest==8.3.4
+fakeredis>=2.20     # test backend Redis không cần server
 tzdata>=2024.1
 Pillow>=10.0
