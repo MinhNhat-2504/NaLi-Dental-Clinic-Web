@@ -54,7 +54,9 @@ class Settings:
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "").strip()
     # Token bảo vệ POST /reload (web gọi sau khi admin sửa cấu hình). Trống = không kiểm tra.
     admin_token: str = os.getenv("AI_ADMIN_TOKEN", "").strip()
-    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.6-flash").strip()
+    # Mặc định model lite: gói free tính quota theo NGÀY cho từng model, gemini-3.6-flash chỉ 20 lượt/ngày
+    # (không đủ cho một buổi demo); lite đạt cùng điểm eval (xem eval/history). Đặt GEMINI_MODEL để đổi.
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite").strip()
 
     # Database (cùng MySQL với web Flask)
     db_host: str = _dburl.get("host") or os.getenv("DB_HOST", "localhost")

@@ -190,6 +190,24 @@ def test_clinic_facts():
     check("tài liệu hotline dùng giá trị cấu hình", any(hotline() in d.content for d in docs))
 
 
+def test_judge_parsing():
+    """Đọc kết quả giám khảo LLM (JSON, có thể bọc ```json``` hoặc lẫn chữ)."""
+    print("\n[Eval: đọc phán quyết giám khảo]")
+    from eval_agent import parse_verdict
+    check("JSON thuần", parse_verdict('{"dung": true, "ly_do": "khớp giờ mở cửa"}') == (True, "khớp giờ mở cửa"))
+    check("bọc ```json```", parse_verdict('```json\n{"dung": false, "ly_do": "sai giờ"}\n```')[0] is False)
+    check("chuỗi 'true'", parse_verdict('{"dung": "true"}')[0] is True)
+    check("không JSON -> sai, có lý do", parse_verdict("không biết")[0] is False and parse_verdict("không biết")[1])
+    from eval_agent import parse_verdicts, _sample
+    batch = parse_verdicts('[{"i": 1, "dung": true, "ly_do": "ok"}, {"i": 3, "dung": "true"}]', 3)
+    check("chấm theo lô: đúng vị trí, thiếu mục -> sai", [b[0] for b in batch] == [True, False, True], str(batch))
+    check("lô không phải JSON -> tất cả sai", all(not b[0] for b in parse_verdicts("lỗi", 2)))
+    qs = [{"topic": t, "q": f"{t}{k}", "expect": []} for t in ("a", "b", "c") for k in range(4)]
+    picked = _sample(qs, 6)
+    check("lấy mẫu chia đều chủ đề", len(picked) == 6 and {p["topic"] for p in picked} == {"a", "b", "c"})
+    check("lấy mẫu cố định giữa các lần", _sample(qs, 6) == picked)
+
+
 def test_tool_parsing():
     print("\n[5] Phân tích tool-call của LLM tự host")
     c1 = extract_tool_call('{"tool": "tim_dich_vu", "args": {"tu_khoa": "implant"}}')
@@ -210,6 +228,7 @@ if __name__ == "__main__":
     test_record_context(r)
     test_gemini_routes_booking(r)
     test_clinic_facts()
+    test_judge_parsing()
     test_streaming(r)
     test_tool_parsing()
     print(f"\n===== KẾT QUẢ: {_passed} PASS / {_failed} FAIL =====")

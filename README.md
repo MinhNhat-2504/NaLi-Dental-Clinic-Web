@@ -61,6 +61,8 @@ flowchart LR
 - **Web Flask** (`flask_app/`): giao diện khách và trang quản trị, đặt lịch, đặt cọc VietQR, hồ sơ khám,
   thư viện ca, email, Telegram. Là nơi duy nhất render HTML và giữ session đăng nhập. Khi gọi chatbot, web
   dựng chuỗi `user_context` (tên, SĐT, lịch sắp tới, hồ sơ gần nhất) gửi kèm để bot nhớ khách.
+  Thông tin phòng khám (hotline, email, giờ, chi nhánh) nằm trong bảng `clinic_settings`, admin sửa ở
+  `/admin/cai-dat`; web, email và AI service cùng đọc, lưu xong web gọi `POST /reload` để AI nạp lại.
 - **AI service FastAPI** (`ai_service/`): tách tiến trình riêng để lỗi hoặc độ trễ của LLM không kéo web
   theo, và để đổi backend LLM bằng một biến môi trường. Endpoint: `/chat`, `/chat/stream` (SSE),
   `/analyze-image`, `/reset`, `/health`.
@@ -70,12 +72,13 @@ flowchart LR
 - **Generation**: `_select_primary()` trong `main.py` chọn theo `LLM_BACKEND=auto|local|gemini|offline`,
   thứ tự ưu tiên local, gemini, offline. Mỗi lượt gọi LLM thất bại thì rơi về `FallbackAgent`.
 - **Code kiểm soát (guardrail)**:
-  - Ý định đặt lịch ở backend local được nhận diện bằng từ khoá và chuyển sang máy trạng thái
-    slot-filling trong `FallbackAgent` (tên, SĐT, ngày, giờ), LLM không tham gia bước này.
-  - Backend Gemini dùng function calling với 3 tool `tim_dich_vu`, `kiem_tra_lich_trong`, `dat_lich_hen`;
-    backend local dùng giao thức JSON tự cài (`{"tool": ..., "args": ...}`), tối đa 4 vòng, tool lạ bị từ chối.
-  - LLM không ghi thẳng vào database. Mọi đường đều đi qua `tools.dat_lich_hen()`: validate SĐT, ngày, giờ,
-    giờ mở cửa, kiểm tra trùng slot, rồi mới INSERT.
+  - Ý định đặt lịch (`wants_booking`) được nhận diện bằng từ khoá ở cả hai backend local và Gemini, rồi
+    chuyển sang máy trạng thái slot-filling trong `FallbackAgent` (tên, SĐT, ngày, giờ). LLM không tham gia
+    bước này và không có tool ghi lịch: Gemini chỉ có `tim_dich_vu`, `kiem_tra_lich_trong` qua function
+    calling; local dùng giao thức JSON tự cài (`{"tool": ..., "args": ...}`), tối đa 4 vòng, tool lạ bị từ chối.
+  - Ghi lịch chỉ đi qua `tools.dat_lich_hen()`: validate SĐT, ngày, giờ, giờ mở cửa, kiểm tra trùng slot rồi
+    INSERT. Tầng DB có thêm cột `slot_key` ("YYYY-MM-DD HH:MM" khi lịch còn hiệu lực) với UNIQUE index, nên hai
+    request đặt cùng slot trong cùng lúc thì một cái bị từ chối ở MySQL, code bắt `IntegrityError` và báo khách.
   - Câu hỏi về hồ sơ, dặn dò, tái khám được trả lời trực tiếp từ `user_context`
     (`FallbackAgent.record_answer`) ở mọi backend, không qua LLM.
 - **Vision**: `/analyze-image` gửi ảnh sang Gemini, yêu cầu JSON có cấu trúc, ghép với bảng dịch vụ để gợi ý,
@@ -91,7 +94,7 @@ flowchart LR
 | Data | `knowledge.py` 10 tài liệu cố định + bảng `products` | Dữ kiện đổi thường xuyên (giá) phải lấy từ DB lúc chạy, không đưa vào trọng số model |
 | Model | Qwen2.5-3B-Instruct + QLoRA (r=16, alpha=32, 4-bit, 3 epoch) | Comment trong `train_qlora.py`: batch 1 và gradient accumulation 8 để vừa GPU 8GB (RTX 4060 Laptop); fine-tune chỉ để chỉnh giọng và hành vi gọi tool |
 | Model | Ollama, giao thức OpenAI-compatible | Docstring `local_llm_agent.py`: đổi được sang llama.cpp, vLLM, TGI mà không sửa code |
-| Model | Gemini (`gemini-3.6-flash`, `text-embedding-004`) | Render free không đủ RAM chạy model local; Gemini có free tier, có function calling và vision |
+| Model | Gemini (`gemini-3.5-flash-lite` cho chat, `gemini-3.6-flash` cho vision, `text-embedding-004`) | Render free không đủ RAM chạy model local; Gemini có free tier, function calling và vision. Chat dùng lite vì flagship chỉ 20 lượt/ngày ở gói free, eval cho thấy lite đạt cùng điểm |
 | Model | TF-IDF (scikit-learn) | Comment trong requirements: RAG chạy offline không cần mạng, corpus nhỏ nên đủ dùng |
 | Serving | Flask 3.1, app factory + 5 blueprint | Yêu cầu môn học là Flask; app factory cho phép tạo app với config test riêng |
 | Serving | Flask-WTF, Flask-Login, Flask-Mail, Flask-Migrate | CSRF và validate form; hai loại user (bệnh nhân, nhân viên) qua id có tiền tố `p:`/`s:`; email; migration có version |
@@ -104,10 +107,10 @@ flowchart LR
 | Infra | Render Blueprint (`render.yaml`), Aiven | Hai web service free và MySQL free, tổng chi phí 0 đồng |
 | Infra | cron-job.org | Ghi chú trong `DEPLOY_FREE.md`: cron của GitHub Actions bị trễ 4 giờ và bỏ lượt nên thay |
 | Infra | Docker Compose + nginx + certbot | Phương án VPS riêng có HTTPS (`docker-compose.prod.yml`) |
-| Infra | Cache và rate limit trong tiến trình (`cache.py`, `ratelimit.py`) | Docstring: DB cloud xa nên cache 60 giây; không cần Redis ở quy mô phòng khám |
+| Infra | `cache.py`, `ratelimit.py`, Redis tuỳ chọn qua `REDIS_URL` | Mặc định đếm trong tiến trình (đủ cho 1 worker). Có Redis thì rate limit và khoá đăng nhập đếm chung mọi worker bằng INCR/EXPIRE, cache dùng epoch trên Redis để xoá đồng bộ; Redis lỗi tự quay về trong tiến trình |
 | Testing | pytest với SQLite in-memory | Comment `conftest.py`: tách khỏi MySQL thật, `AI_SERVICE_URL` trỏ cổng chết để test không phụ thuộc service ngoài |
-| Testing | `test_agent.py`, `eval_agent.py` | Test AI chạy offline không cần key; eval 30 câu chấm tự động, CI fail nếu dưới 80% |
-| Testing | GitHub Actions | Chạy pytest và test AI mỗi lần push |
+| Testing | `test_agent.py`, `eval_agent.py` | Test AI chạy offline không cần key. Eval 30 câu có hai cách chấm: keyword (offline, chạy mỗi lần push) và LLM-as-judge bằng Gemini (job riêng trong CI khi có secret), luôn ghi kèm điểm keyword để đối chiếu |
+| Testing | GitHub Actions | Ba job: pytest, test AI + eval offline, eval Gemini (LLM-as-judge). Kết quả eval lưu thành artifact theo SHA commit, tóm tắt vào Job Summary |
 
 ## Cách chạy
 
@@ -155,32 +158,41 @@ Biến môi trường (tên biến, không có giá trị trong repo):
   `AI_SERVICE_URL`, `MAIL_SERVER/MAIL_PORT/MAIL_USERNAME/MAIL_PASSWORD/MAIL_DEFAULT_SENDER`, `CRON_TOKEN`,
   `BANK_ID/BANK_ACCOUNT_NO/BANK_ACCOUNT_NAME/DEPOSIT_AMOUNT`, `TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID`,
   `REVISIT_REMIND_DAYS`, `CHAT_RATE_LIMIT`, `GA_MEASUREMENT_ID`, `GOOGLE_SITE_VERIFICATION`,
-  `SITE_URL`, `TIMEZONE`, `PER_PAGE`, `AUTO_CREATE_SCHEMA`.
+  `SITE_URL`, `TIMEZONE`, `PER_PAGE`, `AUTO_CREATE_SCHEMA`, `REDIS_URL` (tuỳ chọn), `AI_ADMIN_TOKEN` (tuỳ chọn).
 - AI: `LLM_BACKEND`, `LOCAL_LLM_URL/LOCAL_LLM_MODEL/LOCAL_LLM_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`,
-  `DATABASE_URL` hoặc `DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME`, `HOST`, `PORT`.
+  `DATABASE_URL` hoặc `DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME`, `HOST`, `PORT`, `AI_ADMIN_TOKEN` (tuỳ chọn).
 
 Test:
 
 ```bash
-cd flask_app && pytest -q                                  # 34 test
-cd ai_service && LLM_BACKEND=offline python test_agent.py  # 33 kiểm tra
-cd ai_service && python eval_agent.py --min 80             # eval 30 câu
+cd flask_app && pytest -q                                  # 44 test
+cd ai_service && LLM_BACKEND=offline python test_agent.py  # 44 kiểm tra
+cd ai_service && python eval_agent.py --min 80             # eval 30 câu, chấm keyword
+cd ai_service && LLM_BACKEND=gemini python eval_agent.py --judge gemini --history --pause 1.5
+                                                           # eval backend Gemini, chấm LLM-as-judge, lưu eval/history/
 ```
 
 Deploy miễn phí theo `DEPLOY_FREE.md`, VPS theo `DEPLOY.md`.
 
 ## Kết quả và đánh giá
 
-Số liệu lấy từ `ai_service/eval/last_result.json` (chạy `eval_agent.py`, backend `offline`):
+Bộ eval: 30 câu trong `eval/questions.json` theo 12 chủ đề (giờ làm việc, chi nhánh, giá, đặt lịch nhiều lượt,
+hồ sơ, phạm vi thông tin...). Số liệu lấy từ `ai_service/eval/history/` (mỗi lần chạy một file, tên có SHA commit):
 
-| Chỉ số | Giá trị | Cách đo |
-|---|---|---|
-| Câu trả lời đạt | 25/25 (100%) | 30 câu trong `eval/questions.json` theo 12 chủ đề; câu đạt khi chứa ít nhất 1 từ khoá mong đợi, so sánh không dấu |
-| Câu bị bỏ qua | 5 | Cần MySQL (hỏi giá dịch vụ), tự skip khi chạy offline không có DB |
-| Độ trễ trung bình | 494 ms | Đo trong tiến trình, backend offline, không tính mạng |
+| Backend | Cách chấm | Kết quả | Trung bình | Ghi chú |
+|---|---|---|---|---|
+| offline (luật + TF-IDF) | keyword | 30/30 (100%) | dưới 1 giây | có MySQL local, không bỏ câu nào |
+| gemini (`gemini-3.5-flash-lite`) | LLM-as-judge, lô 10 câu | 30/30 (100.0%) | 1.9 giây | chat và giám khảo cùng model `gemini-3.5-flash-lite`, có MySQL, keyword 100.0%, commit `71ee147` |
 
-Cách chấm bằng từ khoá chỉ bắt được câu trả lời sai hẳn, không đo được câu đúng từ khoá nhưng diễn giải sai.
-Chưa có kết quả eval cho backend `gemini` và `local` lưu trong repo.
+Cách chấm keyword: đạt khi câu trả lời chứa ít nhất 1 từ khoá mong đợi (so sánh không dấu). Cách chấm
+LLM-as-judge: gom 10 câu một lượt, đưa câu hỏi, các ý mong đợi và câu trả lời cho Gemini, nhận JSON
+`[{"i", "dung", "ly_do"}]`; chấm được câu đúng từ khoá nhưng sai nghĩa hoặc bịa thêm số liệu. Giám khảo cùng họ
+model với chatbot nên có thể thiên vị; điểm keyword luôn được ghi kèm để đối chiếu.
+
+Hạn mức: gói free của Gemini giới hạn theo ngày cho từng model; `gemini-3.6-flash` chỉ 20 lượt/ngày (đọc từ
+lỗi 429 `GenerateRequestsPerDayPerProjectPerModel-FreeTier`), không đủ cho một lần eval 30 câu và cũng là
+lý do chatbot mặc định chuyển sang `gemini-3.5-flash-lite`. Job eval Gemini trong CI vì vậy chạy hàng tuần
+(hoặc bấm tay), không chạy mỗi push.
 
 Kiểm thử: 34 test pytest (đăng nhập, phân trang, đặt lịch, trùng slot, phân quyền, chat log, nhắc lịch, hồ sơ,
 đặt cọc, upload ca, GA4, khoá đăng nhập, rate limit, streaming, healthz) và 33 kiểm tra AI offline
@@ -192,10 +204,11 @@ Kiểm thử: 34 test pytest (đăng nhập, phân trang, đặt lịch, trùng 
   **Vì**: LLM chậm và hay lỗi; web đặt lịch phải sống độc lập, và cần đổi backend bằng config.
   **Đánh đổi**: thêm một hop mạng và một tiến trình phải deploy, giữ thức, cấu hình DB hai nơi.
 
-- **Quyết định**: ở backend local, đặt lịch đi qua máy trạng thái slot-filling thay vì để model gọi tool.
-  **Vì**: model 3B hay hiểu sai ngày giờ; ghi sai lịch là lỗi không chấp nhận được.
-  **Đánh đổi**: hai backend hành xử khác nhau (Gemini vẫn dùng function calling), hội thoại đặt lịch ở
-  local cứng nhắc hơn.
+- **Quyết định**: đặt lịch đi qua máy trạng thái slot-filling ở mọi backend, LLM không có tool ghi lịch.
+  **Vì**: model 3B hay hiểu sai ngày giờ; ban đầu Gemini vẫn được gọi `dat_lich_hen` qua function calling nên
+  hai backend hành xử khác nhau và khó test. Gom về một đường thì test một lần là đủ.
+  **Đánh đổi**: hội thoại đặt lịch cứng nhắc hơn (hỏi lần lượt từng thông tin), mất khả năng Gemini tự hiểu
+  "đặt cho tôi 3 giờ chiều mai tên An" trong một câu.
 
 - **Quyết định**: fine-tune chỉ cho giọng và hành vi, dữ kiện lấy bằng RAG.
   **Vì**: giá dịch vụ thay đổi thì không thể train lại; admin sửa DB là bot trả lời theo ngay.
@@ -213,29 +226,28 @@ Kiểm thử: 34 test pytest (đăng nhập, phân trang, đặt lịch, trùng 
 
 Hạn chế:
 
-1. Eval chấm bằng từ khoá, không phát hiện câu trả lời đúng từ khoá nhưng sai nghĩa; 5/30 câu bị bỏ khi
-   không có DB; chưa có số đo cho backend Gemini và local.
-2. Không có test cho `analyze_dental_image` (vision) và cho streaming với LLM thật; toàn bộ test AI chạy
-   offline nên không bắt được lỗi prompt hay tool-calling của model.
-3. `cache.py` và `ratelimit.py` giữ state trong tiến trình; gunicorn chạy 2 worker nên giới hạn thực tế
-   gấp đôi con số cấu hình và cache có thể lệch giữa hai worker.
-4. Đặt lịch không có unique index hay `SELECT ... FOR UPDATE` trên (ngày, giờ); hai request cùng lúc có
-   thể ghi trùng slot. Test hiện chỉ kiểm tra tuần tự.
-5. Hotline và địa chỉ chi nhánh hardcode trong 8 file và trong `knowledge.py`, không lấy từ DB hay config.
-6. Hai backend xử lý đặt lịch khác nhau: Gemini để model tự điền tham số tool (chỉ validate ở `tools.py`),
-   local đi qua slot-filling. Cùng một câu có thể cho hành vi khác nhau tuỳ backend.
-7. Model fine-tune không chạy trên production vì Render free không đủ RAM; bản demo dùng Gemini nên phần
+1. Giám khảo LLM-as-judge là Gemini, trong lần đo trong repo còn là cùng model với chatbot, nên có thể thiên
+   vị; các ý mong đợi trong `questions.json` do mình tự viết, chưa có người thứ hai duyệt. Câu cần DB vẫn bị bỏ
+   khi chạy trong CI. Hạn mức free theo ngày khiến eval Gemini chỉ chạy hàng tuần.
+2. Không có test cho `analyze_dental_image` (vision) và cho streaming với LLM thật; test AI chạy offline nên
+   không bắt được lỗi prompt của model. Job eval Gemini trong CI đặt `continue-on-error` vì free tier hay trả 429.
+3. Redis chỉ là tuỳ chọn và bản demo chưa bật; khi chưa có `REDIS_URL`, rate limit vẫn đếm riêng từng worker.
+   Giá trị cache luôn nằm trong từng worker, Redis chỉ đồng bộ việc xoá.
+4. `slot_key` chỉ khoá lịch `pending`/`confirmed`; lịch cũ trùng nhau trước migration được giữ nguyên nhưng
+   bỏ khoá. Chưa có test chạy hai request thật sự song song, mới test bằng hai INSERT tuần tự.
+5. Sau khi admin sửa cấu hình, web gọi `POST /reload` của AI service; nếu AI service đang ngủ hoặc token lệch
+   thì tri thức cũ vẫn dùng đến lần deploy sau. Endpoint này mở khi `AI_ADMIN_TOKEN` để trống.
+6. Model fine-tune không chạy trên production vì Render free không đủ RAM; bản demo dùng Gemini nên phần
    fine-tune chưa được kiểm chứng với người dùng thật.
-8. `/api/chat` tắt CSRF (cần cho fetch từ widget) và chỉ chặn bằng rate limit theo IP.
+7. `/api/chat` tắt CSRF (cần cho fetch từ widget) và chỉ chặn bằng rate limit theo IP.
 
 Việc làm tiếp, theo ưu tiên:
 
-1. Đổi eval sang chấm bằng LLM-as-judge hoặc so khớp ngữ nghĩa, chạy thêm trên backend Gemini trong CI với
-   secret, lưu kết quả theo từng commit.
-2. Thêm unique index `(appointment_date, appointment_time)` hoặc khoá hàng khi đặt lịch; chuyển cache và
-   rate limit sang Redis khi chạy nhiều worker.
-3. Thống nhất luồng đặt lịch giữa hai backend (Gemini cũng đi qua slot-filling), đưa hotline và chi nhánh
-   vào bảng cấu hình trong DB.
+1. Xây bộ golden answers có người duyệt và dùng giám khảo thứ hai khác họ model; chạy eval trên backend
+   local khi có máy GPU để so trực tiếp fine-tune với Gemini.
+2. Thêm test vision với ảnh mẫu và test đồng thời (nhiều luồng đặt cùng slot) trên MySQL thật trong CI.
+3. Bật Redis Key Value trên Render cho bản demo, thêm streaming thật cho backend Gemini (hiện cắt cụm từ
+   sau khi có câu trả lời đầy đủ).
 
 ## Cấu trúc thư mục
 
@@ -245,19 +257,21 @@ flask_app/                  web Flask
     __init__.py             app factory, lệnh CLI (init-db, seed-*, send-reminders)
     models.py               Patient, Staff, Product, Appointment, Feedback, FAQ, BlogPost,
                             ChatLog, MedicalRecord, CaseStudy
+    clinic.py               thông tin phòng khám từ bảng clinic_settings, mặc định khi DB trống
     main.py                 trang công khai, /healthz, /healthz/db, sitemap
     auth.py                 đăng nhập, đăng ký, đổi/quên mật khẩu, khoá đăng nhập
     booking.py              đặt lịch, đổi/huỷ, đặt cọc VietQR, hồ sơ khám của tôi
-    admin.py                quản trị, hồ sơ bệnh nhân, ca điều trị, chất lượng AI
+    admin.py                quản trị, hồ sơ bệnh nhân, ca điều trị, chất lượng AI, cài đặt phòng khám
     api.py                  proxy /api/chat và /api/chat/stream, /api/cron/reminders
     reminders.py            email nhắc lịch 24h và nhắc tái khám
     notify.py               Telegram
-    cache.py, ratelimit.py  state trong tiến trình
+    cache.py, ratelimit.py  trong tiến trình, hoặc Redis khi có REDIS_URL
     imaging.py              nén ảnh, bỏ EXIF
-  migrations/versions/      6 migration viết tay
-  tests/                    34 test pytest
+  migrations/versions/      8 migration viết tay
+  tests/                    44 test pytest
 ai_service/                 FastAPI
-  main.py                   endpoint, chọn backend, fallback
+  main.py                   endpoint, chọn backend, fallback, /reload
+  clinic.py                 đọc clinic_settings, mặc định khi không có DB
   retriever.py              TF-IDF hoặc Gemini embedding, bỏ dấu
   knowledge.py              10 tài liệu cố định
   tools.py                  tim_dich_vu, kiem_tra_lich_trong, dat_lich_hen (validate + INSERT)
@@ -265,10 +279,10 @@ ai_service/                 FastAPI
   local_llm_agent.py        Qwen qua Ollama, tool-calling JSON
   gemini_agent.py           Gemini function calling
   vision_agent.py           phân tích ảnh răng
-  eval_agent.py, eval/      30 câu eval và kết quả gần nhất
-  test_agent.py             33 kiểm tra offline
+  eval_agent.py, eval/      30 câu eval, chấm keyword hoặc LLM-as-judge, history/ theo commit
+  test_agent.py             44 kiểm tra offline
   finetune/                 generate_dataset.py, train_qlora.py, merge_and_export.py, data/nali_sft.jsonl
-.github/workflows/ci.yml    pytest + test AI mỗi lần push
+.github/workflows/ci.yml    pytest, test AI + eval offline, eval Gemini (cần secret)
 render.yaml                 2 web service free trên Render
 docker-compose.prod.yml     MySQL + gunicorn + nginx + certbot cho VPS
 deploy/                     nginx template, entrypoint, HuggingFace Space

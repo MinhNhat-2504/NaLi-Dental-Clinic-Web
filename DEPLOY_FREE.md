@@ -39,6 +39,9 @@ flask --app run.py seed-content
 ## Bước 2 — Lấy Gemini API key (miễn phí) — 2 phút
 1. Vào **https://aistudio.google.com/apikey** → **Create API key**.
 2. Copy key (bắt đầu bằng `AIza`, dài **39 ký tự**). Dùng cho chatbot + AI xem ảnh răng.
+3. Hạn mức gói free tính theo **ngày, riêng từng model**: `gemini-3.6-flash` chỉ **20 lượt/ngày**, hết là chatbot
+   rơi về chế độ offline. Vì vậy chat mặc định dùng `gemini-3.5-flash-lite` (hạn mức cao hơn nhiều, eval 30 câu
+   vẫn 100%). Muốn đổi thì đặt `GEMINI_MODEL` trên Render; AI xem ảnh vẫn dùng `gemini-3.6-flash` (ít lượt).
 
 ---
 
@@ -111,6 +114,16 @@ Mặc định giới hạn đăng nhập sai / rate limit API đếm trong từn
 giới hạn thực tế gấp đôi). Muốn đếm chung: Render → **New → Key Value** (gói Free 25MB) → tạo xong copy
 **Internal Key Value URL** (dạng `redis://red-xxxx:6379`) → dán vào biến `REDIS_URL` của `nali-dental-web`.
 Redis lỗi thì web tự quay về đếm trong tiến trình, không ảnh hưởng người dùng.
+
+## Bước 5c — Eval Gemini trong CI và token nạp lại cấu hình — 2 phút
+
+- GitHub → repo → Settings → Secrets and variables → Actions → thêm secret `GEMINI_API_KEY` (cùng key đang dùng
+  trên Render). Job "eval Gemini (LLM-as-judge)" chạy **thứ Hai hàng tuần** hoặc khi bấm **Run workflow** (không chạy
+  mỗi push vì quota free tính theo ngày): 30 câu trên `gemini-3.5-flash-lite`, chấm theo lô bằng Gemini, lưu artifact
+  `eval-gemini-<sha>` và tóm tắt trong Job Summary. Đổi model đo bằng Variables `GEMINI_EVAL_MODEL`, `GEMINI_JUDGE_MODEL`.
+  Không có secret thì job tự bỏ qua. Chạy tay trên máy: `LLM_BACKEND=gemini python eval_agent.py --judge gemini --history`.
+- Render → cả 2 service thêm `AI_ADMIN_TOKEN` (một chuỗi ngẫu nhiên, giống nhau ở hai nơi). Web gửi token này khi
+  gọi `POST /reload` của AI service sau khi admin sửa Cài đặt phòng khám. Để trống thì endpoint mở.
 
 ## Bước 6 — Bật đặt cọc giữ chỗ qua VietQR (0đ) — 1 phút
 
