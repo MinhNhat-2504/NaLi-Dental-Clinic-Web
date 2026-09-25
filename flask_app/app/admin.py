@@ -394,6 +394,33 @@ def case_delete(cid):
     return redirect(url_for("admin.cases"))
 
 
+# ---------- Cài đặt phòng khám ----------
+@admin_bp.route("/cai-dat", methods=["GET", "POST"])
+@admin_required
+def settings():
+    """Hotline, email, giờ, chi nhánh: một nguồn cho web, email và chatbot."""
+    from .clinic import branches_to_text, get_clinic, parse_branches_text, save_clinic
+    from .forms import ClinicSettingsForm
+    form = ClinicSettingsForm()
+    if request.method == "GET":
+        c = get_clinic()
+        form.name.data, form.hotline.data, form.email.data = c["name"], c["hotline"], c["email"]
+        form.hours_text.data = c["hours_text"]
+        form.open_hour.data, form.close_hour.data = int(c["open_hour"]), int(c["close_hour"])
+        form.branches_text.data = branches_to_text(c["branches"])
+    if form.validate_on_submit():
+        branches = parse_branches_text(form.branches_text.data)
+        if not branches:
+            form.branches_text.errors.append("Cần ít nhất một dòng dạng: Tên | Địa chỉ")
+        else:
+            save_clinic({"name": form.name.data, "hotline": form.hotline.data, "email": form.email.data,
+                         "hours_text": form.hours_text.data, "open_hour": form.open_hour.data,
+                         "close_hour": form.close_hour.data, "branches": branches})
+            flash("Đã lưu cài đặt phòng khám. Web và chatbot dùng thông tin mới ngay.", "success")
+            return redirect(url_for("admin.settings"))
+    return render_template("admin/settings.html", form=form)
+
+
 # ---------- Chất lượng chatbot AI ----------
 @admin_bp.route("/ai-chat")
 @admin_required

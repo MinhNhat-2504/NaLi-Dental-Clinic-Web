@@ -92,6 +92,19 @@ def fetch_products() -> list[dict]:
             cur.close()
 
 
+def fetch_clinic_settings() -> dict[str, str]:
+    """Bảng clinic_settings (key/value) do admin web sửa. Bảng chưa có -> DatabaseUnavailable -> dùng mặc định."""
+    with get_connection() as conn:
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT `key`, `value` FROM clinic_settings")
+            return {k: v for k, v in cur.fetchall()}
+        except MySQLError as exc:
+            raise DatabaseUnavailable(f"Lỗi đọc clinic_settings: {exc}") from exc
+        finally:
+            cur.close()
+
+
 def fetch_booked_times(date_str: str) -> set[str]:
     """Trả về tập các khung giờ ('HH:MM') đã có lịch trong ngày `date_str`.
 

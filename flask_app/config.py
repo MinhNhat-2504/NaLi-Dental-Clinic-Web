@@ -59,6 +59,8 @@ class Config:
     AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://127.0.0.1:8000")
     # Token bảo vệ endpoint cron (/api/cron/reminders) — GitHub Actions gọi mỗi sáng
     CRON_TOKEN = os.getenv("CRON_TOKEN", "")
+    # Token gửi kèm khi web báo AI service nạp lại cấu hình (POST /reload). Trống = AI service không kiểm tra.
+    AI_ADMIN_TOKEN = os.getenv("AI_ADMIN_TOKEN", "")
     # Địa chỉ web công khai để chèn link vào email (Render tự cấp RENDER_EXTERNAL_URL)
     SITE_URL = (os.getenv("SITE_URL") or os.getenv("RENDER_EXTERNAL_URL") or "http://127.0.0.1:5000").rstrip("/")
     TIMEZONE = os.getenv("TIMEZONE", "Asia/Ho_Chi_Minh")

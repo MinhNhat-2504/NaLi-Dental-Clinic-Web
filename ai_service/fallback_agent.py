@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from clinic import hotline as _hotline
 from knowledge import _format_price
 from retriever import Retriever
 from tools import (
@@ -161,7 +162,7 @@ class FallbackAgent:
                     "Anh/chị muốn *đặt lịch* khám thì nhắn \"đặt lịch\" giúp NALI nhé ạ.")
         return (greet + "Theo hồ sơ khám của anh/chị tại NALI:\n" + "\n".join(found) +
                 "\n\n👉 Anh/chị cần đặt lịch tái khám thì nhắn \"đặt lịch\" nhé ạ. "
-                "Nếu có đau/sưng bất thường, vui lòng gọi hotline 0945 457 512.")
+                f"Nếu có đau/sưng bất thường, vui lòng gọi hotline {_hotline()}.")
 
     def reply_stream(self, session_id: str, message: str, user_context: str = ""):
         """Phiên bản streaming: agent luật trả lời tức thì nên chỉ cắt theo cụm từ để giao diện hiện dần."""
@@ -196,7 +197,7 @@ class FallbackAgent:
         docs = self.retriever.search(message, k=3)
         if not docs:
             return ("Dạ NALI chưa có thông tin này. Anh/chị vui lòng gọi hotline "
-                    "0945 457 512 để được hỗ trợ ạ.")
+                    f"{_hotline()} để được hỗ trợ ạ.")
         lines = [f"• {d.title}: {d.content}" for d in docs]
         tip = "\n\n👉 Anh/chị muốn *đặt lịch* thì nhắn \"đặt lịch\" giúp NALI nhé ạ."
         greet = f"Dạ chào {known['ho_ten']} ạ! " if known.get("ho_ten") else "Dạ "

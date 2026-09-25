@@ -86,9 +86,26 @@ def create_app(config_class=Config):
         if "cao răng" in n or "sạch" in n: return "fa-broom"
         return "fa-tooth"
 
+    from .clinic import get_clinic
+
+    def clinic_jsonld():
+        """Schema.org cho Google, dựng từ cấu hình phòng khám."""
+        from flask import request
+        c = get_clinic()
+        try:
+            hours = f"Mo-Su {int(c['open_hour']):02d}:00-{int(c['close_hour']):02d}:00"
+        except (TypeError, ValueError):
+            hours = "Mo-Su 08:00-20:00"
+        return {"@context": "https://schema.org", "@type": "Dentist", "name": c["name"], "url": request.url_root,
+                "telephone": c["phone_e164"], "openingHours": hours,
+                "address": {"@type": "PostalAddress", "streetAddress": c["main_address"], "addressCountry": "VN"},
+                "department": [{"@type": "Dentist", "name": f"{c['name']} - {b['name']}", "address": b["address"]}
+                               for b in c["branches"]]}
+
     @app.context_processor
     def inject_globals():
         return dict(AI_SERVICE_URL=app.config["AI_SERVICE_URL"], current_year=datetime.now().year,
+                    clinic=get_clinic(), clinic_jsonld=clinic_jsonld,
                     svc_rating=svc_rating, svc_reviews=svc_reviews, is_weak_image=is_weak_image,
                     svc_grad=svc_grad, svc_icon=svc_icon, service_card_image=service_card_image)
 
@@ -104,7 +121,7 @@ def create_app(config_class=Config):
     def server_error(e):
         db.session.rollback()
         return render_template("error.html", code=500,
-                               msg="Có lỗi hệ thống. Vui lòng thử lại hoặc gọi hotline 0945 457 512."), 500
+                               msg=f"Có lỗi hệ thống. Vui lòng thử lại hoặc gọi hotline {get_clinic()['hotline']}."), 500
 
     from sqlalchemy.exc import OperationalError, InterfaceError
 
@@ -116,7 +133,7 @@ def create_app(config_class=Config):
         app.logger.error("Không kết nối được CSDL: %s", str(e)[:300])
         return render_template("error.html", code=503,
                                msg="Hệ thống đang tạm thời không kết nối được cơ sở dữ liệu. "
-                                   "Vui lòng thử lại sau ít phút hoặc gọi hotline 0945 457 512."), 503
+                                   f"Vui lòng thử lại sau ít phút hoặc gọi hotline {get_clinic()['hotline']}."), 503
 
     @app.errorhandler(403)
     def forbidden(e):

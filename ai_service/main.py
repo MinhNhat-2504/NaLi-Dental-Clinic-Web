@@ -222,6 +222,21 @@ def reset(req: ChatRequest) -> dict:
     return {"ok": True}
 
 
+@app.post("/reload")
+def reload_knowledge(request: Request) -> dict:
+    """Web gọi sau khi admin sửa cấu hình phòng khám: đọc lại clinic_settings, dựng lại kho tri thức
+    và khởi tạo lại agent (để prompt Gemini nhận hotline mới). Phiên chat đang mở sẽ mất lịch sử."""
+    import clinic as _clinic
+    if settings.admin_token and request.headers.get("X-Admin-Token") != settings.admin_token:
+        raise HTTPException(status_code=401, detail="unauthorized")
+    _clinic.refresh()
+    state.retriever = Retriever()
+    state.fallback = FallbackAgent(state.retriever)
+    state.primary, state.primary_mode = _select_primary(state.retriever)
+    logger.info("Đã nạp lại cấu hình + tri thức: %d tài liệu, hotline %s", len(state.retriever.documents), _clinic.hotline())
+    return {"ok": True, "docs": len(state.retriever.documents), "mode": state.primary_mode, "hotline": _clinic.hotline()}
+
+
 @app.get("/health")
 def health() -> dict:
     """Trạng thái hệ thống — tiện để kiểm tra nhanh khi demo."""

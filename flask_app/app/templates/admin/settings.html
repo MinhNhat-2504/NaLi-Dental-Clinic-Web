@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Quản trị — Cài đặt phòng khám{% endblock %}
+{% block content %}
+{% include 'partials/admin_nav.html' %}
+<div class="admin-wrap" style="max-width:680px;">
+  <div class="admin-card">
+    <h2><i class="fas fa-sliders"></i> Cài đặt phòng khám</h2>
+    <p style="color:#64748b;margin-bottom:16px;font-size:.92rem;">Thông tin này hiện ở chân trang, trang Liên hệ, email gửi khách và
+      được chatbot dùng để trả lời. Lưu xong là áp dụng ngay cho cả web lẫn AI.</p>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="fg">{{ form.name.label }} {{ form.name(class="fc") }}
+        {% for e in form.name.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+      <div class="grid2">
+        <div class="fg">{{ form.hotline.label }} {{ form.hotline(class="fc") }}
+          {% for e in form.hotline.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+        <div class="fg">{{ form.email.label }} {{ form.email(class="fc") }}
+          {% for e in form.email.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+      </div>
+      <div class="grid2">
+        <div class="fg">{{ form.hours_text.label }} {{ form.hours_text(class="fc", placeholder="T2 - CN: 08:00 - 20:00") }}</div>
+        <div class="fg" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>{{ form.open_hour.label }} {{ form.open_hour(class="fc") }}</div>
+          <div>{{ form.close_hour.label }} {{ form.close_hour(class="fc") }}</div>
+        </div>
+      </div>
+      <div class="fg">{{ form.branches_text.label }} {{ form.branches_text(class="fc", rows=4, placeholder="Bình Thạnh | 69/68 Đặng Thùy Trâm, Q. Bình Thạnh, TP.HCM") }}
+        <small style="color:#94a3b8;">Mỗi dòng một chi nhánh, dạng <code>Tên | Địa chỉ</code>. Dòng đầu là chi nhánh chính (dùng trong email nhắc lịch).</small>
+        {% for e in form.branches_text.errors %}<small class="err">{{ e }}</small>{% endfor %}</div>
+      <div style="display:flex;gap:10px;">
+        {{ form.submit(class="auth-btn", style="flex:1;") }}
+        <a href="{{ url_for('admin.dashboard') }}" class="btn-sm btn-gray" style="display:flex;align-items:center;padding:0 20px;">Hủy</a>
+      </div>
+    </form>
+  </div>
+</div>
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;} @media(max-width:600px){.grid2{grid-template-columns:1fr;}}</style>
+{% endblock %}

@@ -19,6 +19,7 @@ import google.generativeai as genai
 
 from config import settings
 from retriever import Retriever
+from clinic import hotline as _hotline
 from fallback_agent import FallbackAgent, wants_booking
 from tools import _strip_accents, kiem_tra_lich_trong, tim_dich_vu
 
@@ -27,7 +28,7 @@ Nhiệm vụ: tư vấn dịch vụ nha khoa và giúp khách ĐẶT LỊCH HẸ
 
 Nguyên tắc:
 - Luôn trả lời bằng tiếng Việt, thân thiện, ngắn gọn, xưng "NALI" và gọi khách là "anh/chị".
-- Chỉ dùng thông tin trong phần [DỮ LIỆU NALI] được cung cấp; nếu không có thì nói chưa có thông tin và mời gọi hotline 0945 457 512.
+- Chỉ dùng thông tin trong phần [DỮ LIỆU NALI] được cung cấp; nếu không có thì nói chưa có thông tin và mời gọi hotline {hotline}.
 - Bạn KHÔNG phải bác sĩ, không chẩn đoán bệnh. Với triệu chứng, hãy gợi ý dịch vụ phù hợp và khuyên đến khám.
 - Bạn KHÔNG tự đặt lịch. Khi khách muốn đặt lịch, mời khách nhắn đúng chữ "đặt lịch" để hệ thống
   hướng dẫn từng bước (họ tên, số điện thoại, ngày, giờ).
@@ -44,7 +45,7 @@ class GeminiAgent:
         today = date.today().isoformat()
         self.model = genai.GenerativeModel(
             model_name=settings.gemini_model,
-            system_instruction=SYSTEM_INSTRUCTION + f"\n\nHôm nay là ngày {today}.",
+            system_instruction=SYSTEM_INSTRUCTION.replace("{hotline}", _hotline()) + f"\n\nHôm nay là ngày {today}.",
             tools=[tim_dich_vu, kiem_tra_lich_trong],
         )
         # Mỗi session_id giữ một phiên chat riêng để nhớ ngữ cảnh hội thoại

@@ -177,6 +177,19 @@ def test_gemini_routes_booking(r: Retriever):
     check("Gemini không còn tool dat_lich_hen", "dat_lich_hen" not in open("gemini_agent.py", encoding="utf-8").read().split("tools=[")[1].split("]")[0])
 
 
+def test_clinic_facts():
+    """Kho tri thức phòng khám dựng từ clinic_settings; không có DB thì dùng mặc định."""
+    print("\n[Cấu hình phòng khám -> tri thức]")
+    from clinic import get_clinic, hotline
+    from knowledge import clinic_facts
+    c = get_clinic()
+    check("mặc định có 3 chi nhánh", len(c["branches"]) == 3)
+    docs = clinic_facts()
+    check("8 tài liệu cố định", len(docs) == 8, str(len(docs)))
+    check("tài liệu chi nhánh chứa địa chỉ", any("Đặng Thùy Trâm" in d.content for d in docs))
+    check("tài liệu hotline dùng giá trị cấu hình", any(hotline() in d.content for d in docs))
+
+
 def test_tool_parsing():
     print("\n[5] Phân tích tool-call của LLM tự host")
     c1 = extract_tool_call('{"tool": "tim_dich_vu", "args": {"tu_khoa": "implant"}}')
@@ -196,6 +209,7 @@ if __name__ == "__main__":
     test_fallback(r)
     test_record_context(r)
     test_gemini_routes_booking(r)
+    test_clinic_facts()
     test_streaming(r)
     test_tool_parsing()
     print(f"\n===== KẾT QUẢ: {_passed} PASS / {_failed} FAIL =====")

@@ -170,7 +170,8 @@ def chat_proxy():
         return jsonify(data)
     except (urllib.error.URLError, OSError, ValueError) as exc:
         current_app.logger.warning("AI service lỗi: %s", exc)
-        fallback = "Xin lỗi, Trợ lý AI tạm thời không phản hồi. Vui lòng gọi hotline 0945 457 512 ạ."
+        from .clinic import get_clinic
+        fallback = f"Xin lỗi, Trợ lý AI tạm thời không phản hồi. Vui lòng gọi hotline {get_clinic()['hotline']} ạ."
         _log_chat(payload.get("session_id", "web"), payload.get("message", ""), fallback, "offline",
                   int((_t.time() - t0) * 1000))
         return jsonify({"reply": fallback, "mode": "offline"}), 200
@@ -216,7 +217,8 @@ def chat_stream_proxy():
                     yield sse(obj)
         except (urllib.error.URLError, OSError, ValueError) as exc:
             current_app.logger.warning("AI stream lỗi: %s", exc)
-            text = ("Dạ NALI đang bận, anh/chị vui lòng gọi hotline 0945 457 512 hoặc thử lại sau ít phút ạ."
+            from .clinic import get_clinic
+            text = (f"Dạ NALI đang bận, anh/chị vui lòng gọi hotline {get_clinic()['hotline']} hoặc thử lại sau ít phút ạ."
                     if not full else "\n\n(Kết nối bị gián đoạn.)")
             full.append(text)
             yield sse({"delta": text})

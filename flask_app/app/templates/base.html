@@ -13,7 +13,7 @@
     <meta property="og:image" content="{{ url_for('static', filename='images/service-whitening-ai.webp', _external=True) }}">
     <meta name="twitter:card" content="summary_large_image">
     {% endblock %}
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Dentist","name":"NALI Dental Clinic","url":"{{ request.url_root }}","telephone":"+84945457512","openingHours":"Mo-Su 08:00-20:00","address":{"@type":"PostalAddress","streetAddress":"69/68 Đặng Thùy Trâm","addressLocality":"Bình Thạnh","addressRegion":"Hồ Chí Minh","addressCountry":"VN"},"department":[{"@type":"Dentist","name":"NALI Dental - Bình Thạnh","address":"69/68 Đặng Thùy Trâm, Bình Thạnh, Hồ Chí Minh"},{"@type":"Dentist","name":"NALI Dental - Quận 1","address":"123 Nguyễn Huệ, Quận 1, Hồ Chí Minh"},{"@type":"Dentist","name":"NALI Dental - Gò Vấp","address":"456 Quang Trung, Gò Vấp, Hồ Chí Minh"}]}</script>
+    <script type="application/ld+json">{{ clinic_jsonld()|tojson }}</script>
     <title>{% block title %}NALI Dental Clinic{% endblock %}</title>
     {% if config.GOOGLE_SITE_VERIFICATION %}<meta name="google-site-verification" content="{{ config.GOOGLE_SITE_VERIFICATION }}">{% endif %}
     {% if config.GA_MEASUREMENT_ID %}
@@ -99,16 +99,15 @@
             </div>
             <div class="footer-section footer-contact">
                 <h4>Liên hệ</h4>
-                <p><i class="fas fa-phone"></i> <span style="color:#ff6b6b;font-weight:bold;">0945 457 512</span></p>
-                <p><i class="fas fa-envelope"></i> nalidental@gmail.com</p>
-                <p><i class="fas fa-clock"></i> T2 - CN: 08:00 - 20:00</p>
+                <p><i class="fas fa-phone"></i> <span style="color:#ff6b6b;font-weight:bold;">{{ clinic.hotline }}</span></p>
+                <p><i class="fas fa-envelope"></i> {{ clinic.email }}</p>
+                <p><i class="fas fa-clock"></i> {{ clinic.hours_text }}</p>
             </div>
             <div class="footer-section">
                 <h4>Chi nhánh</h4>
                 <ul class="footer-links">
-                    <li><a href="#"><i class="fas fa-hospital"></i> Bình Thạnh: 69/68 Đặng Thùy Trâm</a></li>
-                    <li><a href="#"><i class="fas fa-hospital"></i> Quận 1: 123 Nguyễn Huệ</a></li>
-                    <li><a href="#"><i class="fas fa-hospital"></i> Gò Vấp: 456 Quang Trung</a></li>
+                    {% for b in clinic.branches %}<li><a href="{{ url_for('main.contact') }}"><i class="fas fa-hospital"></i> {{ b.name }}: {{ b.address }}</a></li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>

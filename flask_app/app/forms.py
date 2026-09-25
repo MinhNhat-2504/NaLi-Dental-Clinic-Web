@@ -148,3 +148,15 @@ class ResetPasswordForm(FlaskForm):
     confirm = PasswordField("Nhập lại mật khẩu mới", validators=[DataRequired(), EqualTo("new", message="Hai mật khẩu không khớp")])
     submit = SubmitField("Đặt lại mật khẩu")
 
+
+class ClinicSettingsForm(FlaskForm):
+    """Admin sửa thông tin phòng khám (app/clinic.py)."""
+    name = StringField("Tên phòng khám", validators=[DataRequired(), Length(2, 100)])
+    hotline = StringField("Hotline", validators=[DataRequired(), Length(8, 20)])
+    email = StringField("Email liên hệ", validators=[DataRequired(), Email(message="Email không hợp lệ")])
+    hours_text = StringField("Giờ làm việc (chữ hiển thị)", validators=[DataRequired(), Length(3, 60)])
+    open_hour = IntegerField("Giờ mở", validators=[NumberRange(0, 23)], default=8)
+    close_hour = IntegerField("Giờ đóng", validators=[NumberRange(1, 24)], default=20)
+    branches_text = TextAreaField("Chi nhánh", validators=[DataRequired()])
+    submit = SubmitField("Lưu cài đặt")
+

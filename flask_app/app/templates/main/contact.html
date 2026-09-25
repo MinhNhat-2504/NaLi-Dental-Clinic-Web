@@ -5,26 +5,23 @@
 <section class="section">
   <div class="branch-grid">
     <div>
-      {% set branches = [
-        ('Chi nhánh Bình Thạnh','69/68 Đặng Thùy Trâm, Q. Bình Thạnh, TP.HCM'),
-        ('Chi nhánh Quận 1','123 Nguyễn Huệ, Quận 1, TP.HCM'),
-        ('Chi nhánh Gò Vấp','456 Quang Trung, Q. Gò Vấp, TP.HCM')] %}
+      {% set branches = clinic.branches %}
       {% for b in branches %}
-      <button type="button" class="branch-item {{ 'active' if loop.first }}" data-q="{{ b[1] }}">
+      <button type="button" class="branch-item {{ 'active' if loop.first }}" data-q="{{ b.address }}">
         <span class="branch-ico"><i class="fas fa-hospital"></i></span>
-        <span><b>{{ b[0] }}</b><span class="addr">{{ b[1] }}</span></span>
+        <span><b>Chi nhánh {{ b.name }}</b><span class="addr">{{ b.address }}</span></span>
       </button>
       {% endfor %}
       <div class="branch-info">
-        <p><i class="fas fa-phone"></i> Hotline: <strong>0945 457 512</strong></p>
-        <p><i class="fas fa-envelope"></i> nalidental@gmail.com</p>
-        <p><i class="fas fa-clock"></i> T2 – CN: 08:00 – 20:00</p>
+        <p><i class="fas fa-phone"></i> Hotline: <strong>{{ clinic.hotline }}</strong></p>
+        <p><i class="fas fa-envelope"></i> {{ clinic.email }}</p>
+        <p><i class="fas fa-clock"></i> {{ clinic.hours_text }}</p>
         <p id="weatherBox"><i class="fas fa-cloud-sun"></i> <span>Đang tải thời tiết…</span></p>
       </div>
     </div>
     <div class="branch-map">
       <iframe id="branchMap" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"
-              src="https://www.google.com/maps?q={{ branches[0][1]|urlencode }}&output=embed" title="Bản đồ NALI"></iframe>
+              src="https://www.google.com/maps?q={{ (branches[0].address if branches else '')|urlencode }}&output=embed" title="Bản đồ NALI"></iframe>
     </div>
   </div>
 </section>

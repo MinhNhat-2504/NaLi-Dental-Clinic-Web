@@ -147,6 +147,15 @@ class Appointment(db.Model):
         return {"pending": "Chờ chuyển cọc", "reported": "Khách báo đã chuyển", "paid": "Đã nhận cọc"}.get(self.deposit_status or "", "")
 
 
+class ClinicSetting(db.Model):
+    """Cấu hình phòng khám dạng key/value (hotline, email, giờ, chi nhánh). Xem app/clinic.py."""
+    __tablename__ = "clinic_settings"
+
+    key = db.Column(db.String(50), primary_key=True)
+    value = db.Column(db.Text)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 @event.listens_for(Appointment, "before_insert")
 @event.listens_for(Appointment, "before_update")
 def _appointment_slot_key(mapper, connection, target):

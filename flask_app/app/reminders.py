@@ -23,6 +23,11 @@ from .models import Appointment, MedicalRecord, Patient, Product
 _WEEKDAYS = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"]
 
 
+def _hotline() -> str:
+    from .clinic import get_clinic
+    return get_clinic()["hotline"]
+
+
 def _now_local() -> datetime:
     tz = ZoneInfo(current_app.config.get("TIMEZONE", "Asia/Ho_Chi_Minh"))
     return datetime.now(tz).replace(tzinfo=None)
@@ -41,6 +46,8 @@ def build_reminder_email(appt: Appointment, when_label: str) -> tuple[str, str]:
     d = appt.appointment_date
     t = appt.appointment_time.strftime("%H:%M") if appt.appointment_time else ""
     site = current_app.config.get("SITE_URL", "")
+    from .clinic import get_clinic
+    clinic = get_clinic()
     subject = f"[NALI Dental] Nhắc lịch hẹn {when_label} {t} — {d.strftime('%d/%m/%Y')}"
     body = (
         f"Xin chào {appt.customer_name},\n\n"
@@ -48,11 +55,11 @@ def build_reminder_email(appt: Appointment, when_label: str) -> tuple[str, str]:
         f"  • Thời gian: {t}, {_WEEKDAYS[d.weekday()]} {d.strftime('%d/%m/%Y')}\n"
         f"  • Dịch vụ: {_service_names(appt.product_ids)}\n"
         f"  • Mã lịch hẹn: #{appt.id}\n"
-        f"  • Chi nhánh chính: 69/68 Đặng Thùy Trâm, Bình Thạnh, TP.HCM (chi nhánh khác: {site}/lien-he)\n\n"
+        f"  • Chi nhánh chính: {clinic['main_address']} (chi nhánh khác: {site}/lien-he)\n\n"
         f"Lưu ý nhỏ: vui lòng đến trước 10 phút; nếu đang dùng thuốc hoặc có bệnh nền, "
         f"hãy báo bác sĩ khi khám.\n\n"
         f"Cần đổi/huỷ lịch? Xem lịch của anh/chị tại {site}/lich-hen-cua-toi "
-        f"hoặc gọi hotline 0945 457 512.\n\n"
+        f"hoặc gọi hotline {clinic['hotline']}.\n\n"
         f"Hẹn gặp anh/chị tại NALI! 🦷\n"
         f"— NALI Dental Clinic"
     )
@@ -125,7 +132,7 @@ def send_revisit_reminders(now: datetime | None = None) -> dict:
                 f"Bác sĩ NALI có hẹn anh/chị tái khám vào {_WEEKDAYS[d.weekday()]} {d.strftime('%d/%m/%Y')} "
                 f"(sau lần khám ngày {rec.visit_date.strftime('%d/%m/%Y')}).\n"
                 + (f"Dặn dò lần trước: {rec.prescription}\n" if rec.prescription else "")
-                + f"\nAnh/chị đặt lịch tái khám tại {site}/dat-lich hoặc gọi hotline 0945 457 512 để chọn giờ phù hợp.\n\n"
+                + f"\nAnh/chị đặt lịch tái khám tại {site}/dat-lich hoặc gọi hotline {_hotline()} để chọn giờ phù hợp.\n\n"
                 f"Hẹn gặp anh/chị tại NALI!\n— NALI Dental Clinic")
         if send_email(subject, p.email, body):
             rec.revisit_reminder_sent_at = now

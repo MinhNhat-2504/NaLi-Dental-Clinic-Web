@@ -27,57 +27,67 @@ class Document:
         return f"{self.title}. {self.content}"
 
 
-# --- Thông tin cố định của phòng khám (nguồn: web NALI) ---
-CLINIC_FACTS: list[Document] = [
-    Document(
-        "Giờ làm việc",
-        "NALI Dental mở cửa tất cả các ngày trong tuần, từ Thứ 2 đến Chủ Nhật, "
-        "khung giờ 08:00 đến 20:00.",
-        {"topic": "gio_lam_viec"},
-    ),
-    Document(
-        "Hotline và Email",
-        "Số hotline đặt lịch và tư vấn: 0945 457 512. Email: nalidental@gmail.com.",
-        {"topic": "lien_he"},
-    ),
-    Document(
-        "Hệ thống chi nhánh",
-        "NALI có 3 chi nhánh: Bình Thạnh (69/68 Đặng Thùy Trâm); "
-        "Quận 1 (123 Nguyễn Huệ); Gò Vấp (456 Quang Trung).",
-        {"topic": "chi_nhanh"},
-    ),
-    Document(
-        "Thanh toán và trả góp",
-        "Phương thức thanh toán và chính sách hỗ trợ sẽ được nhân viên xác nhận khi khách đặt lịch. "
-        "Không tự khẳng định ưu đãi hoặc điều kiện thanh toán khi chưa có xác nhận.",
-        {"topic": "thanh_toan"},
-    ),
-    Document(
-        "Đối tượng phục vụ",
-        "NALI phục vụ mọi lứa tuổi: nha khoa trẻ em, người lớn, người cao tuổi "
-        "và bệnh nhân có bệnh lý nền.",
-        {"topic": "doi_tuong"},
-    ),
-    Document(
-        "Quy trình đặt lịch",
-        "Khách chỉ cần cung cấp họ tên, số điện thoại, chọn ngày và giờ mong muốn. "
-        "Lễ tân sẽ gọi xác nhận trước buổi hẹn.",
-        {"topic": "dat_lich"},
-    ),
-    Document(
-        "Bãi đỗ xe và tiện ích",
-        "Cả 3 chi nhánh NALI đều có chỗ để xe máy miễn phí cho khách. Với ô tô, "
-        "khách vui lòng liên hệ hotline 0945 457 512 để được hướng dẫn chỗ đậu gần nhất theo từng chi nhánh.",
-        {"topic": "tien_ich"},
-    ),
-    Document(
-        "Phạm vi thông tin",
-        "NALI chỉ tư vấn về dịch vụ nha khoa và đặt lịch. Những điều chưa có trong dữ liệu "
-        "(khuyến mãi, thông tin cá nhân bác sĩ, dịch vụ ngoài nha khoa) NALI không tự khẳng định; "
-        "khách vui lòng gọi hotline để được xác nhận.",
-        {"topic": "pham_vi"},
-    ),
-]
+# --- Thông tin phòng khám: đọc từ bảng clinic_settings (admin sửa được), mặc định trong clinic.py ---
+def clinic_facts() -> list[Document]:
+    from clinic import get_clinic
+    c = get_clinic()
+    branches = c.get("branches") or []
+    branch_txt = "; ".join(f"{b['name']} ({b['address']})" for b in branches)
+    try:
+        oh, ch = int(c["open_hour"]), int(c["close_hour"])
+    except (TypeError, ValueError):
+        oh, ch = 8, 20
+    hotline = c["hotline"]
+    return [
+        Document(
+            "Giờ làm việc",
+            f"{c['name']} mở cửa tất cả các ngày trong tuần, từ Thứ 2 đến Chủ Nhật, "
+            f"khung giờ {oh:02d}:00 đến {ch:02d}:00.",
+            {"topic": "gio_lam_viec"},
+        ),
+        Document(
+            "Hotline và Email",
+            f"Số hotline đặt lịch và tư vấn: {hotline}. Email: {c['email']}.",
+            {"topic": "lien_he"},
+        ),
+        Document(
+            "Hệ thống chi nhánh",
+            f"NALI có {len(branches)} chi nhánh: {branch_txt}." if branches else "NALI hiện có một cơ sở duy nhất.",
+            {"topic": "chi_nhanh"},
+        ),
+        Document(
+            "Thanh toán và trả góp",
+            "Phương thức thanh toán và chính sách hỗ trợ sẽ được nhân viên xác nhận khi khách đặt lịch. "
+            "Không tự khẳng định ưu đãi hoặc điều kiện thanh toán khi chưa có xác nhận.",
+            {"topic": "thanh_toan"},
+        ),
+        Document(
+            "Đối tượng phục vụ",
+            "NALI phục vụ mọi lứa tuổi: nha khoa trẻ em, người lớn, người cao tuổi "
+            "và bệnh nhân có bệnh lý nền.",
+            {"topic": "doi_tuong"},
+        ),
+        Document(
+            "Quy trình đặt lịch",
+            "Khách chỉ cần cung cấp họ tên, số điện thoại, chọn ngày và giờ mong muốn. "
+            "Lễ tân sẽ gọi xác nhận trước buổi hẹn.",
+            {"topic": "dat_lich"},
+        ),
+        Document(
+            "Bãi đỗ xe và tiện ích",
+            f"Các chi nhánh NALI đều có chỗ để xe máy miễn phí cho khách. Với ô tô, "
+            f"khách vui lòng liên hệ hotline {hotline} để được hướng dẫn chỗ đậu gần nhất theo từng chi nhánh.",
+            {"topic": "tien_ich"},
+        ),
+        Document(
+            "Phạm vi thông tin",
+            "NALI chỉ tư vấn về dịch vụ nha khoa và đặt lịch. Những điều chưa có trong dữ liệu "
+            "(khuyến mãi, thông tin cá nhân bác sĩ, dịch vụ ngoài nha khoa) NALI không tự khẳng định; "
+            "khách vui lòng gọi hotline để được xác nhận.",
+            {"topic": "pham_vi"},
+        ),
+    ]
+
 
 # --- Bộ dịch vụ tĩnh dự phòng (khi MySQL chưa sẵn sàng lúc demo) ---
 FALLBACK_SERVICES: list[dict] = [
@@ -129,7 +139,7 @@ def build_corpus() -> tuple[list[Document], bool]:
     `dùng_dữ_liệu_thật` = True nếu lấy được dịch vụ từ MySQL,
     False nếu phải dùng bộ dịch vụ tĩnh dự phòng.
     """
-    docs: list[Document] = list(CLINIC_FACTS)
+    docs: list[Document] = clinic_facts()
     used_live_db = False
     try:
         services = fetch_products()
