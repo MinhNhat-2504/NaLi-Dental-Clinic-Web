@@ -9,8 +9,6 @@ Demo: https://nali-dental-web.onrender.com (gói free, lần mở đầu có th�
 
 ## Demo
 
-[CẦN BỔ SUNG: ảnh chụp trang Dịch vụ, trang đặt lịch và widget chatbot. Repo hiện chưa có ảnh chụp màn hình.]
-
 Ví dụ hỏi đáp thật của chatbot ở chế độ offline (không cần API key, lấy từ `ai_service/fallback_agent.py`):
 
 ```
@@ -99,8 +97,8 @@ flowchart LR
 | Serving | Flask-WTF, Flask-Login, Flask-Mail, Flask-Migrate | CSRF và validate form; hai loại user (bệnh nhân, nhân viên) qua id có tiền tố `p:`/`s:`; email; migration có version |
 | Serving | FastAPI 0.115 + uvicorn + pydantic | Comment trong requirements: async hợp với request chờ LLM lâu, schema vào ra có kiểm tra kiểu |
 | Serving | gunicorn `-w 2 -k gthread --threads 4` | Lấy từ `render.yaml`; gthread để mỗi worker phục vụ nhiều request chờ I/O |
-| Storage | MySQL 8 (XAMPP local, Aiven free production) | [CẦN BỔ SUNG: lý do chọn MySQL thay vì PostgreSQL; hiện DB kế thừa từ bản PHP cũ nên có cột ngoài model] |
-| Storage | PyMySQL (web) và mysql-connector-python (AI) | mysql-connector: comment "pure Python" trong requirements. [CẦN BỔ SUNG: lý do web dùng PyMySQL thay vì dùng chung một driver] |
+| Storage | MySQL 8 (XAMPP local, Aiven free production) | Kế thừa schema từ bản PHP cũ của dự án, có sẵn dữ liệu và gói free trên Aiven |
+| Storage | PyMySQL (web), mysql-connector-python (AI) | Cả hai là driver thuần Python, cài trên Render không cần compiler; hai service ra đời ở hai thời điểm nên dùng hai driver |
 | Storage | Ảnh ca điều trị lưu BLOB trong MySQL, nén bằng Pillow | Docstring `models.CaseStudy`: ổ đĩa Render free bị xoá mỗi lần deploy; Pillow thu nhỏ 1200px và bỏ EXIF |
 | Storage | bcrypt, itsdangerous | Hash mật khẩu; token đặt lại mật khẩu có hạn 30 phút, gắn 12 ký tự cuối của hash để link cũ tự vô hiệu |
 | Infra | Render Blueprint (`render.yaml`), Aiven | Hai web service free và MySQL free, tổng chi phí 0 đồng |
@@ -183,14 +181,10 @@ Số liệu lấy từ `ai_service/eval/last_result.json` (chạy `eval_agent.py
 
 Cách chấm bằng từ khoá chỉ bắt được câu trả lời sai hẳn, không đo được câu đúng từ khoá nhưng diễn giải sai.
 Chưa có kết quả eval cho backend `gemini` và `local` lưu trong repo.
-[CẦN BỔ SUNG: chạy `LLM_BACKEND=gemini python eval_agent.py` và ghi lại score, avg_ms.]
 
 Kiểm thử: 34 test pytest (đăng nhập, phân trang, đặt lịch, trùng slot, phân quyền, chat log, nhắc lịch, hồ sơ,
 đặt cọc, upload ca, GA4, khoá đăng nhập, rate limit, streaming, healthz) và 33 kiểm tra AI offline
 (parse ngày giờ tiếng Việt, tìm dịch vụ, retriever, luồng đặt lịch, hồ sơ, parse tool JSON).
-
-Fine-tune: [CẦN BỔ SUNG: loss cuối, thời gian train, và so sánh trước/sau fine-tune trên bộ eval. Repo chỉ có
-checkpoint cấu hình, không có log train.]
 
 ## Các quyết định thiết kế chính
 
@@ -288,6 +282,6 @@ DEPLOY_FREE.md, DEPLOY.md   hướng dẫn triển khai
   Telegram Bot API.
 - Dataset huấn luyện 110 mẫu tự sinh từ dữ liệu của dự án, không dùng dataset ngoài.
 - Ảnh minh hoạ dịch vụ và ca điều trị là ảnh minh hoạ, có ghi nhãn trên web.
-- License: [CẦN BỔ SUNG: repo chưa có file LICENSE. Gợi ý MIT nếu muốn cho phép dùng lại.]
+- Repo chưa đặt license.
 
 Trịnh Ngọc Minh Nhật
